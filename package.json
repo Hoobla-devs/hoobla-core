@@ -1,0 +1,29 @@
+{
+  "name": "@kongulo-is/hoobla-core",
+  "version": "0.0.25",
+  "description": "Hoobla core",
+  "repository": "kongulo-is/hoobla-core",
+  "main": "./src/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "patch": "tsc && npm version patch && npm publish",
+    "pre": "rm ./lib/* && tsc && npm version patch"
+  },
+  "files": [
+    "lib"
+  ],
+  "peerDependencies": {
+    "firebase": "10.7.1",
+    "mixpanel-browser": "^2.47.0"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.9",
+    "@typescript-eslint/eslint-plugin": "^6.7.0",
+    "@typescript-eslint/parser": "^6.7.0",
+    "eslint": "^8.49.0",
+    "typescript": "^5.2.2"
+  }
+}
