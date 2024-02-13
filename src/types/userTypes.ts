@@ -1,30 +1,62 @@
-import {
-  TJobTitle,
-  TSkill,
-  TLanguage,
-  TEducation,
-  TExperience,
-} from "./baseTypes";
+import { DocumentReference, Timestamp } from "firebase/firestore";
+import { TEducation, TExperience } from "./baseTypes";
 import { TCompany } from "./companyTypes";
+import { TApplicant, TJob, TJobWrite } from "./jobTypes";
+import { TJobTitle, TSkill, TLanguage } from "./tagTypes";
 
-export type TUser = {
+export type TUserBase = {
   general: TGeneral;
-  //   freelancer?: TFreelancer;
-  //   employer?: TEmployer;
   settings?: {
     SMSNotifications?: boolean;
     excludedJobTitleNotifications?: string[];
   };
 };
 
-export type TFreelancerUser = TUser & {
+export type TFreelancerUser = TUserBase & {
   freelancer: TFreelancer; // required
   freelancerForm?: TSavedFreelancerFormData;
 };
 
-export type TEmployerUser = TUser & {
+export type TEmployerUser = TUserBase & {
   employer: TEmployer; // required
 };
+
+export type TUserRead = {
+  general: TGeneral;
+  freelancer?: TFreelancer;
+  freelancerForm?: TSavedFreelancerFormData;
+  employer?: TEmployer;
+  settings?: {
+    SMSNotifications?: boolean;
+    excludedJobTitleNotifications?: string[];
+  };
+};
+
+export type TUser = TUserRead;
+
+export type TUserWrite = {
+  general: TGeneralWrite;
+  freelancer?: TFreelancer;
+  freelancerForm?: TSavedFreelancerFormData;
+  employer?: TEmployer;
+  settings?: {
+    SMSNotifications?: boolean;
+    excludedJobTitleNotifications?: string[];
+  };
+};
+
+export type TGeneralWrite = {
+  uid: string;
+  name: string;
+  phone: string;
+  ssn: string;
+  email: string;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+  lang: "is" | "en";
+};
+
+export type TApplicantUser = TUserBase & TApplicant;
 
 export type TGeneral = {
   uid: string;
@@ -45,31 +77,39 @@ export type TFreelancer = {
   languages: TLanguage[];
   experience: TExperience[];
   education: TEducation[];
-  unapprovedTags?: {
-    jobTitles: string[];
-    skills: string[];
-    languages: string[];
-  } | null;
-  jobs: DocumentReference<Job>[]; // TODO
+  unapprovedTags?: TFreelancerUnapprovedTags | null;
+  jobs: DocumentReference<TJobWrite>[]; // TODO
   status: "inReview" | "approved" | "denied";
-  social?: {
-    linkedIn: string;
-    website: string;
-  };
+  social?: TFreelancerSocial;
+  address: TFreelancerAddress | null;
+  company: TFreelancerCompany | null;
+};
+
+export type TFreelancerCompany = {
+  name: string;
+  ssn: string;
   address: {
     address: string;
     postcode: string;
     city: string;
-  } | null;
-  company: {
-    name: string;
-    ssn: string;
-    address: {
-      address: string;
-      postcode: string;
-      city: string;
-    };
-  } | null;
+  };
+};
+
+export type TFreelancerAddress = {
+  address: string;
+  postcode: string;
+  city: string;
+};
+
+export type TFreelancerUnapprovedTags = {
+  jobTitles: string[];
+  skills: string[];
+  languages: string[];
+};
+
+export type TFreelancerSocial = {
+  linkedIn: string;
+  website: string;
 };
 
 export type TEmployer = {

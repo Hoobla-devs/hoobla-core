@@ -1,57 +1,29 @@
 import {
+  doc,
   DocumentReference,
   UpdateData,
   updateDoc as firestoreUpdateDoc,
 } from "firebase/firestore";
-import {
-  TClient,
-  TClientProgramDay,
-  TClientProgramDayWrite,
-  TClientProgramRead,
-  TClientProgramWrite,
-  TClientWrite,
-} from "../types/clientTypes";
-import {
-  TClinicianWrite,
-  TClinicianClientWrite,
-  TClinicianClientRead,
-  TInvitationWrite,
-} from "../types/clinicianTypes";
-import {
-  TProgramWrite,
-  TProgramDayWrite,
-  TExerciseDayWrite,
-  TProgramRead,
-  TProgramDayRead,
-} from "../types/programTypes";
-import { TExercise } from "../types/baseTypes";
 
-type AllWrites =
-  | TClientProgramWrite
-  | TClientWrite
-  | TClientProgramDayWrite
-  | TClinicianWrite
-  | TClinicianClientWrite
-  | TProgramWrite
-  | TProgramDayWrite
-  | TExerciseDayWrite
-  | TInvitationWrite;
+import { TJobRead, TJobWrite } from "../types/jobTypes";
+import { db } from "../firebase/init";
+import { TUserWrite } from "../types/userTypes";
+import { TCompanyWrite } from "../types/companyTypes";
 
-type AllReads =
-  | TClientProgramRead
-  | TClient
-  | TClientProgramDay
-  | TClinicianClientRead
-  | TProgramRead
-  | TProgramDayRead
-  | TExercise;
+type AllWrites = TJobWrite | TUserWrite | TCompanyWrite;
 
 export function updateDoc<T extends AllWrites>(
-  ref: DocumentReference<T, any>,
+  ref: DocumentReference<T>,
   data: UpdateData<Partial<T>>
 ) {
   return firestoreUpdateDoc(ref, data);
 }
+
+// updateDoc(doc(db, "users", "uid") as DocumentReference<TJobWrite>, {
+//   "jobInfo.numOfHours": 10,
+//   "company.address.city": "Reykjavik",
+//   jobInfo: { numOfHours: 10 },
+// });
 
 // DEMO
 // const clientRef = doc(
