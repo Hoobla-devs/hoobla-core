@@ -3,13 +3,38 @@ import {
   SnapshotOptions,
   Timestamp,
 } from "firebase/firestore";
-import { TUserRead, TUserWrite } from "../types/userTypes";
+import {
+  TFreelancerRead,
+  TFreelancerWrite,
+  TUserRead,
+  TUserWrite,
+} from "../types/userTypes";
 
 export const userConverter = {
   toFirestore(user: TUserRead): TUserWrite {
-    const { general, ...props } = user;
+    const { general, freelancer, ...props } = user;
 
     const { createdAt, updatedAt, ...generalProps } = general;
+
+    let freelancerWrite: TFreelancerWrite | undefined = undefined;
+
+    if (freelancer) {
+      const { contract, ...freelancerProps } = freelancer;
+
+      freelancerWrite = {
+        ...freelancerProps,
+      };
+
+      if (contract) {
+        const { date, ...contractProps } = contract;
+        freelancerWrite.contract = {
+          ...contractProps,
+          ...(contract && {
+            date: date && Timestamp.fromDate(date),
+          }),
+        };
+      }
+    }
 
     return {
       ...props,
@@ -18,6 +43,7 @@ export const userConverter = {
         createdAt: Timestamp.fromDate(createdAt),
         ...(updatedAt && { updatedAt: Timestamp.fromDate(updatedAt) }),
       },
+      ...(freelancerWrite && { freelancer: freelancerWrite }),
     };
   },
   fromFirestore(
@@ -25,9 +51,27 @@ export const userConverter = {
     options: SnapshotOptions
   ): TUserRead {
     const snapData = snapshot.data(options);
-    const { general, ...props } = snapData;
+    const { general, freelancer, ...props } = snapData;
 
     const { createdAt, updatedAt, ...generalProps } = general;
+
+    let freelancerRead: TFreelancerRead | undefined = undefined;
+
+    if (freelancer) {
+      const { contract, ...freelancerProps } = freelancer;
+
+      freelancerRead = {
+        ...freelancerProps,
+      };
+      if (contract && contract.date) {
+        const { date, ...contractProps } = contract;
+        freelancerRead.contract = {
+          ...contractProps,
+          date: date.toDate(),
+        };
+      }
+    }
+
     return {
       ...props,
       general: {
@@ -35,6 +79,7 @@ export const userConverter = {
         createdAt: createdAt.toDate(),
         ...(updatedAt && { updatedAt: updatedAt.toDate() }),
       },
+      ...(freelancerRead && { freelancer: freelancerRead }),
     };
   },
 };

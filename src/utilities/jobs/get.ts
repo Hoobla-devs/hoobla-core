@@ -12,8 +12,8 @@ import { db } from "../../firebase/init";
 import { TCompany } from "../../types/companyTypes";
 import {
   TApplicant,
-  TApplicantRead,
   TApplicantWrite,
+  TJob,
   TJobWithCompany,
   TJobWrite,
 } from "../../types/jobTypes";
@@ -27,6 +27,20 @@ async function _getJobFromRef(jobRef: DocumentReference<TJobWrite>) {
   }
   const jobData = jobSnap.data();
   return jobData;
+}
+
+export async function getJob(
+  ref: string | DocumentReference<TJobWrite>
+): Promise<TJob> {
+  if (typeof ref === "string") {
+    ref = doc(db, "jobs", ref) as DocumentReference<TJobWrite>;
+  }
+
+  const job = await _getJobFromRef(ref);
+
+  let applicants: TApplicant[] = [];
+
+  return { ...job, applicants: applicants };
 }
 
 export async function getJobWithCompany(
@@ -46,8 +60,11 @@ export async function getJobWithCompany(
     // get applicants
     const applicant = await getApplicant(
       doc(ref, "applicants", applicantId) as DocumentReference<TApplicantWrite>
-    );
-    applicants = [applicant];
+    ).catch(() => null);
+
+    if (applicant) {
+      applicants = [applicant];
+    }
   }
 
   return { ...job, applicants: applicants, company };

@@ -17,6 +17,7 @@ export const jobConverter = {
       id,
       terms,
       logs,
+      jobInfo,
 
       ...data
     } = job;
@@ -29,11 +30,17 @@ export const jobConverter = {
       };
     });
 
+    const { deadline, ...jobInfoData } = jobInfo;
+
     // return that data
     return {
       ...data,
       terms: terms ? Timestamp.fromDate(terms) : null,
       logs: newLogs,
+      jobInfo: {
+        ...jobInfoData,
+        ...(deadline && { deadline: Timestamp.fromDate(deadline) }),
+      },
     };
   },
 
@@ -42,7 +49,7 @@ export const jobConverter = {
     options: SnapshotOptions
   ): TJobRead {
     const snapData = snapshot.data(options);
-    const { terms, logs, ...data } = snapData;
+    const { terms, logs, jobInfo, ...data } = snapData;
 
     const newLogs = logs.map((log) => {
       return {
@@ -51,11 +58,17 @@ export const jobConverter = {
       };
     });
 
+    const { deadline, ...jobInfoData } = jobInfo;
+
     return {
       ...data,
       terms: terms ? terms.toDate() : null,
       logs: newLogs,
       id: snapshot.id,
+      jobInfo: {
+        ...jobInfoData,
+        ...(deadline && { deadline: deadline.toDate() }),
+      },
     };
   },
 };

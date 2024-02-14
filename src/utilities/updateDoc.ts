@@ -5,12 +5,12 @@ import {
   updateDoc as firestoreUpdateDoc,
 } from "firebase/firestore";
 
-import { TJobRead, TJobWrite } from "../types/jobTypes";
+import { TApplicantWrite, TJobRead, TJobWrite } from "../types/jobTypes";
 import { db } from "../firebase/init";
 import { TUserWrite } from "../types/userTypes";
 import { TCompanyWrite } from "../types/companyTypes";
 
-type AllWrites = TJobWrite | TUserWrite | TCompanyWrite;
+type AllWrites = TJobWrite | TUserWrite | TCompanyWrite | TApplicantWrite;
 
 export function updateDoc<T extends AllWrites>(
   ref: DocumentReference<T>,

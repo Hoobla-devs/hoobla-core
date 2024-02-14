@@ -1,9 +1,9 @@
 import { arrayUnion, doc, DocumentReference, setDoc } from "firebase/firestore";
-import { applicantConverter } from "../../converters/job";
-import { db } from "../../firebase/init";
-import { TJobWrite, TOffer } from "../../types/jobTypes";
-import { TUserWrite } from "../../types/userTypes";
-import { updateDoc } from "../updateDoc";
+import { applicantConverter } from "../../../converters/job";
+import { db } from "../../../firebase/init";
+import { TJobWrite, TOffer } from "../../../types/jobTypes";
+import { TUserWrite } from "../../../types/userTypes";
+import { updateDoc } from "../../updateDoc";
 
 export async function applyForJob(uid: string, jobId: string, offer: TOffer) {
   // create the job reference
@@ -27,7 +27,7 @@ export async function applyForJob(uid: string, jobId: string, offer: TOffer) {
     applicantConverter
   );
 
-  await setDoc(applicationRef, { offer }).catch((err) => {
+  await setDoc(applicationRef, { offer, id: uid }).catch((err) => {
     throw new Error(`Error adding application to job: ${err}`);
   });
 

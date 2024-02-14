@@ -1,5 +1,5 @@
 import { DocumentReference, Timestamp } from "firebase/firestore";
-import { TCompany } from "./companyTypes";
+import { TCompany, TCompanyWrite } from "./companyTypes";
 import { TTagsId } from "./refrencesTypes";
 import { TEmployerUser, TFreelancerUser } from "./userTypes";
 
@@ -8,11 +8,10 @@ export type TJobBase = {
   description: string;
   unapprovedTags?: TUnapprovedTags | null;
   type: "notSure" | "partTime" | "timeframe";
-  jobInfo: TJobInfo;
   status: TJobStatus;
   documentId: string;
   signatures: TSignatures;
-  company: DocumentReference<TCompany>;
+  company: DocumentReference<TCompanyWrite>;
   creator: DocumentReference<TEmployerUser>;
   freelancers: DocumentReference<TFreelancerUser>[]; // Þau sem taka verkið að sér
   selectedApplicants: DocumentReference<TFreelancerUser>[]; // Þau sem Hoobla 3-5 velja
@@ -21,6 +20,7 @@ export type TJobBase = {
 export type TJobWrite = TJobBase & {
   terms: Timestamp | null;
   logs: TLogWrite[];
+  jobInfo: TJobInfoWrite;
 };
 
 export type TLogWrite = {
@@ -34,6 +34,7 @@ export type TJobRead = TJobBase & {
   id: string;
   terms: Date | null;
   logs: TLog[];
+  jobInfo: TJobInfoRead;
 };
 
 export type TJob = TJobRead & {
@@ -79,11 +80,20 @@ export type TSignatures = {
   };
 };
 
-export type TJobInfo = {
+export type TJobInfoRead = {
   start: string;
   end: string;
   percentage: number | null;
   numOfHours: number | null;
+  deadline?: Date;
+};
+
+export type TJobInfoWrite = {
+  start: string;
+  end: string;
+  percentage: number | null;
+  numOfHours: number | null;
+  deadline?: Timestamp;
 };
 
 export type TApplicantWrite = {
