@@ -183,9 +183,9 @@ export type TFreelancerFormData = {
     postcode: string;
     city: string;
   };
-  jobTitles: TJobTitle[];
-  skills: TSkill[];
-  languages: TLanguage[];
+  jobTitles: string[];
+  skills: string[];
+  languages: string[];
   unapprovedTags?: {
     jobTitles?: string[] | null;
     skills?: string[] | null;
