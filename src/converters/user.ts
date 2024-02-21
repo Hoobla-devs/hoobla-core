@@ -6,6 +6,8 @@ import {
 import {
   TFreelancerRead,
   TFreelancerWrite,
+  TReviewRead,
+  TReviewWrite,
   TUserRead,
   TUserWrite,
 } from "../types/userTypes";
@@ -75,11 +77,35 @@ export const userConverter = {
     return {
       ...props,
       general: {
+        uid: snapshot.id,
         ...generalProps,
         createdAt: createdAt.toDate(),
         ...(updatedAt && { updatedAt: updatedAt.toDate() }),
       },
       ...(freelancerRead && { freelancer: freelancerRead }),
+    };
+  },
+};
+
+export const reviewConverter = {
+  toFirestore(review: TReviewRead): TReviewWrite {
+    const { date, ...props } = review;
+
+    return {
+      ...props,
+      date: Timestamp.fromDate(date),
+    };
+  },
+  fromFirestore(
+    snapshot: QueryDocumentSnapshot<TReviewWrite>,
+    options: SnapshotOptions
+  ): TReviewRead {
+    const snapData = snapshot.data(options);
+    const { date, ...props } = snapData;
+
+    return {
+      ...props,
+      date: date.toDate(),
     };
   },
 };

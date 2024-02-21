@@ -4,13 +4,14 @@ import { db } from "../../firebase/init";
 import { TCompany } from "../../types/companyTypes";
 import {
   TEmployer,
+  TFreelancer,
   TFreelancerUser,
   TUser,
-  TUserBase,
   TUserRead,
   TUserWrite,
 } from "../../types/userTypes";
 import { getCompany } from "../companies/get";
+import { getAllReviews } from "./reviews/get";
 
 async function _getUserFromRef(
   userRef: DocumentReference<TUserWrite>
@@ -21,14 +22,12 @@ async function _getUserFromRef(
     throw new Error("User does not exist.");
   }
   const userData = userSnap.data();
-  const { employer, ...rest } = userData;
+  const { employer, freelancer, ...rest } = userData;
 
   let newEmployer: TEmployer | undefined;
   let company: TCompany | undefined;
 
   if (employer) {
-    console.log("employer", employer);
-
     // get the company
     company = await getCompany(employer.company);
     newEmployer = {
@@ -37,10 +36,22 @@ async function _getUserFromRef(
     };
   }
 
+  let newFreelancer: TFreelancer | undefined;
+  if (freelancer) {
+    const reviews = await getAllReviews(userRef.id);
+    newFreelancer = {
+      ...freelancer,
+      reviews,
+    };
+  }
+
   return {
     ...rest,
     ...(employer && {
       employer: newEmployer,
+    }),
+    ...(freelancer && {
+      freelancer: newFreelancer,
     }),
   };
 }
@@ -74,7 +85,7 @@ export async function onUserChange(
   const unsubscribe = onSnapshot(userRef, async (doc) => {
     if (doc.exists()) {
       const userData = doc.data();
-      const { employer, ...rest } = userData;
+      const { employer, freelancer, ...rest } = userData;
 
       let newEmployer: TEmployer | undefined;
       let company: TCompany | undefined;
@@ -90,10 +101,22 @@ export async function onUserChange(
         };
       }
 
+      let newFreelancer: TFreelancer | undefined;
+      if (freelancer) {
+        const reviews = await getAllReviews(userRef.id);
+        newFreelancer = {
+          ...freelancer,
+          reviews,
+        };
+      }
+
       callback({
         ...rest,
         ...(employer && {
           employer: newEmployer,
+        }),
+        ...(freelancer && {
+          freelancer: newFreelancer,
         }),
       });
     } else {

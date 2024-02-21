@@ -9,12 +9,14 @@ export type TJobBase = {
   unapprovedTags?: TUnapprovedTags | null;
   type: "notSure" | "partTime" | "timeframe";
   status: TJobStatus;
-  documentId: string;
-  signatures: TSignatures;
+  documentId: string | null;
+  documentStorageUrl?: string;
+  signatures: TSignatures | null;
   company: DocumentReference<TCompanyWrite>;
   creator: DocumentReference<TEmployerUser>;
   freelancers: DocumentReference<TFreelancerUser>[]; // Þau sem taka verkið að sér
   selectedApplicants: DocumentReference<TFreelancerUser>[]; // Þau sem Hoobla 3-5 velja
+  notSelectedReason?: TReasonId;
 } & TTagsId;
 
 export type TJobWrite = TJobBase & {
@@ -42,6 +44,10 @@ export type TJob = TJobRead & {
   applicants?: TApplicant[]; // TODO: breyta í map?   // Allir sem hafa sent inn umsókn
 };
 
+// export type TJobWithApplicants = TJob & {
+//   applicants: (TApplicant & TFreelancerUser)[];
+// };
+
 export type TJobWithCompany = Omit<TJob, "company"> & {
   company: TCompany;
 };
@@ -53,6 +59,7 @@ export type TJobStatus =
   | "chooseFreelancers"
   | "requiresSignature"
   | "inProgress"
+  | "readyForReview"
   | "completed"
   | "cancelled";
 
@@ -119,4 +126,35 @@ export type TOffer = {
   fixedRate: string;
   message: string;
   acceptedRate?: "hourly" | "fixed" | "";
+};
+
+export type TReasonId =
+  | "price"
+  | "experience"
+  | "skills"
+  | "similarProject"
+  | "knowsFreelancer";
+
+// * Job Form Types
+export type TJobFormData = {
+  name: string;
+  description: string;
+  jobTitles: string[];
+  skills: string[];
+  languages: string[];
+  unapprovedTags?: {
+    jobTitles?: string[] | null;
+    skills?: string[] | null;
+    languages?: string[] | null;
+  } | null;
+  type: "notSure" | "partTime" | "timeframe";
+  jobInfo: {
+    start: string;
+    end: string;
+    percentage: number | null;
+    numOfHours: string | null;
+    deadline: number;
+  };
+  logs?: TLog[];
+  status: TJobStatus;
 };

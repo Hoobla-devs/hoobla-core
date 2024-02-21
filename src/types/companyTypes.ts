@@ -1,5 +1,5 @@
 import { DocumentReference, Timestamp } from "@firebase/firestore";
-import { TJob } from "./jobTypes";
+import { TJob, TJobWrite } from "./jobTypes";
 import { TEmployerUser } from "./userTypes";
 
 export type TCompanyBase = {
@@ -17,11 +17,11 @@ export type TCompanyBase = {
 };
 
 export type TCompanyRead = TCompanyBase & {
-  id: string;
   invites: TInvite[];
-  employees: string[]; // TODO:   DocumentReference<TProgramWrite, DocumentData>;
-  jobs: string[];
-  creator: string;
+  employees: DocumentReference<TEmployerUser>[]; // TODO:   DocumentReference<TProgramWrite, DocumentData>;
+  jobs: DocumentReference<TJobWrite>[];
+  creator: DocumentReference<TEmployerUser>;
+  id: string;
 };
 export type TInvite = {
   token: string;
@@ -33,7 +33,7 @@ export type TCompany = TCompanyRead;
 
 export type TCompanyWrite = TCompanyBase & {
   employees: DocumentReference<TEmployerUser>[];
-  jobs: DocumentReference<TJob>[];
+  jobs: DocumentReference<TJobWrite>[];
   creator: DocumentReference<TEmployerUser>;
   invites: TInviteWrite[];
 };
@@ -42,4 +42,20 @@ export type TInviteWrite = {
   token: string;
   email: string;
   date: Timestamp;
+};
+
+// * Form Types
+
+export type TCompanyCreatorData = {
+  ssn: string;
+  name: string;
+  phone: string;
+  position: string;
+};
+
+export type TCompanyFormData = Omit<TCompanyBase, "logo"> & {
+  invites: string[];
+  logo: { originalFile: File; file: File; url: string } | null;
+  oldLogo?: { url: string };
+  creator?: TCompanyCreatorData;
 };

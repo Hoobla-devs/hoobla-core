@@ -1,11 +1,7 @@
-import {
-  updateDoc,
-  doc,
-  DocumentReference,
-  arrayUnion,
-} from "firebase/firestore";
+import { doc, DocumentReference, arrayUnion } from "firebase/firestore";
 import { db } from "../../firebase/init";
 import { TJobWrite } from "../../types/jobTypes";
+import { updateDoc } from "../updateDoc";
 
 export async function agreeTerms(jobId: string) {
   const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
@@ -25,4 +21,18 @@ export async function agreeTerms(jobId: string) {
     .then(() => true);
 
   return mission;
+}
+
+export async function finishJob(jobId: string) {
+  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+
+  return await updateDoc(jobRef, {
+    status: "completed",
+    logs: arrayUnion({
+      date: new Date(),
+      status: "completed",
+    }),
+  })
+    .then(() => true)
+    .catch(() => false);
 }

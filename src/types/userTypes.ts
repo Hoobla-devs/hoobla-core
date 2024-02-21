@@ -32,8 +32,9 @@ export type TUserRead = {
   };
 };
 
-export type TUser = Omit<TUserRead, "employer"> & {
+export type TUser = Omit<TUserRead, "employer" | "freelancer"> & {
   employer?: TEmployer;
+  freelancer?: TFreelancer;
 };
 
 export type TUserWrite = {
@@ -48,7 +49,6 @@ export type TUserWrite = {
 };
 
 export type TGeneralWrite = {
-  uid: string;
   name: string;
   phone: string;
   ssn: string;
@@ -91,7 +91,9 @@ export type TFreelancerRead = TFreelancerBase & {
   contract?: TFreelancerContractRead;
 };
 
-export type TFreelancer = TFreelancerRead;
+export type TFreelancer = TFreelancerRead & {
+  reviews: TReview[];
+};
 
 export type TFreelancerWrite = TFreelancerBase & {
   contract?: TFreelancerContractWrite;
@@ -153,6 +155,8 @@ export type TEmployerWrite = {
   company: DocumentReference<TCompanyWrite>;
 };
 
+// * Freelancer Form
+
 export type TSavedFreelancerFormData = Omit<
   TFreelancerFormData,
   "jobTitles" | "skills" | "languages"
@@ -201,3 +205,34 @@ export type TFreelancerFormData = {
   };
   hasBusiness?: boolean;
 };
+
+// * Review
+
+export type TReviewBase = {
+  jobTitle: string;
+  jobDescription: string;
+  jobInfo: {
+    start: string;
+    end: string;
+    percentage: number | null;
+    numOfHours: number | null;
+  };
+  companyInfo: {
+    name: string;
+    employerName: string;
+    logo: string;
+  };
+  show: boolean;
+  stars: number;
+  text: string;
+};
+
+export type TReviewWrite = TReviewBase & {
+  date: Timestamp;
+};
+
+export type TReviewRead = TReviewBase & {
+  date: Date;
+};
+
+export type TReview = TReviewRead;

@@ -13,14 +13,7 @@ import {
 export const jobConverter = {
   toFirestore(job: TJobRead): TJobWrite {
     // remove id and applicants from job
-    const {
-      id,
-      terms,
-      logs,
-      jobInfo,
-
-      ...data
-    } = job;
+    const { terms, logs, jobInfo, id, ...data } = job;
 
     // convert the terms to a firestore timestamp
     const newLogs = logs.map((log) => {
