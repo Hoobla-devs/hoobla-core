@@ -1,8 +1,14 @@
 import { DocumentReference, Timestamp } from "firebase/firestore";
-import { TEducation, TExperience } from "./baseTypes";
+import { TEducation, TExperience, TGender } from "./baseTypes";
 import { TCompany, TCompanyRead, TCompanyWrite } from "./companyTypes";
 import { TApplicant, TJob, TJobWrite } from "./jobTypes";
 import { TJobTitle, TSkill, TLanguage } from "./tagTypes";
+
+export type TFreelancerStatus =
+  | "inReview"
+  | "approved"
+  | "denied"
+  | "requiresSignature";
 
 export type TUserBase = {
   general: TGeneral;
@@ -72,7 +78,7 @@ export type TGeneral = {
 };
 
 export type TFreelancerBase = {
-  gender: "female" | "male" | "other";
+  gender: TGender;
   photo: { url: string; originalUrl: string };
   jobTitles: string[];
   skills: string[];
@@ -81,7 +87,7 @@ export type TFreelancerBase = {
   education: TEducation[];
   unapprovedTags?: TFreelancerUnapprovedTags | null;
   jobs: DocumentReference<TJobWrite>[]; // TODO
-  status: "inReview" | "approved" | "denied" | "requiresSignature";
+  status: TFreelancerStatus;
   social?: TFreelancerSocial;
   address: TFreelancerAddress | null;
   company: TFreelancerCompany | null;
@@ -170,7 +176,7 @@ export type TFreelancerFormData = {
   name: string;
   phone: string;
   ssn: string;
-  gender: "female" | "male" | "other" | "";
+  gender: TGender | "";
   oldPhoto?: { url: string; originalUrl: string } | null;
   photo?: { originalFile: File; file: File; url: string } | null;
   company: {
@@ -204,6 +210,8 @@ export type TFreelancerFormData = {
     website: string;
   };
   hasBusiness?: boolean;
+  selectedReviews: TReview[];
+  hiddenReviews: TReview[];
 };
 
 // * Review

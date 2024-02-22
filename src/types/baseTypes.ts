@@ -1,3 +1,5 @@
+export type TGender = "male" | "female" | "other";
+
 export type TExperience = {
   title: string;
   company: string;
