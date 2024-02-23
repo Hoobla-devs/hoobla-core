@@ -55,3 +55,24 @@ export const isTodayOrBefore = (date: Date | Timestamp) => {
 
   return date <= today;
 };
+
+export const calculateWorkingDaysUntil = (targetDate: Date): number => {
+  const currentDate = new Date();
+  let workingDaysCount = 0;
+  let currentDateCopy = new Date(currentDate);
+  let targetDateCopy = new Date(targetDate);
+
+  currentDateCopy.setHours(0, 0, 0, 0);
+  targetDateCopy.setHours(0, 0, 0, 0);
+
+  // Iterate from current date until the target date
+  while (currentDateCopy.getTime() < targetDateCopy.getTime()) {
+    // Check if the current day is a working day (Monday to Friday)
+    if (currentDateCopy.getDay() !== 0 && currentDateCopy.getDay() !== 6) {
+      workingDaysCount++; // Increment the working days count
+    }
+    currentDateCopy.setDate(currentDateCopy.getDate() + 1); // Move to the next day
+  }
+
+  return workingDaysCount;
+};
