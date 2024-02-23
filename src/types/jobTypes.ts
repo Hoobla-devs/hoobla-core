@@ -14,8 +14,8 @@ export type TJobBase = {
   signatures: TSignatures | null;
   company: DocumentReference<TCompanyWrite>;
   creator: DocumentReference<TEmployerUser>;
-  freelancers: DocumentReference<TFreelancerUser>[]; // Þau sem taka verkið að sér
-  selectedApplicants: DocumentReference<TFreelancerUser>[]; // Þau sem Hoobla 3-5 velja
+  freelancers: DocumentReference<TApplicant>[]; // Þau sem taka verkið að sér
+  selectedApplicants: DocumentReference<TApplicant>[]; // Þau sem Hoobla 3-5 velja
   notSelectedReason?: TReasonId;
 } & TTagsId;
 
@@ -44,9 +44,11 @@ export type TJob = TJobRead & {
   applicants?: TApplicant[]; // TODO: breyta í map?   // Allir sem hafa sent inn umsókn
 };
 
-// export type TJobWithApplicants = TJob & {
-//   applicants: (TApplicant & TFreelancerUser)[];
-// };
+export type TJobWithApplicants = Omit<TJob, "applicants"> & {
+  applicants: TFreelancerApplicant[];
+  // selectedApplicants: (TFreelancerApplicant)[];
+  // freelancers: (TFreelancerApplicant)[];
+};
 
 export type TJobWithCompany = Omit<TJob, "company"> & {
   company: TCompany;
@@ -111,14 +113,20 @@ export type TApplicantWrite = {
     message: string;
     acceptedRate?: "hourly" | "fixed" | "";
   };
+  contactApproval?: TContactStatus;
 };
 
 export type TApplicantRead = {
   offer: TOffer;
+  contactApproval?: TContactStatus;
   id: string;
 };
 
 export type TApplicant = TApplicantRead;
+
+export type TFreelancerApplicant = TApplicant & TFreelancerUser;
+
+export type TContactStatus = "requested" | "approved" | "declined";
 
 export type TOffer = {
   date: Date;

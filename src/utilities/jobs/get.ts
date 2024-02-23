@@ -6,6 +6,7 @@ import {
   DocumentReference,
   getDoc,
   doc,
+  CollectionReference,
 } from "firebase/firestore";
 import { jobConverter } from "../../converters/job";
 import { db } from "../../firebase/init";
@@ -13,12 +14,16 @@ import { TCompany } from "../../types/companyTypes";
 import {
   TApplicant,
   TApplicantWrite,
+  TFreelancerApplicant,
   TJob,
+  TJobWithApplicants,
   TJobWithCompany,
   TJobWrite,
 } from "../../types/jobTypes";
+import { TFreelancerUser } from "../../types/userTypes";
 import { getCompany } from "../companies/get";
-import { getApplicant } from "./applicants/get";
+import { getFreelancer } from "../users/get";
+import { getAllApplicants, getApplicant } from "./applicants/get";
 
 async function _getJobFromRef(jobRef: DocumentReference<TJobWrite>) {
   const jobSnap = await getDoc(jobRef.withConverter(jobConverter));
@@ -68,6 +73,34 @@ export async function getJobWithCompany(
   }
 
   return { ...job, applicants: applicants, company };
+}
+
+export async function getJobWithApplicants(
+  ref: string | DocumentReference<TJobWrite>
+): Promise<TJobWithApplicants> {
+  if (typeof ref === "string") {
+    ref = doc(db, "jobs", ref) as DocumentReference<TJobWrite>;
+  }
+
+  const job = await _getJobFromRef(ref);
+
+  const applicants = await getAllApplicants(
+    collection(
+      db,
+      "jobs",
+      ref.id,
+      "applicants"
+    ) as CollectionReference<TApplicantWrite>
+  );
+
+  const freelancerApplicants: TFreelancerApplicant[] = await Promise.all(
+    applicants.map(async (a) => {
+      const freelancer = await getFreelancer(a.id);
+      return { ...a, ...freelancer };
+    })
+  );
+
+  return { ...job, applicants: freelancerApplicants };
 }
 
 export async function getApprovedJobs(): Promise<TJobWithCompany[]> {

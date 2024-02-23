@@ -6,6 +6,7 @@ import {
   TEmployer,
   TFreelancer,
   TFreelancerUser,
+  TGeneral,
   TUser,
   TUserRead,
   TUserWrite,
@@ -75,6 +76,19 @@ export async function getFreelancer(id: string): Promise<TFreelancerUser> {
   } else {
     throw new Error("User is not a freelancer.");
   }
+}
+
+export async function getUserGeneralInfo(uid: string): Promise<TGeneral> {
+  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
+  const userSnap = await getDoc(userRef.withConverter(userConverter));
+
+  if (!userSnap.exists()) {
+    throw new Error("User does not exist.");
+  }
+  const userData = userSnap.data();
+  const { general, ...rest } = userData;
+
+  return general;
 }
 
 export async function onUserChange(
