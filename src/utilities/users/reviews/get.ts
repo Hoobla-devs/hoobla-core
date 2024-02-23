@@ -28,6 +28,27 @@ export async function getReview(id: string): Promise<TReview | []> {
   return review;
 }
 
+export async function getSelectedReviews(
+  id: string,
+  reviewIdList: string[]
+): Promise<TReview[] | []> {
+  const reviewsAsync = reviewIdList.map(async (reviewId) => {
+    const ref = doc(
+      db,
+      "users",
+      id,
+      "reviews",
+      reviewId
+    ) as DocumentReference<TReviewWrite>;
+    const review = await _getReviewFromRef(ref);
+    return review;
+  });
+
+  const reviews = await Promise.all(reviewsAsync);
+
+  return reviews;
+}
+
 export async function getAllReviews(uid: string): Promise<TReview[] | []> {
   const querySnapshot = await getDocs(collection(db, "users", uid, "reviews"));
 

@@ -11,7 +11,7 @@ import {
   TUserWrite,
 } from "../../types/userTypes";
 import { getCompany } from "../companies/get";
-import { getAllReviews } from "./reviews/get";
+import { getAllReviews, getSelectedReviews } from "./reviews/get";
 
 async function _getUserFromRef(
   userRef: DocumentReference<TUserWrite>
@@ -38,10 +38,13 @@ async function _getUserFromRef(
 
   let newFreelancer: TFreelancer | undefined;
   if (freelancer) {
-    const reviews = await getAllReviews(userRef.id);
+    const selectedReviews = await getSelectedReviews(
+      userRef.id,
+      freelancer.selectedReviews || []
+    );
     newFreelancer = {
       ...freelancer,
-      reviews,
+      selectedReviews,
     };
   }
 
@@ -103,10 +106,13 @@ export async function onUserChange(
 
       let newFreelancer: TFreelancer | undefined;
       if (freelancer) {
-        const reviews = await getAllReviews(userRef.id);
+        const selectedReviews = await getSelectedReviews(
+          userRef.id,
+          freelancer.selectedReviews || []
+        );
         newFreelancer = {
           ...freelancer,
-          reviews,
+          selectedReviews,
         };
       }
 

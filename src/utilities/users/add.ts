@@ -3,16 +3,17 @@ import { db } from "../../firebase/init";
 import { TGender } from "../../types/baseTypes";
 import {
   TFreelancerFormData,
-  TFreelancerRead,
   TFreelancerStatus,
   TFreelancerUnapprovedTags,
+  TFreelancerWrite,
   TUserWrite,
 } from "../../types/userTypes";
 import { updateDoc } from "../updateDoc";
 
-export function convertFreelancerFormToFreelancerRead(
+export function convertFreelancerFormToFreelancerWrite(
+  uid: string,
   freelancerFormData: TFreelancerFormData
-): TFreelancerRead {
+): TFreelancerWrite {
   const {
     name,
     phone,
@@ -23,6 +24,7 @@ export function convertFreelancerFormToFreelancerRead(
     oldPhoto,
     gender,
     hiddenReviews,
+    selectedReviews,
     ...freelancerData
   } = freelancerFormData;
 
@@ -47,8 +49,8 @@ export function convertFreelancerFormToFreelancerRead(
     }
   }
 
-  // Create freelancerRead object
-  const freelancerRead = {
+  // Create freelancerWrite object
+  const freelancerWrite = {
     ...freelancerData,
     gender: gender as TGender,
     address: freelancerAddress,
@@ -60,9 +62,10 @@ export function convertFreelancerFormToFreelancerRead(
       url: oldPhoto?.url || "",
     },
     unapprovedTags,
+    selectedReviews: [],
   };
 
-  return freelancerRead;
+  return freelancerWrite;
 }
 
 export async function createFreelancer(
@@ -70,8 +73,10 @@ export async function createFreelancer(
   uid: string
 ) {
   const { name, phone, ssn } = freelancerFormData;
-  const freelancerRead =
-    convertFreelancerFormToFreelancerRead(freelancerFormData);
+  const freelancerWrite = convertFreelancerFormToFreelancerWrite(
+    uid,
+    freelancerFormData
+  );
 
   return await updateDoc(
     doc(db, "users", uid) as DocumentReference<TUserWrite>,
@@ -82,7 +87,7 @@ export async function createFreelancer(
       "general.ssn": ssn,
       "general.updatedAt": new Date(),
 
-      freelancer: freelancerRead,
+      freelancer: freelancerWrite,
     }
   )
     .then(() => true)

@@ -1,8 +1,11 @@
 import {
+  doc,
+  DocumentReference,
   QueryDocumentSnapshot,
   SnapshotOptions,
   Timestamp,
 } from "firebase/firestore";
+import { db } from "../firebase/init";
 import {
   TFreelancerRead,
   TFreelancerWrite,
@@ -21,7 +24,7 @@ export const userConverter = {
     let freelancerWrite: TFreelancerWrite | undefined = undefined;
 
     if (freelancer) {
-      const { contract, ...freelancerProps } = freelancer;
+      const { contract, selectedReviews, ...freelancerProps } = freelancer;
 
       freelancerWrite = {
         ...freelancerProps,
@@ -35,6 +38,18 @@ export const userConverter = {
             date: date && Timestamp.fromDate(date),
           }),
         };
+      }
+      if (selectedReviews) {
+        freelancerWrite.selectedReviews = selectedReviews.map(
+          (reviewId) =>
+            doc(
+              db,
+              "users",
+              general.uid,
+              "reviews",
+              reviewId
+            ) as DocumentReference<TReviewWrite>
+        );
       }
     }
 
@@ -60,7 +75,7 @@ export const userConverter = {
     let freelancerRead: TFreelancerRead | undefined = undefined;
 
     if (freelancer) {
-      const { contract, ...freelancerProps } = freelancer;
+      const { contract, selectedReviews, ...freelancerProps } = freelancer;
 
       freelancerRead = {
         ...freelancerProps,
@@ -71,6 +86,11 @@ export const userConverter = {
           ...contractProps,
           date: date.toDate(),
         };
+      }
+      if (selectedReviews) {
+        freelancerRead.selectedReviews = selectedReviews.map(
+          (reviewRef) => reviewRef.id
+        );
       }
     }
 
@@ -89,7 +109,7 @@ export const userConverter = {
 
 export const reviewConverter = {
   toFirestore(review: TReviewRead): TReviewWrite {
-    const { date, ...props } = review;
+    const { id, date, ...props } = review;
 
     return {
       ...props,
@@ -105,6 +125,7 @@ export const reviewConverter = {
 
     return {
       ...props,
+      id: snapshot.id,
       date: date.toDate(),
     };
   },

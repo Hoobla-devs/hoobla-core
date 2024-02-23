@@ -95,14 +95,16 @@ export type TFreelancerBase = {
 
 export type TFreelancerRead = TFreelancerBase & {
   contract?: TFreelancerContractRead;
+  selectedReviews?: string[]; // List of review id's
 };
 
-export type TFreelancer = TFreelancerRead & {
-  reviews: TReview[];
+export type TFreelancer = Omit<TFreelancerRead, "selectedReviews"> & {
+  selectedReviews?: TReview[];
 };
 
 export type TFreelancerWrite = TFreelancerBase & {
   contract?: TFreelancerContractWrite;
+  selectedReviews?: DocumentReference<TReviewWrite>[];
 };
 
 export type TFreelancerContractRead = {
@@ -240,6 +242,7 @@ export type TReviewWrite = TReviewBase & {
 };
 
 export type TReviewRead = TReviewBase & {
+  id: string;
   date: Date;
 };
 

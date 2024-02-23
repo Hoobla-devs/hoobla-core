@@ -7,7 +7,7 @@ import {
 
 import { TApplicantWrite, TJobRead, TJobWrite } from "../types/jobTypes";
 import { db } from "../firebase/init";
-import { TFreelancerWrite, TUserWrite } from "../types/userTypes";
+import { TFreelancerWrite, TReviewWrite, TUserWrite } from "../types/userTypes";
 import { TCompanyWrite } from "../types/companyTypes";
 
 type AllWrites =
@@ -15,7 +15,8 @@ type AllWrites =
   | TUserWrite
   | TCompanyWrite
   | TApplicantWrite
-  | TFreelancerWrite;
+  | TFreelancerWrite
+  | TReviewWrite;
 
 export function updateDoc<T extends AllWrites>(
   ref: DocumentReference<T>,
