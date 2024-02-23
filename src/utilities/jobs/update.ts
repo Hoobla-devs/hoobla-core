@@ -36,3 +36,17 @@ export async function finishJob(jobId: string) {
     .then(() => true)
     .catch(() => false);
 }
+
+export async function updateJob(jobId: string) {
+  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+
+  return await updateDoc(jobRef, {
+    status: "completed",
+    logs: arrayUnion({
+      date: new Date(),
+      status: "completed",
+    }),
+  })
+    .then(() => true)
+    .catch(() => false);
+}
