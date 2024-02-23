@@ -1,8 +1,33 @@
-import { doc, DocumentReference } from "firebase/firestore";
+import { arrayUnion, doc, DocumentReference } from "firebase/firestore";
 import { applicantConverter } from "../../../converters/job";
 import { db } from "../../../firebase/init";
-import { TOffer, TJobWrite, TApplicantWrite } from "../../../types/jobTypes";
+import {
+  TOffer,
+  TJobWrite,
+  TApplicantWrite,
+  TContactStatus,
+  TJobStatus,
+} from "../../../types/jobTypes";
+import { TGeneral } from "../../../types/userTypes";
 import { updateDoc } from "../../updateDoc";
+
+const contactLogs = {
+  approved: {
+    title: "Tengiliðaupplýsingar samþykktar",
+    description: (name: string) =>
+      `${name} hefur samþykkt birtingu tengiliðaupplýsinga.`,
+  },
+  declined: {
+    title: "Tengiliðaupplýsingum hafnað",
+    description: (name: string) =>
+      `${name} hefur samþykkt birtingu tengiliðaupplýsinga.`,
+  },
+  requested: {
+    title: "Beiðni um tengiliðaupplýsingar",
+    description: (name: string) =>
+      `Beiðni send á ${name} um að fá tengiliðaupplýsingar.`,
+  },
+};
 
 export async function changeJobOffer(
   uid: string,
@@ -28,4 +53,65 @@ export async function changeJobOffer(
   });
 
   return jobRef;
+}
+
+export async function addAcceptedRate(
+  uid: string,
+  jobId: string,
+  acceptedRate: TOffer["acceptedRate"]
+): Promise<boolean> {
+  // create the job reference
+  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+
+  const applicationRef = doc(
+    jobRef,
+    "applicants",
+    uid
+  ) as DocumentReference<TApplicantWrite>;
+
+  return await updateDoc(applicationRef, {
+    "offer.acceptedRate": acceptedRate,
+  })
+    .catch((err) => {
+      console.log(`Error adding application to job: ${err}`);
+      return false;
+    })
+    .then(() => true);
+}
+
+export async function updateContactApproval(
+  jobId: string,
+  jobStatus: TJobStatus,
+  freelancerInfo: TGeneral,
+  status: TContactStatus
+) {
+  try {
+    const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+    const applicantRef = doc(
+      db,
+      `jobs/${jobId}/applicants`,
+      freelancerInfo.uid
+    ) as DocumentReference<TApplicantWrite>;
+    await updateDoc(applicantRef, {
+      contactApproval: status,
+    })
+      .then(() => {
+        // add log to job
+        updateDoc(jobRef, {
+          logs: arrayUnion({
+            date: new Date(),
+            status: jobStatus,
+            title: contactLogs[status].title,
+            description: contactLogs[status].description(freelancerInfo.name),
+          }),
+        });
+      })
+      .catch((error) => {
+        throw new Error("Could not update freelancer contact status: ", error);
+      });
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
 }
