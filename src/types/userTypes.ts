@@ -1,8 +1,7 @@
 import { DocumentReference, Timestamp } from "firebase/firestore";
 import { TEducation, TExperience, TGender } from "./baseTypes";
-import { TCompany, TCompanyRead, TCompanyWrite } from "./companyTypes";
-import { TApplicant, TJob, TJobWrite } from "./jobTypes";
-import { TJobTitle, TSkill, TLanguage } from "./tagTypes";
+import { TCompany, TCompanyWrite } from "./companyTypes";
+import { TApplicant, TJobWrite } from "./jobTypes";
 
 export type TFreelancerStatus =
   | "inReview"
@@ -11,6 +10,7 @@ export type TFreelancerStatus =
   | "requiresSignature";
 
 export type TUserBase = {
+  deleted?: boolean;
   general: TGeneral;
   settings?: {
     SMSNotifications?: boolean;
@@ -28,6 +28,7 @@ export type TEmployerUser = TUserBase & {
 };
 
 export type TUserRead = {
+  deleted?: boolean;
   general: TGeneral;
   freelancer?: TFreelancerRead;
   freelancerForm?: TSavedFreelancerFormData;
@@ -44,6 +45,7 @@ export type TUser = Omit<TUserRead, "employer" | "freelancer"> & {
 };
 
 export type TUserWrite = {
+  deleted?: boolean;
   general: TGeneralWrite;
   freelancer?: TFreelancerWrite;
   freelancerForm?: TSavedFreelancerFormData;

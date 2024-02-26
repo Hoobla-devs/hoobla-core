@@ -12,7 +12,7 @@ import {
   TUserWrite,
 } from "../../types/userTypes";
 import { getCompany } from "../companies/get";
-import { getAllReviews, getSelectedReviews } from "./reviews/get";
+import { getSelectedReviews } from "./reviews/get";
 
 async function _getUserFromRef(
   userRef: DocumentReference<TUserWrite>

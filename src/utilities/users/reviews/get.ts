@@ -1,9 +1,13 @@
 import {
   collection,
+  CollectionReference,
   doc,
   DocumentReference,
   getDoc,
   getDocs,
+  query,
+  Timestamp,
+  where,
 } from "firebase/firestore";
 import { reviewConverter } from "../../../converters/user";
 import { db } from "../../../firebase/init";
@@ -47,6 +51,29 @@ export async function getSelectedReviews(
   const reviews = await Promise.all(reviewsAsync);
 
   return reviews;
+}
+
+export async function getHiddenReviews(uid: string): Promise<TReview[] | []> {
+  try {
+    const userRef = doc(db, "users", uid);
+    const reviewsRef = collection(
+      userRef,
+      "reviews"
+    ) as CollectionReference<TReview>;
+
+    const q = query(reviewsRef, where("show", "==", false));
+
+    const querySnapshot = await getDocs(q);
+    const reviews = querySnapshot.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id,
+      date: (doc.data()!.date as unknown as Timestamp).toDate(),
+    }));
+
+    return reviews as TReview[];
+  } catch (error) {
+    return [];
+  }
 }
 
 export async function getAllReviews(uid: string): Promise<TReview[] | []> {

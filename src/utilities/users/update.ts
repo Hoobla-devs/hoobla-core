@@ -10,6 +10,8 @@ import {
   TFreelancerUser,
   TFreelancerWrite,
   TReviewWrite,
+  TSavedFreelancerFormData,
+  TUser,
   TUserWrite,
 } from "../../types/userTypes";
 import { uploadPhoto } from "../storage/add";
@@ -197,5 +199,65 @@ export async function updateEmployerInfo(
     "general.updatedAt": new Date(),
   })
     .then(() => true)
+    .catch(() => false);
+}
+
+export async function saveFreelancerForm(
+  user: TUser,
+  data: TSavedFreelancerFormData,
+  callback: Function
+) {
+  const { uid } = user.general;
+  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
+  await updateDoc(userRef, {
+    freelancerForm: {
+      ...data,
+      jobTitles: data.jobTitles,
+      skills: data.skills,
+      languages: data.languages,
+      photo: null,
+      oldPhoto: data.oldPhoto
+        ? {
+            url: data.oldPhoto.url,
+            originalUrl: data.oldPhoto.originalUrl,
+          }
+        : null,
+    },
+  }).catch((err) => {
+    alert("Could not save!!!");
+  });
+
+  callback();
+}
+
+export async function addContractToFreelancer(
+  freelancerUser: TFreelancerUser,
+  documentStorageUrl: string
+) {
+  const userRef = doc(
+    db,
+    "users",
+    freelancerUser.general.uid
+  ) as DocumentReference<TUserWrite>;
+
+  const newContractData = {
+    ...freelancerUser.freelancer.contract,
+    link: documentStorageUrl,
+    signed: true,
+    date: new Date(),
+  };
+
+  const newStatus =
+    freelancerUser.freelancer.status === "requiresSignature"
+      ? "inReview"
+      : freelancerUser.freelancer.status;
+
+  return await updateDoc(userRef, {
+    "freelancer.contract": newContractData,
+    "freelancer.status": newStatus,
+  })
+    .then(() => {
+      return true;
+    })
     .catch(() => false);
 }

@@ -1,4 +1,9 @@
-import { deleteField, doc, DocumentReference } from "firebase/firestore";
+import {
+  deleteField,
+  doc,
+  DocumentReference,
+  setDoc,
+} from "firebase/firestore";
 import { db } from "../../firebase/init";
 import { TGender } from "../../types/baseTypes";
 import {
@@ -66,6 +71,24 @@ export function convertFreelancerFormToFreelancerWrite(
   };
 
   return freelancerWrite;
+}
+
+export async function createUser(uid: string, email: string) {
+  const userRef = doc(db, "users", uid);
+  await setDoc(userRef, {
+    general: {
+      email,
+      lang: "is",
+      createdAt: new Date(),
+    },
+  })
+    .then(() => {
+      return true;
+    })
+    .catch((error) => {
+      console.log(error);
+      return false;
+    });
 }
 
 export async function createFreelancer(

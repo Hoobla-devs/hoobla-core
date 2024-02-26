@@ -1,10 +1,15 @@
-import { DocumentReference, getDoc } from "firebase/firestore";
-import { companyConverter } from "../../converters/company";
 import {
-  TCompany,
-  TCompanyRead,
-  TCompanyWrite,
-} from "../../types/companyTypes";
+  collection,
+  DocumentReference,
+  getDoc,
+  getDocs,
+  query,
+  QuerySnapshot,
+  where,
+} from "firebase/firestore";
+import { companyConverter } from "../../converters/company";
+import { db } from "../../firebase/init";
+import { TCompanyRead, TCompanyWrite } from "../../types/companyTypes";
 
 async function _getCompanyFromRef(
   companyRef: DocumentReference<TCompanyWrite>
@@ -17,6 +22,20 @@ async function _getCompanyFromRef(
   }
   const companyData = companySnap.data();
   return companyData;
+}
+
+export async function checkIfCompanyExists(ssn: string) {
+  try {
+    const companyRef = collection(db, "company");
+    const companyQuery = query(companyRef, where("ssn", "==", ssn));
+    const companyQuerySnapshot = (await getDocs(
+      companyQuery
+    )) as QuerySnapshot<TCompanyWrite>;
+    return companyQuerySnapshot.docs.length > 0;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
 }
 
 export async function getCompany(companyRef: DocumentReference<TCompanyWrite>) {
