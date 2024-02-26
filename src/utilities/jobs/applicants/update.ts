@@ -56,7 +56,7 @@ export async function changeJobOffer(
 }
 
 export async function addAcceptedRate(
-  uid: string,
+  applicantId: string,
   jobId: string,
   acceptedRate: TOffer["acceptedRate"]
 ): Promise<boolean> {
@@ -66,7 +66,7 @@ export async function addAcceptedRate(
   const applicationRef = doc(
     jobRef,
     "applicants",
-    uid
+    applicantId
   ) as DocumentReference<TApplicantWrite>;
 
   return await updateDoc(applicationRef, {

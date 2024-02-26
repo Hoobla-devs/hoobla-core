@@ -52,6 +52,7 @@ export type TJobWithApplicants = Omit<TJob, "applicants"> & {
 
 export type TJobWithCompany = Omit<TJob, "company"> & {
   company: TCompany;
+  acceptedOffer?: TOffer;
 };
 
 export type TJobStatus =
@@ -111,7 +112,7 @@ export type TApplicantWrite = {
     hourlyRate: string;
     fixedRate: string;
     message: string;
-    acceptedRate?: "hourly" | "fixed" | "";
+    acceptedRate?: TOfferType | "";
   };
   contactApproval?: TContactStatus;
 };
@@ -133,7 +134,7 @@ export type TOffer = {
   hourlyRate: string;
   fixedRate: string;
   message: string;
-  acceptedRate?: "hourly" | "fixed" | "";
+  acceptedRate?: TOfferType | "";
 };
 
 export type TReasonId =
@@ -142,6 +143,8 @@ export type TReasonId =
   | "skills"
   | "similarProject"
   | "knowsFreelancer";
+
+export type TOfferType = "hourly" | "fixed";
 
 // * Job Form Types
 export type TJobFormData = {

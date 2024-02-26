@@ -3,6 +3,7 @@ import { db } from "../../firebase/init";
 import { TGender } from "../../types/baseTypes";
 import { TCompanyCreatorData, TCompanyWrite } from "../../types/companyTypes";
 import {
+  TEmployerFormData,
   TFreelancerFormData,
   TFreelancerStatus,
   TFreelancerUnapprovedTags,
@@ -182,4 +183,19 @@ export async function updateFreelancerResume(
       console.log(error);
       return false;
     });
+}
+
+export async function updateEmployerInfo(
+  uid: string,
+  employerFormData: TEmployerFormData
+) {
+  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
+  return await updateDoc(userRef, {
+    "general.name": employerFormData.name,
+    "general.phone": employerFormData.phone,
+    "employer.position": employerFormData.position,
+    "general.updatedAt": new Date(),
+  })
+    .then(() => true)
+    .catch(() => false);
 }

@@ -216,6 +216,15 @@ export type TFreelancerFormData = {
   hiddenReviews: TReview[];
 };
 
+// * Employer Form
+
+export type TEmployerFormData = {
+  name: string;
+  ssn?: string;
+  phone: string;
+  position: string;
+};
+
 // * Review
 
 export type TReviewBase = {

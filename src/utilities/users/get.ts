@@ -60,6 +60,12 @@ async function _getUserFromRef(
   };
 }
 
+export async function checkIfUserExists(uid: string) {
+  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
+  const userDoc = await getDoc(userRef);
+  return userDoc.exists();
+}
+
 export async function getUserById(id: string): Promise<TUser> {
   const userRef = doc(db, "users", id) as DocumentReference<TUserWrite>;
   const user = await _getUserFromRef(userRef);

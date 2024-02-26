@@ -4,11 +4,19 @@ import {
   collection,
   doc,
   DocumentReference,
+  Timestamp,
 } from "firebase/firestore";
 import { jobConverter } from "../../converters/job";
 import { db } from "../../firebase/init";
 import { TCompanyWrite } from "../../types/companyTypes";
-import { TJob, TJobFormData, TJobRead, TJobWrite } from "../../types/jobTypes";
+import {
+  TJob,
+  TJobFormData,
+  TJobRead,
+  TJobWrite,
+  TLog,
+  TLogWrite,
+} from "../../types/jobTypes";
 import { TEmployerUser } from "../../types/userTypes";
 import { updateDoc } from "../updateDoc";
 
@@ -92,6 +100,15 @@ export function convertFormJobToJobRead(
 }
 
 export async function createJob(data: TJobRead) {
+  const log: TLog = {
+    status: "inReview",
+    date: new Date(),
+    title: "Verkefni stofnað",
+    description: "Verkefni stofnað og bíður samþykkis",
+  };
+
+  data.logs.push(log);
+
   const jobRef = await addDoc(
     collection(db, "jobs").withConverter(jobConverter),
     data

@@ -19,6 +19,7 @@ import {
   TJobWithApplicants,
   TJobWithCompany,
   TJobWrite,
+  TOffer,
 } from "../../types/jobTypes";
 import { TFreelancerUser } from "../../types/userTypes";
 import { getCompany } from "../companies/get";
@@ -72,7 +73,30 @@ export async function getJobWithCompany(
     }
   }
 
-  return { ...job, applicants: applicants, company };
+  let acceptedOffer: TOffer | null = null;
+
+  if (job.freelancers.length > 0) {
+    // get selected applicant
+    const selectedApplicantRef = job.freelancers[0];
+    const applicant = await getApplicant(
+      doc(
+        ref,
+        "applicants",
+        selectedApplicantRef.id
+      ) as DocumentReference<TApplicantWrite>
+    ).catch(() => null);
+
+    if (applicant) {
+      acceptedOffer = applicant.offer;
+    }
+  }
+
+  return {
+    ...job,
+    ...(acceptedOffer && { acceptedOffer }),
+    applicants: applicants,
+    company,
+  };
 }
 
 export async function getJobWithApplicants(
@@ -101,6 +125,36 @@ export async function getJobWithApplicants(
   );
 
   return { ...job, applicants: freelancerApplicants };
+}
+
+export async function getJobWithSelectedApplicant(
+  ref: string | DocumentReference<TJobWrite>,
+  applicantId: string
+): Promise<TJobWithApplicants> {
+  if (typeof ref === "string") {
+    ref = doc(db, "jobs", ref) as DocumentReference<TJobWrite>;
+  }
+
+  const applicantRef = doc(
+    db,
+    "jobs",
+    ref.id,
+    "applicants",
+    applicantId
+  ) as DocumentReference<TApplicantWrite>;
+
+  const [job, applicant, freelancer] = await Promise.all([
+    _getJobFromRef(ref),
+    getApplicant(applicantRef),
+    getFreelancer(applicantId),
+  ]);
+
+  const freelancerApplicant: TFreelancerApplicant = {
+    ...applicant,
+    ...freelancer,
+  };
+
+  return { ...job, applicants: [freelancerApplicant] };
 }
 
 export async function getApprovedJobs(): Promise<TJobWithCompany[]> {

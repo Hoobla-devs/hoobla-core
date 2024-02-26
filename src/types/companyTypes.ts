@@ -1,6 +1,14 @@
 import { DocumentReference, Timestamp } from "@firebase/firestore";
-import { TJob, TJobWrite } from "./jobTypes";
+import { TJobWrite } from "./jobTypes";
 import { TEmployerUser } from "./userTypes";
+
+export const companySizeList = [
+  { value: 0, label: "1-10" },
+  { value: 1, label: "11-50" },
+  { value: 2, label: "51-100" },
+  { value: 3, label: "101-500" },
+  { value: 4, label: "500+" },
+];
 
 export type TCompanyBase = {
   name: string;
