@@ -158,14 +158,20 @@ export type TJobFormData = {
     skills?: string[] | null;
     languages?: string[] | null;
   } | null;
-  type: "notSure" | "partTime" | "timeframe";
+  type: "notSure" | "partTime" | "timeframe" | "";
   jobInfo: {
     start: string;
     end: string;
     percentage: number | null;
     numOfHours: string | null;
-    deadline: number;
+    deadline: number | null;
   };
   logs?: TLog[];
   status: TJobStatus;
+};
+
+export type TJobOfferFormData = {
+  hourlyRate: string;
+  fixedRate: string;
+  message: string;
 };
