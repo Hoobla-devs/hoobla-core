@@ -64,7 +64,7 @@ export function convertFormJobToJobRead(
     id: "",
     name: formJob.name,
     description: formJob.description,
-    type: formJob.type,
+    type: formJob.type ? formJob.type : "notSure",
     status: formJob.status,
     company: doc(db, "companies", company) as DocumentReference<TCompanyWrite>,
     creator: doc(db, "users", creator) as DocumentReference<TEmployerUser>,
