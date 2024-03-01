@@ -91,11 +91,18 @@ export function switchLocale(uid: string, lang: "is" | "en") {
   updateDoc(userRef, { "general.lang": lang });
 }
 
-export function updateSMSNotifications(uid: string, value: boolean) {
+export function updateNotificationField(
+  uid: string,
+  notificationField:
+    | "SMSNotifications"
+    | "deniedOfferMails"
+    | "cancelledJobMails",
+  value: boolean
+) {
   console.log("updateSMSNotifications", uid, value);
 
   const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
-  updateDoc(userRef, { "settings.SMSNotifications": value });
+  updateDoc(userRef, { [`settings.${notificationField}`]: value });
 }
 
 export function updateJobTitlesNotificationSettings(

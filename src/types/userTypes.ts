@@ -14,6 +14,8 @@ export type TUserBase = {
   general: TGeneral;
   settings?: {
     SMSNotifications?: boolean;
+    deniedOfferMails?: boolean;
+    cancelledJobMails?: boolean;
     excludedJobTitleNotifications?: string[];
   };
 };
@@ -35,6 +37,8 @@ export type TUserRead = {
   employer?: TEmployerRead;
   settings?: {
     SMSNotifications?: boolean;
+    deniedOfferMails?: boolean;
+    cancelledJobMails?: boolean;
     excludedJobTitleNotifications?: string[];
   };
 };
@@ -52,6 +56,8 @@ export type TUserWrite = {
   employer?: TEmployerWrite;
   settings?: {
     SMSNotifications?: boolean;
+    deniedOfferMails?: boolean;
+    cancelledJobMails?: boolean;
     excludedJobTitleNotifications?: string[];
   };
 };
