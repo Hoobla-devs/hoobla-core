@@ -4,6 +4,7 @@ import {
   arrayUnion,
   Timestamp,
 } from "firebase/firestore";
+import { jobConverter } from "../../converters/job";
 import { db } from "../../firebase/init";
 import {
   TFreelancerApplicant,
@@ -143,6 +144,15 @@ export async function updateJob(jobId: string) {
       status: "completed",
     }),
   })
+    .then(() => true)
+    .catch(() => false);
+}
+
+export async function editJob(jobId: string, jobData: TJobRead) {
+  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+
+  const jobDataWrite = jobConverter.toFirestore(jobData);
+  return await updateDoc(jobRef, jobDataWrite)
     .then(() => true)
     .catch(() => false);
 }
