@@ -1,6 +1,7 @@
 import { DocumentReference, Timestamp } from "firebase/firestore";
 import { TCompany, TCompanyWrite } from "./companyTypes";
 import { TTagsId } from "./refrencesTypes";
+import { TJobTitle } from "./tagTypes";
 import { TEmployerUser, TFreelancerUser } from "./userTypes";
 
 export type TJobBase = {
@@ -174,4 +175,11 @@ export type TJobOfferFormData = {
   hourlyRate: string;
   fixedRate: string;
   message: string;
+};
+
+export type TEmailJobData = {
+  id: string;
+  name: string;
+  description: string;
+  jobTitles?: Omit<TJobTitle, "relatedJobs" | "relatedSkills">[];
 };
