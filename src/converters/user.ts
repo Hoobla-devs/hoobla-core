@@ -80,11 +80,11 @@ export const userConverter = {
       freelancerRead = {
         ...freelancerProps,
       };
-      if (contract && contract.date) {
+      if (contract) {
         const { date, ...contractProps } = contract;
         freelancerRead.contract = {
           ...contractProps,
-          date: date.toDate(),
+          ...(date && { date: date.toDate() }),
         };
       }
       if (selectedReviews) {
