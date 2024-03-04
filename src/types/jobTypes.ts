@@ -1,5 +1,5 @@
 import { DocumentReference, Timestamp } from "firebase/firestore";
-import { TCompany, TCompanyWrite } from "./companyTypes";
+import { TCompany, TCompanyWithEmployees, TCompanyWrite } from "./companyTypes";
 import { TTagsId } from "./refrencesTypes";
 import { TJobTitle } from "./tagTypes";
 import { TEmployerUser, TFreelancerUser } from "./userTypes";
@@ -12,7 +12,6 @@ export type TJobBase = {
   status: TJobStatus;
   documentId: string | null;
   documentStorageUrl?: string;
-  signatures: TSignatures | null;
   company: DocumentReference<TCompanyWrite>;
   creator: DocumentReference<TEmployerUser>;
   freelancers: DocumentReference<TApplicant>[]; // Þau sem taka verkið að sér
@@ -24,6 +23,7 @@ export type TJobWrite = TJobBase & {
   terms: Timestamp | null;
   logs: TLogWrite[];
   jobInfo: TJobInfoWrite;
+  signatures: TSignaturesWrite | null;
 };
 
 export type TLogWrite = {
@@ -38,6 +38,7 @@ export type TJobRead = TJobBase & {
   terms: Date | null;
   logs: TLog[];
   jobInfo: TJobInfoRead;
+  signatures: TSignatures | null;
 };
 
 export type TJob = TJobRead & {
@@ -54,6 +55,17 @@ export type TJobWithApplicants = Omit<TJob, "applicants"> & {
 export type TJobWithCompany = Omit<TJob, "company"> & {
   company: TCompany;
   acceptedOffer?: TOffer;
+};
+
+export type TJobWithAllData = Omit<
+  TJob,
+  "applicants" | "selectedApplicants" | "freelancers" | "company" | "creator"
+> & {
+  company: TCompanyWithEmployees;
+  creator: TEmployerUser;
+  applicants: TFreelancerApplicant[];
+  selectedApplicants: TFreelancerApplicant[];
+  freelancers: TFreelancerApplicant[];
 };
 
 export type TJobStatus =
@@ -88,6 +100,17 @@ export type TSignatures = {
   freelancer: {
     id: string;
     date: Date;
+  };
+};
+
+export type TSignaturesWrite = {
+  employer: {
+    id: string;
+    date: Timestamp;
+  };
+  freelancer: {
+    id: string;
+    date: Timestamp;
   };
 };
 
