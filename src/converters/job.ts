@@ -13,7 +13,7 @@ import {
 export const jobConverter = {
   toFirestore(job: TJobRead): TJobWrite {
     // remove id and applicants from job
-    const { terms, logs, jobInfo, id, ...data } = job;
+    const { terms, logs, jobInfo, id, signatures, ...data } = job;
 
     // convert the terms to a firestore timestamp
     const newLogs = logs.map((log) => {
@@ -23,6 +23,24 @@ export const jobConverter = {
       };
     });
 
+    const signaturesWrite = signatures
+      ? {
+          ...signatures,
+          ...(signatures.employer && {
+            employer: {
+              ...signatures.employer,
+              date: Timestamp.fromDate(signatures.employer.date),
+            },
+          }),
+          ...(signatures.freelancer && {
+            freelancer: {
+              ...signatures.freelancer,
+              date: Timestamp.fromDate(signatures.freelancer.date),
+            },
+          }),
+        }
+      : null;
+
     const { deadline, ...jobInfoData } = jobInfo;
 
     // return that data
@@ -30,6 +48,7 @@ export const jobConverter = {
       ...data,
       terms: terms ? Timestamp.fromDate(terms) : null,
       logs: newLogs,
+      signatures: signaturesWrite,
       jobInfo: {
         ...jobInfoData,
         ...(deadline && { deadline: Timestamp.fromDate(deadline) }),
@@ -42,7 +61,7 @@ export const jobConverter = {
     options: SnapshotOptions
   ): TJobRead {
     const snapData = snapshot.data(options);
-    const { terms, logs, jobInfo, ...data } = snapData;
+    const { terms, logs, jobInfo, signatures, ...data } = snapData;
 
     const newLogs = logs.map((log) => {
       return {
@@ -51,13 +70,32 @@ export const jobConverter = {
       };
     });
 
+    const signaturesRead = signatures
+      ? {
+          ...signatures,
+          ...(signatures.employer && {
+            employer: {
+              ...signatures.employer,
+              date: signatures.employer.date.toDate(),
+            },
+          }),
+          ...(signatures.freelancer && {
+            freelancer: {
+              ...signatures.freelancer,
+              date: signatures.freelancer.date.toDate(),
+            },
+          }),
+        }
+      : null;
+
     const { deadline, ...jobInfoData } = jobInfo;
 
     return {
       ...data,
+      id: snapshot.id,
       terms: terms ? terms.toDate() : null,
       logs: newLogs,
-      id: snapshot.id,
+      signatures: signaturesRead,
       jobInfo: {
         ...jobInfoData,
         ...(deadline && { deadline: deadline.toDate() }),
