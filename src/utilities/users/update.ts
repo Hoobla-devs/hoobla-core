@@ -237,6 +237,12 @@ export async function saveFreelancerForm(
   callback();
 }
 
+/**
+ * Adds a pre-signed contract link to user and sets signed to true.
+ * @param freelancerUser
+ * @param documentStorageUrl
+ * @returns
+ */
 export async function addContractToFreelancer(
   freelancerUser: TFreelancerUser,
   documentStorageUrl: string
@@ -247,8 +253,10 @@ export async function addContractToFreelancer(
     freelancerUser.general.uid
   ) as DocumentReference<TUserWrite>;
 
+  const documentId = freelancerUser.freelancer.contract?.documentId || "";
+
   const newContractData = {
-    ...freelancerUser.freelancer.contract,
+    documentId,
     link: documentStorageUrl,
     signed: true,
     date: new Date(),

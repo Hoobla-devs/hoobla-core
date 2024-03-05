@@ -4,6 +4,7 @@ import { db } from "../../firebase/init";
 import { TCompany } from "../../types/companyTypes";
 import {
   TEmployer,
+  TEmployerUser,
   TFreelancer,
   TFreelancerUser,
   TGeneral,
@@ -81,6 +82,17 @@ export async function getFreelancer(id: string): Promise<TFreelancerUser> {
     return { ...user, freelancer: user.freelancer }; // Ensure freelancer property is present
   } else {
     throw new Error("User is not a freelancer.");
+  }
+}
+
+export async function getEmployer(id: string): Promise<TEmployerUser> {
+  const userRef = doc(db, "users", id) as DocumentReference<TUserWrite>;
+  const user = await _getUserFromRef(userRef);
+
+  if (user && user.employer) {
+    return { ...user, employer: user.employer }; // Ensure employer property is present
+  } else {
+    throw new Error("User is not an employer.");
   }
 }
 

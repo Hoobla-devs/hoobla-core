@@ -3,6 +3,7 @@ import {
   uploadBytes,
   getDownloadURL,
   uploadString,
+  UploadMetadata,
 } from "firebase/storage";
 import { storage } from "../../firebase/init";
 
@@ -40,6 +41,32 @@ export async function uploadBase64(base64: string, name: string) {
       return url;
     })
     .catch((err) => null);
+}
+
+export async function uploadFile(
+  file: File,
+  name: string,
+  metaData?: UploadMetadata
+) {
+  // Create a reference to 'uid'
+  const photoRef = ref(storage, name);
+
+  await uploadBytes(photoRef, file, metaData)
+    .then((snapshot) => {
+      console.log("Uploaded file!");
+    })
+    .catch((error) => {
+      console.log("Upload failed!");
+    });
+
+  return getDownloadURL(photoRef)
+    .then((url) => {
+      return url;
+    })
+    .catch((error) => {
+      console.log("Download URL failed!");
+      return null;
+    });
 }
 
 export const storeSignetContract = async (documentId: string, path: string) => {

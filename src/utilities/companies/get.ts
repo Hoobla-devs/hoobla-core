@@ -1,5 +1,6 @@
 import {
   collection,
+  doc,
   DocumentReference,
   getDoc,
   getDocs,
@@ -9,7 +10,13 @@ import {
 } from "firebase/firestore";
 import { companyConverter } from "../../converters/company";
 import { db } from "../../firebase/init";
-import { TCompanyRead, TCompanyWrite } from "../../types/companyTypes";
+import {
+  TCompanyRead,
+  TCompanyWithCreator,
+  TCompanyWithEmployees,
+  TCompanyWrite,
+} from "../../types/companyTypes";
+import { getEmployer } from "../users/get";
 
 async function _getCompanyFromRef(
   companyRef: DocumentReference<TCompanyWrite>
@@ -38,7 +45,41 @@ export async function checkIfCompanyExists(ssn: string) {
   }
 }
 
-export async function getCompany(companyRef: DocumentReference<TCompanyWrite>) {
+export async function getCompany(
+  companyRef: string | DocumentReference<TCompanyWrite>
+) {
+  if (typeof companyRef === "string") {
+    companyRef = doc(
+      db,
+      "companies",
+      companyRef
+    ) as DocumentReference<TCompanyWrite>;
+  }
   const company = await _getCompanyFromRef(companyRef);
   return company;
+}
+
+export async function getCompanyWithEmployees(
+  companyRef: DocumentReference<TCompanyWrite>
+): Promise<TCompanyWithEmployees> {
+  const company = await _getCompanyFromRef(companyRef);
+
+  const employees = await Promise.all(
+    company.employees.map(async (empRef) => {
+      const employer = await getEmployer(empRef.id);
+      return employer;
+    })
+  );
+
+  return { ...company, employees: employees };
+}
+
+export async function getCompanyWithCreator(
+  companyRef: DocumentReference<TCompanyWrite>
+): Promise<TCompanyWithCreator> {
+  const company = await _getCompanyFromRef(companyRef);
+
+  const creator = await getEmployer(company.creator.id);
+
+  return { ...company, creator };
 }
