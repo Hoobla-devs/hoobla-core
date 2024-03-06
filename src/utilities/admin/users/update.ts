@@ -10,6 +10,7 @@ import {
   TFreelancerStatus,
   TFreelancerUnapprovedTags,
   TFreelancerUser,
+  TGeneral,
   TUserWrite,
 } from "../../../types/userTypes";
 import { updateDoc } from "../../updateDoc";
@@ -81,6 +82,20 @@ export async function addTagToFreelancer(
   return await updateDoc(userRef, {
     [tagField]: arrayUnion(tagId),
     "freelancer.unapprovedTags": updatedUnapprovedTags,
+  })
+    .then(() => true)
+    .catch(() => false);
+}
+
+export async function updateGeneralField(
+  uid: string,
+  field: keyof TGeneral,
+  value: TGeneral[keyof TGeneral]
+) {
+  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
+
+  return await updateDoc(userRef, {
+    [`general.${field}`]: value,
   })
     .then(() => true)
     .catch(() => false);

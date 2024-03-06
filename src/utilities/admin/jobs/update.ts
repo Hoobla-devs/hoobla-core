@@ -7,10 +7,14 @@ import {
 import { db } from "../../../firebase/init";
 import {
   TFreelancerApplicant,
+  TJob,
+  TJobBase,
+  TJobFormData,
   TJobStatus,
   TJobWrite,
   TLog,
   TLogWrite,
+  TUnapprovedTags,
 } from "../../../types/jobTypes";
 import { updateDoc } from "../../updateDoc";
 
@@ -86,4 +90,53 @@ export async function submitSelectedApplicants(jobId: string) {
   })
     .then(() => true)
     .catch(() => false);
+}
+
+export async function addTagToJob(
+  id: string,
+  tagId: string,
+  type: "jobTitles" | "skills" | "languages",
+  updatedUnapprovedTags: TJobBase["unapprovedTags"]
+) {
+  const userRef = doc(db, "jobs", id) as DocumentReference<TJobWrite>;
+
+  return await updateDoc(userRef, {
+    [type]: arrayUnion(tagId),
+    unapprovedTags: updatedUnapprovedTags ? updatedUnapprovedTags : null,
+  })
+    .then(() => true)
+    .catch(() => false);
+}
+
+export async function updateJobApplication(
+  job: TJob,
+  jobFormData: TJobFormData
+) {
+  const jobRef = doc(db, "jobs", job.id) as DocumentReference<TJobWrite>;
+
+  const { unapprovedTags, type } = jobFormData;
+  const jobType = type as "notSure" | "partTime" | "timeframe";
+
+  const noUnapprovedTags =
+    !unapprovedTags ||
+    Object.values(unapprovedTags).every((tag) => tag?.length === 0);
+
+  return await updateDoc(jobRef, {
+    name: jobFormData.name,
+    description: jobFormData.description,
+    "jobInfo.start": jobFormData.jobInfo.start || "",
+    "jobInfo.end": jobFormData.jobInfo.end || "",
+    "jobInfo.percentage":
+      jobType === "partTime" ? jobFormData.jobInfo.percentage : null,
+    "jobInfo.numOfHours":
+      jobType === "timeframe"
+        ? parseInt(jobFormData.jobInfo.numOfHours!) || null
+        : null,
+    unapprovedTags: noUnapprovedTags
+      ? null
+      : (unapprovedTags as TUnapprovedTags),
+    type: jobType,
+  })
+    .then(() => true)
+    .catch((err) => false);
 }
