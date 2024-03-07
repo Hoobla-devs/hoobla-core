@@ -21,8 +21,6 @@ import { getEmployer } from "../users/get";
 async function _getCompanyFromRef(
   companyRef: DocumentReference<TCompanyWrite>
 ): Promise<TCompanyRead> {
-  console.log("companyRef", companyRef);
-
   const companySnap = await getDoc(companyRef.withConverter(companyConverter));
   if (!companySnap.exists()) {
     throw new Error("Job does not exist.");

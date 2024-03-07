@@ -17,10 +17,10 @@ const contactLogs = {
     description: (name: string) =>
       `${name} hefur samþykkt birtingu tengiliðaupplýsinga.`,
   },
-  declined: {
+  denied: {
     title: "Tengiliðaupplýsingum hafnað",
     description: (name: string) =>
-      `${name} hefur samþykkt birtingu tengiliðaupplýsinga.`,
+      `${name} hefur hafnað birtingu tengiliðaupplýsinga og þar með dregið tilboðið sitt til baka.`,
   },
   requested: {
     title: "Beiðni um tengiliðaupplýsingar",
