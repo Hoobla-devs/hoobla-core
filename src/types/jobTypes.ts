@@ -128,7 +128,7 @@ export type TApplicant = TApplicantRead;
 
 export type TFreelancerApplicant = TApplicant & TFreelancerUser;
 
-export type TContactStatus = "requested" | "approved" | "declined";
+export type TContactStatus = "requested" | "approved" | "denied";
 
 export type TOffer = {
   date: Date;
