@@ -24,7 +24,8 @@ export const userConverter = {
     let freelancerWrite: TFreelancerWrite | undefined = undefined;
 
     if (freelancer) {
-      const { contract, selectedReviews, ...freelancerProps } = freelancer;
+      const { contract, selectedReviews, inactiveSince, ...freelancerProps } =
+        freelancer;
 
       freelancerWrite = {
         ...freelancerProps,
@@ -51,6 +52,9 @@ export const userConverter = {
             ) as DocumentReference<TReviewWrite>
         );
       }
+      if (inactiveSince) {
+        freelancerWrite.inactiveSince = Timestamp.fromDate(inactiveSince);
+      }
     }
 
     return {
@@ -75,7 +79,8 @@ export const userConverter = {
     let freelancerRead: TFreelancerRead | undefined = undefined;
 
     if (freelancer) {
-      const { contract, selectedReviews, ...freelancerProps } = freelancer;
+      const { contract, selectedReviews, inactiveSince, ...freelancerProps } =
+        freelancer;
 
       freelancerRead = {
         ...freelancerProps,
@@ -91,6 +96,9 @@ export const userConverter = {
         freelancerRead.selectedReviews = selectedReviews.map(
           (reviewRef) => reviewRef.id
         );
+      }
+      if (inactiveSince) {
+        freelancerRead.inactiveSince = inactiveSince.toDate();
       }
     }
 
