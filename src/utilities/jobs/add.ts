@@ -122,9 +122,6 @@ export async function createJob(data: TJobRead) {
 
   const companyRef = data.company;
 
-  console.log("Company ref: ", companyRef);
-  console.log("Job ref: ", jobRef);
-
   await updateDoc(companyRef, {
     jobs: arrayUnion(jobRef),
   }).catch((err) => {

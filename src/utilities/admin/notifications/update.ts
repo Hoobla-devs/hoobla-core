@@ -7,7 +7,7 @@ export async function updateNotification(n: TNotification) {
   const notificationRef = doc(
     db,
     "notifications",
-    n.id
+    n.nid
   ) as DocumentReference<TNotificationWrite>;
 
   // update notification
