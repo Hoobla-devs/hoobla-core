@@ -2,8 +2,8 @@ import { QueryDocumentSnapshot, SnapshotOptions } from "firebase/firestore";
 import { TJobTitle, TSkill, TLanguage } from "../types/tagTypes";
 
 export const jobTitleConverter = {
-  toFirestore(company: TJobTitle): TJobTitle {
-    return company;
+  toFirestore(jobTitle: TJobTitle): TJobTitle {
+    return jobTitle;
   },
 
   fromFirestore(
