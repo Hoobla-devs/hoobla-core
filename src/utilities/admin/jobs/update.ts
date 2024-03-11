@@ -136,6 +136,9 @@ export async function updateJobApplication(
       ? null
       : (unapprovedTags as TUnapprovedTags),
     type: jobType,
+    jobTitles: jobFormData.jobTitles,
+    skills: jobFormData.skills,
+    languages: jobFormData.languages,
   })
     .then(() => true)
     .catch((err) => false);

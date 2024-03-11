@@ -9,7 +9,7 @@ export async function getDownloadUrlFromStorage(path: string) {
       return url;
     })
     .catch((error) => {
-      console.log(error);
+      // console.log(error);
       return "";
     });
 }
