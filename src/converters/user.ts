@@ -35,8 +35,8 @@ export const userConverter = {
         const { date, ...contractProps } = contract;
         freelancerWrite.contract = {
           ...contractProps,
-          ...(contract && {
-            date: date && Timestamp.fromDate(date),
+          ...(date && {
+            date: Timestamp.fromDate(date),
           }),
         };
       }

@@ -1,11 +1,11 @@
-import { doc, DocumentReference } from "firebase/firestore";
+import { doc, DocumentReference, Timestamp } from "firebase/firestore";
 import { db } from "../../firebase/init";
 import { TGender } from "../../types/baseTypes";
 import { TCompanyCreatorData, TCompanyWrite } from "../../types/companyTypes";
 import {
   TEmployerFormData,
+  TFreelancerContractWrite,
   TFreelancerFormData,
-  TFreelancerStatus,
   TFreelancerUnapprovedTags,
   TFreelancerUser,
   TFreelancerWrite,
@@ -59,6 +59,8 @@ export function convertEditFreelancerFormToFreelancerWrite(
     }
   }
 
+  const freelancerContract = freelancerUser.freelancer.contract;
+
   const selectedReviewsWrite =
     selectedReviews?.map((review) => {
       const reviewRef = doc(
@@ -73,6 +75,14 @@ export function convertEditFreelancerFormToFreelancerWrite(
   // Create freelancerWrite object
   const freelancerWrite = {
     ...freelancerData,
+    ...(freelancerContract && {
+      contract: {
+        ...freelancerContract,
+        ...(freelancerContract.date && {
+          date: Timestamp.fromDate(freelancerContract.date),
+        }),
+      } as TFreelancerContractWrite,
+    }),
     gender: gender as TGender,
     address: freelancerAddress,
     company: freelancerCompany,

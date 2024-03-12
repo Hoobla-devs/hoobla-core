@@ -12,6 +12,10 @@ export type TJobTitle = {
   }[];
 };
 
+export type TAlgoliaJobTitle = TJobTitle & {
+  objectID: string;
+};
+
 export type TSkill = {
   id: string;
   is: string;
@@ -22,6 +26,10 @@ export type TSkill = {
   }[];
 };
 
+export type TAlgoliaSkill = TSkill & {
+  objectID: string;
+};
+
 export type TLanguage = {
   id: string;
   is: string;
@@ -30,4 +38,8 @@ export type TLanguage = {
     id: string;
     score: number;
   }[];
+};
+
+export type TAlgoliaLanguage = TLanguage & {
+  objectID: string;
 };

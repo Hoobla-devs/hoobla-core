@@ -1,6 +1,6 @@
 import {
-  arrayRemove,
   arrayUnion,
+  deleteField,
   doc,
   DocumentReference,
   Timestamp,
@@ -22,7 +22,7 @@ import { updateDoc } from "../../updateDoc";
  * @param status
  * @returns
  */
-export async function processFreelancerApplication(
+export async function updateFreelancerStatus(
   uid: string,
   status: TFreelancerStatus
 ) {
@@ -30,7 +30,10 @@ export async function processFreelancerApplication(
 
   return await updateDoc(freelancerRef, {
     "freelancer.status": status,
-    "general.updatedAt": Timestamp.fromDate(new Date()),
+    "general.updatedAt": Timestamp.now(),
+    // if status is inactive, add inactiveSince date. Else, remove field
+    "freelancer.inactiveSince":
+      status === "inactive" ? Timestamp.now() : deleteField(),
   })
     .then(() => true)
     .catch((err) => false);

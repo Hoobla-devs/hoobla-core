@@ -21,6 +21,7 @@ export type TEducation = {
 
 export type TNotificationBase = {
   title: string;
+  id: string; // Id for link
   description: string;
   status?: TJobStatus;
   type: "job" | "freelancer" | "company";
@@ -28,8 +29,8 @@ export type TNotificationBase = {
 };
 
 export type TNotificationRead = TNotificationBase & {
-  id: string;
   date: Date;
+  nid: string; // Id of the notification document
 };
 
 export type TNotification = TNotificationRead;

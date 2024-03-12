@@ -7,6 +7,7 @@ export const updateRelations = async (
   jobTitles: TJobTitle[],
   languages: TLanguage[] | null = null
 ) => {
+  const start = performance.now();
   // Skills related skills
   skills.forEach((skill) => {
     // for each skill that is not this skill
@@ -59,23 +60,22 @@ export const updateRelations = async (
     });
   });
 
-  for (let i = 0; i < skills.length; i++) {
-    const skill = skills[i];
+  const skillPromises = skills.map((skill) => {
     // sort related skills by score
     skill.relatedSkills = skill.relatedSkills.sort((a, b) => b.score - a.score);
 
-    updateDoc(doc(db, "skills", skill.id), {
+    return updateDoc(doc(db, "skills", skill.id), {
       id: skill.id,
       en: skill.en,
       is: skill.is,
       relatedSkills: skill.relatedSkills,
     }).catch((error) => {
       console.log(error);
+      console.log(skill);
     });
-  }
+  });
 
-  for (let i = 0; i < jobTitles.length; i++) {
-    const jobTitle = jobTitles[i];
+  const jobTitlePromises = jobTitles.map((jobTitle) => {
     jobTitle.relatedJobs = jobTitle.relatedJobs.sort(
       (a, b) => b.score - a.score
     );
@@ -83,17 +83,16 @@ export const updateRelations = async (
       (a, b) => b.score - a.score
     );
 
-    updateDoc(doc(db, "jobTitles", jobTitle.id), {
+    return updateDoc(doc(db, "jobTitles", jobTitle.id), {
       id: jobTitle.id,
       en: jobTitle.en,
       is: jobTitle.is,
       relatedJobs: jobTitle.relatedJobs,
       relatedSkills: jobTitle.relatedSkills,
-    }).catch((error) => {
-      console.log(error);
     });
-  }
+  });
 
+  let languagePromises: Promise<void>[] = [];
   if (languages) {
     // languages related languages
     languages.forEach((language) => {
@@ -114,19 +113,103 @@ export const updateRelations = async (
       });
     });
 
-    for (let i = 0; i < languages.length; i++) {
-      const language = languages[i];
+    languagePromises = languages.map((language) => {
       language.relatedLanguages = language.relatedLanguages.sort(
         (a, b) => b.score - a.score
       );
-      updateDoc(doc(db, "languages", language.id), {
+      return updateDoc(doc(db, "languages", language.id), {
         id: language.id,
         en: language.en,
         is: language.is,
         relatedLanguages: language.relatedLanguages,
-      }).catch((error) => {
-        console.log(error);
       });
-    }
+    });
   }
+
+  await Promise.all([
+    ...skillPromises,
+    ...jobTitlePromises,
+    ...languagePromises,
+  ])
+    .then(() => {
+      console.log("All updates finished");
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+
+  console.log("Execution time: ", performance.now() - start);
+
+  return { jobTitles, skills, languages };
+
+  // for (let i = 0; i < skills.length; i++) {
+  //   const skill = skills[i];
+  //   // sort related skills by score
+  //   skill.relatedSkills = skill.relatedSkills.sort((a, b) => b.score - a.score);
+
+  //   updateDoc(doc(db, "skills", skill.id), {
+  //     id: skill.id,
+  //     en: skill.en,
+  //     is: skill.is,
+  //     relatedSkills: skill.relatedSkills,
+  //   }).catch((error) => {
+  //     console.log(error);
+  //   });
+  // }
+
+  // for (let i = 0; i < jobTitles.length; i++) {
+  //   const jobTitle = jobTitles[i];
+  //   jobTitle.relatedJobs = jobTitle.relatedJobs.sort(
+  //     (a, b) => b.score - a.score
+  //   );
+  //   jobTitle.relatedSkills = jobTitle.relatedSkills.sort(
+  //     (a, b) => b.score - a.score
+  //   );
+
+  //   updateDoc(doc(db, "jobTitles", jobTitle.id), {
+  //     id: jobTitle.id,
+  //     en: jobTitle.en,
+  //     is: jobTitle.is,
+  //     relatedJobs: jobTitle.relatedJobs,
+  //     relatedSkills: jobTitle.relatedSkills,
+  //   }).catch((error) => {
+  //     console.log(error);
+  //   });
+  // }
+
+  // if (languages) {
+  //   // languages related languages
+  //   languages.forEach((language) => {
+  //     // if language has no related languages create an empty array
+  //     if (!language.relatedLanguages) language.relatedLanguages = [];
+  //     const relatedLanguages = language.relatedLanguages;
+  //     languages.forEach((l) => {
+  //       if (l.id !== language.id) {
+  //         const languageIndex = relatedLanguages.findIndex(
+  //           (r) => r.id === l.id
+  //         );
+  //         if (languageIndex > -1) {
+  //           relatedLanguages[languageIndex].score += 1;
+  //         } else {
+  //           relatedLanguages.push({ id: l.id, score: 1 });
+  //         }
+  //       }
+  //     });
+  //   });
+
+  //   for (let i = 0; i < languages.length; i++) {
+  //     const language = languages[i];
+  //     language.relatedLanguages = language.relatedLanguages.sort(
+  //       (a, b) => b.score - a.score
+  //     );
+  //     updateDoc(doc(db, "languages", language.id), {
+  //       id: language.id,
+  //       en: language.en,
+  //       is: language.is,
+  //       relatedLanguages: language.relatedLanguages,
+  //     }).catch((error) => {
+  //       console.log(error);
+  //     });
+  //   }
+  // }
 };
