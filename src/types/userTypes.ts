@@ -161,17 +161,20 @@ export type TFreelancerSocial = {
 
 export type TEmployerRead = {
   position: string;
-  company: DocumentReference<TCompanyWrite>;
+  company: DocumentReference<TCompanyWrite>; // TODO: This variable might be phased out in the future. User companies will be used primarily
+  companies: DocumentReference<TCompanyWrite>[];
 };
 
 export type TEmployer = {
   position: string;
   company: TCompany;
+  companies: TCompany[];
 };
 
 export type TEmployerWrite = {
   position: string;
-  company: DocumentReference<TCompanyWrite>;
+  company: DocumentReference<TCompanyWrite>; // TODO: This variable might be phased out in the future. User companies will be used primarily
+  companies: DocumentReference<TCompanyWrite>[];
 };
 
 // * Freelancer Form
