@@ -71,7 +71,6 @@ export const updateRelations = async (
       relatedSkills: skill.relatedSkills,
     }).catch((error) => {
       console.log(error);
-      console.log(skill);
     });
   });
 
@@ -137,8 +136,6 @@ export const updateRelations = async (
     .catch((error) => {
       console.log(error);
     });
-
-  console.log("Execution time: ", performance.now() - start);
 
   return { jobTitles, skills, languages };
 

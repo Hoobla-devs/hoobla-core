@@ -126,8 +126,6 @@ export async function onUserChange(
       let company: TCompany | undefined;
 
       if (employer) {
-        console.log("employer subscription", employer);
-
         // get the company
         company = await getCompany(employer.company);
         newEmployer = {

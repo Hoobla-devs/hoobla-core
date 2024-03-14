@@ -109,8 +109,6 @@ export function updateNotificationField(
     | "cancelledJobMails",
   value: boolean
 ) {
-  console.log("updateSMSNotifications", uid, value);
-
   const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
   updateDoc(userRef, { [`settings.${notificationField}`]: value });
 }

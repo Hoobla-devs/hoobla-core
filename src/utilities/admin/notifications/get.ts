@@ -32,8 +32,6 @@ export async function getNotificationsListener(
     );
     // sort by date descending
     notifications.sort((a, b) => b.date.getTime() - a.date.getTime());
-    console.log("notifications", notifications);
-
     callback(notifications);
   });
 
