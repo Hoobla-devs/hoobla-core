@@ -22,9 +22,11 @@ async function getEmployerWithCompanies(employer: TEmployerRead | undefined) {
       getEmployerCompanies(employer.companies || []),
     ]);
 
+    const companiesIncludesCompany = companies.some((c) => c.id === company.id);
     const newEmployer: TEmployer = {
       ...employer,
-      ...(company && { company, companies }),
+      company,
+      companies: companiesIncludesCompany ? companies : [...companies, company],
     };
 
     return newEmployer;
