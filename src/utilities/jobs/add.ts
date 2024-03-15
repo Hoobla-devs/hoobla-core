@@ -94,8 +94,6 @@ export function convertFormJobToJobRead(
     },
   };
 
-  console.log("Job to be created: ", job);
-
   return job;
 }
 

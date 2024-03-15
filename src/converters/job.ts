@@ -106,8 +106,9 @@ export const jobConverter = {
 
 export const applicantConverter = {
   toFirestore(applicant: TApplicantRead): TApplicantWrite {
+    const { id, ...applicantData } = applicant;
     return {
-      ...applicant,
+      ...applicantData,
       offer: {
         ...applicant.offer,
         date: Timestamp.fromDate(applicant.offer.date),

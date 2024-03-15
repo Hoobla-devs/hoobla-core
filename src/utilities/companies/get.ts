@@ -15,8 +15,10 @@ import {
   TCompanyWithCreator,
   TCompanyWithEmployees,
   TCompanyWrite,
+  TInvite,
 } from "../../types/companyTypes";
-import { getEmployer } from "../users/get";
+import { TEmployerUser } from "../../types/userTypes";
+import { getEmployer, getUserGeneralInfo } from "../users/get";
 
 async function _getCompanyFromRef(
   companyRef: DocumentReference<TCompanyWrite>
@@ -27,6 +29,28 @@ async function _getCompanyFromRef(
   }
   const companyData = companySnap.data();
   return companyData;
+}
+
+export async function checkIfEmailsInUse(
+  emails: string[],
+  empRefList: DocumentReference<TEmployerUser>[]
+) {
+  // Check if employer is already an employee
+  const currEmployerMails = await Promise.all(
+    empRefList.map(async (empRef) => {
+      const employerInfo = await getUserGeneralInfo(empRef.id);
+
+      return employerInfo.email;
+    })
+  );
+
+  const invalidEmails = emails.filter((email) =>
+    currEmployerMails.includes(email)
+  );
+  if (invalidEmails.length > 0) {
+    return { valid: false, invalidEmails };
+  }
+  return { valid: true, invalidEmails: [] };
 }
 
 export async function checkIfCompanyExists(ssn: string) {

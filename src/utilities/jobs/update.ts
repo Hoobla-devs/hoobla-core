@@ -128,6 +128,8 @@ export async function finishJob(jobId: string) {
     logs: arrayUnion({
       date: new Date(),
       status: "completed",
+      title: "Verkefni lokið",
+      description: "Fyrirtæki hefur veitt endurgjöf og verkefni því formlega lokið",
     }),
   })
     .then(() => true)
