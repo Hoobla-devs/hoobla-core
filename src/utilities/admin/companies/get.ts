@@ -11,9 +11,14 @@ export async function getCompanies(): Promise<TCompanyWithCreator[]> {
   const companiesSnap = await getDocs(companiesRef);
 
   const companiesPromise = companiesSnap.docs.map(async (doc) => {
-    const company = doc.data();
-    const creator = await getEmployer(company.creator.id);
-    return { ...company, creator };
+    try {
+      const company = doc.data();
+      const creator = await getEmployer(company.creator.id);
+      return { ...company, creator };
+    } catch (error) {
+      console.log("Error getting company:", doc.id);
+      throw new Error("Errror getting company!")
+    }
   });
 
   const companies: TCompanyWithCreator[] = await Promise.all(companiesPromise);

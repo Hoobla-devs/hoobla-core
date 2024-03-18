@@ -60,47 +60,53 @@ export const jobConverter = {
     snapshot: QueryDocumentSnapshot<TJobWrite>,
     options: SnapshotOptions
   ): TJobRead {
-    const snapData = snapshot.data(options);
-    const { terms, logs, jobInfo, signatures, ...data } = snapData;
-
-    const newLogs = logs.map((log) => {
+    try {
+      const snapData = snapshot.data(options);
+      const { terms, logs, jobInfo, signatures, ...data } = snapData;
+  
+      const newLogs = logs.map((log) => {
+        return {
+          ...log,
+          date: log.date.toDate(),
+        };
+      });
+  
+      const signaturesRead = signatures
+        ? {
+            ...signatures,
+            ...(signatures.employer && {
+              employer: {
+                ...signatures.employer,
+                date: signatures.employer.date.toDate(),
+              },
+            }),
+            ...(signatures.freelancer && {
+              freelancer: {
+                ...signatures.freelancer,
+                date: signatures.freelancer.date.toDate(),
+              },
+            }),
+          }
+        : null;
+  
+      const { deadline, ...jobInfoData } = jobInfo;
+  
       return {
-        ...log,
-        date: log.date.toDate(),
+        ...data,
+        id: snapshot.id,
+        terms: terms ? terms.toDate() : null,
+        logs: newLogs,
+        signatures: signaturesRead,
+        jobInfo: {
+          ...jobInfoData,
+          ...(deadline && { deadline: deadline.toDate() }),
+        },
       };
-    });
-
-    const signaturesRead = signatures
-      ? {
-          ...signatures,
-          ...(signatures.employer && {
-            employer: {
-              ...signatures.employer,
-              date: signatures.employer.date.toDate(),
-            },
-          }),
-          ...(signatures.freelancer && {
-            freelancer: {
-              ...signatures.freelancer,
-              date: signatures.freelancer.date.toDate(),
-            },
-          }),
-        }
-      : null;
-
-    const { deadline, ...jobInfoData } = jobInfo;
-
-    return {
-      ...data,
-      id: snapshot.id,
-      terms: terms ? terms.toDate() : null,
-      logs: newLogs,
-      signatures: signaturesRead,
-      jobInfo: {
-        ...jobInfoData,
-        ...(deadline && { deadline: deadline.toDate() }),
-      },
-    };
+    } catch (error) {
+      console.log("Error on: ", snapshot.id);
+      throw new Error("converter error!")
+      
+    }
   },
 };
 

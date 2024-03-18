@@ -38,21 +38,25 @@ export async function getAllFreelancers(): Promise<TFreelancerUser[]> {
 export async function getFreelancersWithUnapprovedTags(): Promise<
   TFreelancerUser[]
 > {
-  const usersRef = collection(db, "users").withConverter(
-    userConverter
-  ) as CollectionReference<TUserRead>;
-  const usersQuery = query(
-    usersRef,
-    where("freelancer.unapprovedTags", "!=", null),
-    where("freelancer.status", "==", "approved")
-  ) as Query<TFreelancerUser>;
-  const freelancersSnap = await getDocs(usersQuery);
-
-  const freelancers = freelancersSnap.docs.map((doc) => {
-    return doc.data();
-  });
-
-  return freelancers;
+  try {
+    const usersRef = collection(db, "users").withConverter(
+      userConverter
+    ) as CollectionReference<TUserRead>;
+    const usersQuery = query(
+      usersRef,
+      where("freelancer.unapprovedTags", "!=", null),
+      where("freelancer.status", "==", "approved")
+    ) as Query<TFreelancerUser>;
+    const freelancersSnap = await getDocs(usersQuery);
+  
+    const freelancers = freelancersSnap.docs.map((doc) => {
+      return doc.data();
+    });
+  
+    return freelancers;
+  } catch (error) {
+    return []
+  }
 }
 
 export async function getUserByEmail(email: string): Promise<TUserRead | null> {

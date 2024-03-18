@@ -71,47 +71,53 @@ export const userConverter = {
     snapshot: QueryDocumentSnapshot<TUserWrite>,
     options: SnapshotOptions
   ): TUserRead {
-    const snapData = snapshot.data(options);
-    const { general, freelancer, ...props } = snapData;
-
-    const { createdAt, updatedAt, ...generalProps } = general;
-
-    let freelancerRead: TFreelancerRead | undefined = undefined;
-
-    if (freelancer) {
-      const { contract, selectedReviews, inactiveSince, ...freelancerProps } =
-        freelancer;
-
-      freelancerRead = {
-        ...freelancerProps,
-      };
-      if (contract) {
-        const { date, ...contractProps } = contract;
-        freelancerRead.contract = {
-          ...contractProps,
-          ...(date && { date: date.toDate() }),
+    try {
+      const snapData = snapshot.data(options);
+      const { general, freelancer, ...props } = snapData;
+  
+      const { createdAt, updatedAt, ...generalProps } = general;
+  
+      let freelancerRead: TFreelancerRead | undefined = undefined;
+  
+      if (freelancer) {
+        const { contract, selectedReviews, inactiveSince, ...freelancerProps } =
+          freelancer;
+  
+        freelancerRead = {
+          ...freelancerProps,
         };
+        if (contract) {
+          const { date, ...contractProps } = contract;
+          freelancerRead.contract = {
+            ...contractProps,
+            ...(date && { date: date.toDate() }),
+          };
+        }
+        if (selectedReviews) {
+          freelancerRead.selectedReviews = selectedReviews.map(
+            (reviewRef) => reviewRef.id
+          );
+        }
+        if (inactiveSince) {
+          freelancerRead.inactiveSince = inactiveSince.toDate();
+        }
       }
-      if (selectedReviews) {
-        freelancerRead.selectedReviews = selectedReviews.map(
-          (reviewRef) => reviewRef.id
-        );
-      }
-      if (inactiveSince) {
-        freelancerRead.inactiveSince = inactiveSince.toDate();
-      }
+  
+      return {
+        ...props,
+        general: {
+          uid: snapshot.id,
+          ...generalProps,
+          createdAt: createdAt.toDate(),
+          ...(updatedAt && { updatedAt: updatedAt.toDate() }),
+        },
+        ...(freelancerRead && { freelancer: freelancerRead }),
+      };
+    } catch (error) {
+      console.log("Error on: ", snapshot.id);
+      throw new Error("converter error!")
     }
-
-    return {
-      ...props,
-      general: {
-        uid: snapshot.id,
-        ...generalProps,
-        createdAt: createdAt.toDate(),
-        ...(updatedAt && { updatedAt: updatedAt.toDate() }),
-      },
-      ...(freelancerRead && { freelancer: freelancerRead }),
-    };
+      
   },
 };
 
