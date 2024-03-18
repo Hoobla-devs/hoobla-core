@@ -95,7 +95,7 @@ export type TFreelancerBase = {
   experience: TExperience[];
   education: TEducation[];
   unapprovedTags?: TFreelancerUnapprovedTags | null;
-  jobs: DocumentReference<TJobWrite>[]; // TODO
+  jobs: DocumentReference<TJobWrite>[];
   status: TFreelancerStatus;
   social?: TFreelancerSocial;
   address: TFreelancerAddress | null;
