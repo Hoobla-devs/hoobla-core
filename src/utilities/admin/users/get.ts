@@ -32,7 +32,9 @@ export async function getAllFreelancers(): Promise<TFreelancerUser[]> {
     return doc.data();
   });
 
-  const notDeletedFreelancers = freelancers.filter((user) => user.deleted !== true);
+  const notDeletedFreelancers = freelancers.filter(
+    (user) => user.deleted !== true
+  );
 
   return notDeletedFreelancers;
 }
@@ -50,14 +52,14 @@ export async function getFreelancersWithUnapprovedTags(): Promise<
       where("freelancer.status", "==", "approved")
     ) as Query<TFreelancerUser>;
     const freelancersSnap = await getDocs(usersQuery);
-  
+
     const freelancers = freelancersSnap.docs.map((doc) => {
       return doc.data();
     });
-  
+
     return freelancers;
   } catch (error) {
-    return []
+    return [];
   }
 }
 
