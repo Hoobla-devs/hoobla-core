@@ -32,7 +32,9 @@ export async function getAllFreelancers(): Promise<TFreelancerUser[]> {
     return doc.data();
   });
 
-  return freelancers;
+  const notDeletedFreelancers = freelancers.filter((user) => user.deleted !== true);
+
+  return notDeletedFreelancers;
 }
 
 export async function getFreelancersWithUnapprovedTags(): Promise<
