@@ -133,7 +133,7 @@ export async function addEmployerDataAndCompanyToUser(
     "general.phone": employerData.phone,
     "employer.position": employerData.position,
     "employer.company": companyRef,
-    "employer.companies": [companyRef],
+    employers: [employerData],
   })
     .catch((error) => {
       throw new Error("Error adding employer data to user: " + error);

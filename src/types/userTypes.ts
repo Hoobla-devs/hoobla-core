@@ -28,6 +28,7 @@ export type TFreelancerUser = TUserBase & {
 
 export type TEmployerUser = TUserBase & {
   employer: TEmployer; // required
+  employers?: TEmployer[]; // Modified this line to be an array
 };
 
 export type TUserRead = {
@@ -36,6 +37,7 @@ export type TUserRead = {
   freelancer?: TFreelancerRead;
   freelancerForm?: TSavedFreelancerFormData;
   employer?: TEmployerRead;
+  employers?: TEmployerRead[]; // Added this line
   settings?: {
     SMSNotifications?: boolean;
     deniedOfferMails?: boolean;
@@ -44,8 +46,9 @@ export type TUserRead = {
   };
 };
 
-export type TUser = Omit<TUserRead, "employer" | "freelancer"> & {
+export type TUser = Omit<TUserRead, "employer" | "employers" | "freelancer"> & {
   employer?: TEmployer;
+  employers?: TEmployer[]; // Modified this line to be an array
   freelancer?: TFreelancer;
 };
 
@@ -55,6 +58,7 @@ export type TUserWrite = {
   freelancer?: TFreelancerWrite;
   freelancerForm?: TSavedFreelancerFormData;
   employer?: TEmployerWrite;
+  employers?: TEmployerWrite[]; // Already present
   settings?: {
     SMSNotifications?: boolean;
     deniedOfferMails?: boolean;
@@ -162,19 +166,16 @@ export type TFreelancerSocial = {
 export type TEmployerRead = {
   position: string;
   company: DocumentReference<TCompanyWrite>; // TODO: This variable might be phased out in the future. User companies will be used primarily
-  companies: DocumentReference<TCompanyWrite>[];
 };
 
 export type TEmployer = {
   position: string;
   company: TCompany;
-  companies: TCompany[];
 };
 
 export type TEmployerWrite = {
   position: string;
   company: DocumentReference<TCompanyWrite>; // TODO: This variable might be phased out in the future. User companies will be used primarily
-  companies: DocumentReference<TCompanyWrite>[];
 };
 
 // * Freelancer Form

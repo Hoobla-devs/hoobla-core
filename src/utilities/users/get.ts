@@ -1,6 +1,7 @@
 import { doc, DocumentReference, getDoc, onSnapshot } from "firebase/firestore";
 import { userConverter } from "../../converters/user";
 import { db } from "../../firebase/init";
+import { TCompany } from "../../types/companyTypes";
 import {
   TEmployer,
   TEmployerRead,
@@ -15,24 +16,6 @@ import {
 import { getCompany, getEmployerCompanies } from "../companies/get";
 import { getSelectedReviews } from "./reviews/get";
 
-async function getEmployerWithCompanies(employer: TEmployerRead | undefined) {
-  if (employer) {
-    const [company, companies] = await Promise.all([
-      getCompany(employer.company),
-      getEmployerCompanies(employer.companies || []),
-    ]);
-
-    const companiesIncludesCompany = companies.some((c) => c.id === company.id);
-    const newEmployer: TEmployer = {
-      ...employer,
-      company,
-      companies: companiesIncludesCompany ? companies : [...companies, company],
-    };
-
-    return newEmployer;
-  }
-}
-
 async function _getUserFromRef(
   userRef: DocumentReference<TUserWrite>
 ): Promise<TUser> {
@@ -42,12 +25,31 @@ async function _getUserFromRef(
     throw new Error("User does not exist.");
   }
   const userData = userSnap.data();
-  const { employer, freelancer, ...rest } = userData;
+  const { employer, employers, freelancer, ...rest } = userData;
 
   let newEmployer: TEmployer | undefined;
+  let newEmployers: TEmployer[] = [];
+  let company: TCompany | undefined;
 
   if (employer) {
-    newEmployer = await getEmployerWithCompanies(employer);
+    // get the company
+    company = await getCompany(employer.company);
+    newEmployer = {
+      ...employer,
+      ...(company && { company }),
+    };
+  }
+
+  if (employers) {
+    newEmployers = await Promise.all(
+      employers.map(async (employer) => {
+        const company = await getCompany(employer.company);
+        return {
+          ...employer,
+          ...(company && { company }),
+        };
+      })
+    );
   }
 
   let newFreelancer: TFreelancer | undefined;
@@ -69,6 +71,9 @@ async function _getUserFromRef(
     }),
     ...(freelancer && {
       freelancer: newFreelancer,
+    }),
+    ...(newEmployers && {
+      employers: newEmployers,
     }),
   };
 }
@@ -132,13 +137,32 @@ export async function onUserChange(
   const unsubscribe = onSnapshot(userRef, async (doc) => {
     if (doc.exists()) {
       const userData = doc.data();
-      const { employer, freelancer, ...rest } = userData;
+      const { employer, employers, freelancer, ...rest } = userData;
 
       let newEmployer: TEmployer | undefined;
+      let newEmployers: TEmployer[] = [];
+      let company: TCompany | undefined;
+
       if (employer) {
-        newEmployer = await getEmployerWithCompanies(employer);
+        // get the company
+        company = await getCompany(employer.company);
+        newEmployer = {
+          ...employer,
+          ...(company && { company }),
+        };
       }
 
+      if (employers) {
+        newEmployers = await Promise.all(
+          employers.map(async (employer) => {
+            const company = await getCompany(employer.company);
+            return {
+              ...employer,
+              ...(company && { company }),
+            };
+          })
+        );
+      }
       let newFreelancer: TFreelancer | undefined;
       if (freelancer) {
         const selectedReviews = await getSelectedReviews(
@@ -158,6 +182,9 @@ export async function onUserChange(
         }),
         ...(freelancer && {
           freelancer: newFreelancer,
+        }),
+        ...(newEmployers && {
+          employers: newEmployers,
         }),
       });
     } else {
