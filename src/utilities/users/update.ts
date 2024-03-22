@@ -1,4 +1,9 @@
-import { doc, DocumentReference, Timestamp } from "firebase/firestore";
+import {
+  doc,
+  DocumentReference,
+  Timestamp,
+  arrayUnion,
+} from "firebase/firestore";
 import { db } from "../../firebase/init";
 import { TGender } from "../../types/baseTypes";
 import { TCompanyCreatorData, TCompanyWrite } from "../../types/companyTypes";
@@ -133,7 +138,7 @@ export async function addEmployerDataAndCompanyToUser(
     "general.phone": employerData.phone,
     "employer.position": employerData.position,
     "employer.company": companyRef,
-    employers: [employerData],
+    employers: arrayUnion(employerData),
   })
     .catch((error) => {
       throw new Error("Error adding employer data to user: " + error);
