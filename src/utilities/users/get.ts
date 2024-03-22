@@ -38,6 +38,14 @@ async function getUserEmployerProps(user: TUserRead) {
     );
   }
 
+  const shouldConcat = !newEmployers.some(
+    (employer) => employer.company.id === newEmployer?.company.id
+  );
+
+  if (newEmployer && shouldConcat) {
+    newEmployers = newEmployers.concat(newEmployer);
+  }
+
   return { newEmployer, newEmployers };
 }
 
