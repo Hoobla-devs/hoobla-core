@@ -18,25 +18,33 @@ async function getUserEmployerProps(user: TUserRead) {
   let newEmployer: TEmployer | undefined;
   let newEmployers: TEmployer[] = [];
 
-  if (user.employer) {
-    const company = await getCompany(user.employer.company);
-    newEmployer = {
-      ...user.employer,
-      ...(company && { company }),
-    };
+  try {
+    if (user.employer) {
+      const company = await getCompany(user.employer.company);
+      newEmployer = {
+        ...user.employer,
+        ...(company && { company }),
+      };
+    }
+  } catch (error) {
+    console.log('failed to fetch company for user.employer', error);
   }
 
-  if (user.employers) {
-    newEmployers = await Promise.all(
-      user.employers.map(async (employer) => {
-        const company = await getCompany(employer.company);
-        return {
-          ...employer,
-          ...(company && { company }),
-        };
-      })
-    );
-  }
+  try {
+    if (user.employers) {
+      newEmployers = await Promise.all(
+        user.employers.map(async (employer) => {
+          const company = await getCompany(employer.company);
+          return {
+            ...employer,
+            ...(company && { company }),
+          };
+        })
+        );
+      }
+    } catch (error) {
+      console.log('failed to fetch company for user.employers', error);
+    }
 
   const shouldConcat = !newEmployers.some(
     (employer) => employer.company.id === newEmployer?.company.id
@@ -59,9 +67,7 @@ async function _getUserFromRef(
   }
   const userData = userSnap.data();
   const { employer, employers, freelancer, ...rest } = userData;
-
   const { newEmployer, newEmployers } = await getUserEmployerProps(userData);
-
   let newFreelancer: TFreelancer | undefined;
   if (freelancer) {
     const selectedReviews = await getSelectedReviews(

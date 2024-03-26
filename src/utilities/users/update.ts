@@ -3,12 +3,17 @@ import {
   DocumentReference,
   Timestamp,
   arrayUnion,
+  getDoc,
 } from "firebase/firestore";
+import { userConverter } from "../../converters/user";
 import { db } from "../../firebase/init";
 import { TGender } from "../../types/baseTypes";
 import { TCompanyCreatorData, TCompanyWrite } from "../../types/companyTypes";
 import {
+  TEmployer,
   TEmployerFormData,
+  TEmployerRead,
+  TEmployerWrite,
   TFreelancerContractWrite,
   TFreelancerFormData,
   TFreelancerUnapprovedTags,
@@ -17,6 +22,7 @@ import {
   TReviewWrite,
   TSavedFreelancerFormData,
   TUser,
+  TUserRead,
   TUserWrite,
 } from "../../types/userTypes";
 import { uploadPhoto } from "../storage/add";
@@ -138,7 +144,7 @@ export async function addEmployerDataAndCompanyToUser(
     "general.phone": employerData.phone,
     "employer.position": employerData.position,
     "employer.company": companyRef,
-    employers: arrayUnion(employerData),
+    employers: arrayUnion({ ...employerData, company: companyRef }),
   })
     .catch((error) => {
       throw new Error("Error adding employer data to user: " + error);
@@ -221,6 +227,25 @@ export async function updateEmployerInfo(
   })
     .then(() => true)
     .catch(() => false);
+}
+
+
+export async function updateUserEmployerData(uid: string, employer: TEmployer) {
+  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
+  const companyRef = doc(db, "companies", employer.company.id) as DocumentReference<TCompanyWrite>;
+  
+  try {
+
+    await updateDoc(userRef, { 
+      "employer.company": companyRef,
+      "employer.position": employer.position,
+    });
+
+    return true;
+  } catch (error) {
+    console.log('Error updating user employer data: ', error)
+    return false;
+  }
 }
 
 export async function saveFreelancerForm(
