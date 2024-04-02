@@ -18,13 +18,8 @@ const contactLogs = {
     description: (name: string) =>
       `${name} hefur samþykkt birtingu tengiliðaupplýsinga.`,
   },
-<<<<<<< HEAD
-  declined: {
-    title: "Tengiliðaupplýsingum hafnað",
-=======
   denied: {
     title: 'Tengiliðaupplýsingum hafnað',
->>>>>>> 9c96a1c (cleaning up typings for addAcceptedRate, offerType should be of type TOfferType, can never be undefined)
     description: (name: string) =>
       `${name} hefur samþykkt birtingu tengiliðaupplýsinga.`,
   },
