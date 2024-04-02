@@ -144,7 +144,10 @@ export async function addEmployerDataAndCompanyToUser(
     "general.phone": employerData.phone,
     "employer.position": employerData.position,
     "employer.company": companyRef,
-    employers: arrayUnion({ ...employerData, company: companyRef }),
+    employers: arrayUnion({
+      position: employerData.position,
+      company: companyRef,
+    }),
   })
     .catch((error) => {
       throw new Error("Error adding employer data to user: " + error);
@@ -229,21 +232,23 @@ export async function updateEmployerInfo(
     .catch(() => false);
 }
 
-
 export async function updateUserEmployerData(uid: string, employer: TEmployer) {
   const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
-  const companyRef = doc(db, "companies", employer.company.id) as DocumentReference<TCompanyWrite>;
-  
-  try {
+  const companyRef = doc(
+    db,
+    "companies",
+    employer.company.id
+  ) as DocumentReference<TCompanyWrite>;
 
-    await updateDoc(userRef, { 
+  try {
+    await updateDoc(userRef, {
       "employer.company": companyRef,
       "employer.position": employer.position,
     });
 
     return true;
   } catch (error) {
-    console.log('Error updating user employer data: ', error)
+    console.log("Error updating user employer data: ", error);
     return false;
   }
 }
