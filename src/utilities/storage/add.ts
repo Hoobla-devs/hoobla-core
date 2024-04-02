@@ -3,6 +3,7 @@ import {
   uploadBytes,
   getDownloadURL,
   uploadString,
+  UploadMetadata,
 } from "firebase/storage";
 import { storage } from "../../firebase/init";
 
@@ -14,9 +15,9 @@ const _createBase64FromBlob = async (blob: Blob) => {
   });
 };
 
-export async function uploadPhoto(file: File, name: string) {
+export async function uploadPhoto(file: File, path: string) {
   // Create a reference to 'uid'
-  const photoRef = ref(storage, name);
+  const photoRef = ref(storage, path);
 
   await uploadBytes(photoRef, file).then((snapshot) => {
     console.log("Uploaded a blob or file!");
@@ -27,9 +28,9 @@ export async function uploadPhoto(file: File, name: string) {
   });
 }
 
-export async function uploadBase64(base64: string, name: string) {
+export async function uploadBase64(base64: string, path: string) {
   // Create a reference to 'uid'
-  const base64Ref = ref(storage, name);
+  const base64Ref = ref(storage, path);
 
   await uploadString(base64Ref, base64, "data_url").then((snapshot) => {
     console.log("Uploaded a blob or file!");
@@ -40,6 +41,32 @@ export async function uploadBase64(base64: string, name: string) {
       return url;
     })
     .catch((err) => null);
+}
+
+export async function uploadFile(
+  file: File,
+  path: string,
+  metaData?: UploadMetadata
+) {
+  // Create a reference to 'uid'
+  const photoRef = ref(storage, path);
+
+  await uploadBytes(photoRef, file, metaData)
+    .then((snapshot) => {
+      console.log("Uploaded file!");
+    })
+    .catch((error) => {
+      console.log("Upload failed!");
+    });
+
+  return getDownloadURL(photoRef)
+    .then((url) => {
+      return url;
+    })
+    .catch((error) => {
+      console.log("Download URL failed!");
+      return null;
+    });
 }
 
 export const storeSignetContract = async (documentId: string, path: string) => {

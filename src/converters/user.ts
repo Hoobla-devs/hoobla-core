@@ -24,7 +24,8 @@ export const userConverter = {
     let freelancerWrite: TFreelancerWrite | undefined = undefined;
 
     if (freelancer) {
-      const { contract, selectedReviews, ...freelancerProps } = freelancer;
+      const { contract, selectedReviews, inactiveSince, ...freelancerProps } =
+        freelancer;
 
       freelancerWrite = {
         ...freelancerProps,
@@ -34,8 +35,8 @@ export const userConverter = {
         const { date, ...contractProps } = contract;
         freelancerWrite.contract = {
           ...contractProps,
-          ...(contract && {
-            date: date && Timestamp.fromDate(date),
+          ...(date && {
+            date: Timestamp.fromDate(date),
           }),
         };
       }
@@ -50,6 +51,9 @@ export const userConverter = {
               reviewId
             ) as DocumentReference<TReviewWrite>
         );
+      }
+      if (inactiveSince) {
+        freelancerWrite.inactiveSince = Timestamp.fromDate(inactiveSince);
       }
     }
 
@@ -67,43 +71,53 @@ export const userConverter = {
     snapshot: QueryDocumentSnapshot<TUserWrite>,
     options: SnapshotOptions
   ): TUserRead {
-    const snapData = snapshot.data(options);
-    const { general, freelancer, ...props } = snapData;
-
-    const { createdAt, updatedAt, ...generalProps } = general;
-
-    let freelancerRead: TFreelancerRead | undefined = undefined;
-
-    if (freelancer) {
-      const { contract, selectedReviews, ...freelancerProps } = freelancer;
-
-      freelancerRead = {
-        ...freelancerProps,
-      };
-      if (contract && contract.date) {
-        const { date, ...contractProps } = contract;
-        freelancerRead.contract = {
-          ...contractProps,
-          date: date.toDate(),
+    try {
+      const snapData = snapshot.data(options);
+      const { general, freelancer, ...props } = snapData;
+  
+      const { createdAt, updatedAt, ...generalProps } = general;
+  
+      let freelancerRead: TFreelancerRead | undefined = undefined;
+  
+      if (freelancer) {
+        const { contract, selectedReviews, inactiveSince, ...freelancerProps } =
+          freelancer;
+  
+        freelancerRead = {
+          ...freelancerProps,
         };
+        if (contract) {
+          const { date, ...contractProps } = contract;
+          freelancerRead.contract = {
+            ...contractProps,
+            ...(date && { date: date.toDate() }),
+          };
+        }
+        if (selectedReviews) {
+          freelancerRead.selectedReviews = selectedReviews.map(
+            (reviewRef) => reviewRef.id
+          );
+        }
+        if (inactiveSince) {
+          freelancerRead.inactiveSince = inactiveSince.toDate();
+        }
       }
-      if (selectedReviews) {
-        freelancerRead.selectedReviews = selectedReviews.map(
-          (reviewRef) => reviewRef.id
-        );
-      }
+  
+      return {
+        ...props,
+        general: {
+          uid: snapshot.id,
+          ...generalProps,
+          createdAt: createdAt.toDate(),
+          ...(updatedAt && { updatedAt: updatedAt.toDate() }),
+        },
+        ...(freelancerRead && { freelancer: freelancerRead }),
+      };
+    } catch (error) {
+      console.log("Error on: ", snapshot.id);
+      throw new Error("converter error!")
     }
-
-    return {
-      ...props,
-      general: {
-        uid: snapshot.id,
-        ...generalProps,
-        createdAt: createdAt.toDate(),
-        ...(updatedAt && { updatedAt: updatedAt.toDate() }),
-      },
-      ...(freelancerRead && { freelancer: freelancerRead }),
-    };
+      
   },
 };
 

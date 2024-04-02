@@ -1,3 +1,4 @@
+import { Timestamp } from "firebase/firestore";
 import { TJobStatus } from "./jobTypes";
 
 export type TGender = "male" | "female" | "other";
@@ -18,12 +19,22 @@ export type TEducation = {
   to: string;
 };
 
-export type TNotificationRead = {
-  id: string;
+export type TNotificationBase = {
   title: string;
+  id: string; // Id for link
   description: string;
-  date: Date;
   status?: TJobStatus;
   type: "job" | "freelancer" | "company";
   checked: boolean;
+};
+
+export type TNotificationRead = TNotificationBase & {
+  date: Date;
+  nid: string; // Id of the notification document
+};
+
+export type TNotification = TNotificationRead;
+
+export type TNotificationWrite = TNotificationBase & {
+  date: Timestamp;
 };

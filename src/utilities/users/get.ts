@@ -4,6 +4,7 @@ import { db } from "../../firebase/init";
 import { TCompany } from "../../types/companyTypes";
 import {
   TEmployer,
+  TEmployerUser,
   TFreelancer,
   TFreelancerUser,
   TGeneral,
@@ -84,6 +85,17 @@ export async function getFreelancer(id: string): Promise<TFreelancerUser> {
   }
 }
 
+export async function getEmployer(id: string): Promise<TEmployerUser> {
+  const userRef = doc(db, "users", id) as DocumentReference<TUserWrite>;
+  const user = await _getUserFromRef(userRef);
+
+  if (user && user.employer) {
+    return { ...user, employer: user.employer }; // Ensure employer property is present
+  } else {
+    throw new Error("User is not an employer.");
+  }
+}
+
 export async function getUserGeneralInfo(uid: string): Promise<TGeneral> {
   const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
   const userSnap = await getDoc(userRef.withConverter(userConverter));
@@ -114,8 +126,6 @@ export async function onUserChange(
       let company: TCompany | undefined;
 
       if (employer) {
-        console.log("employer subscription", employer);
-
         // get the company
         company = await getCompany(employer.company);
         newEmployer = {

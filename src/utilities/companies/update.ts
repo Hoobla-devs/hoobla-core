@@ -1,13 +1,23 @@
-import { doc, DocumentReference, updateDoc } from "firebase/firestore";
+import { doc, DocumentReference } from "firebase/firestore";
 import { db } from "../../firebase/init";
 import {
   TCompany,
   TCompanyFormData,
   TCompanyRead,
   TCompanyWrite,
+  TInvite,
 } from "../../types/companyTypes";
 import { uploadPhoto } from "../storage/add";
 import { deletePhoto } from "../storage/delete";
+import { updateDoc } from "../updateDoc";
+
+function rand() {
+  return Math.random().toString(36).slice(2); // remove `0.`
+}
+
+function token() {
+  return rand() + rand() + rand(); // to make it longer
+}
 
 export function convertEditCompanyFormToCompanyRead(
   company: TCompany,
@@ -56,4 +66,36 @@ export async function updateCompany(
   )
     .then(() => true)
     .catch(() => false);
+}
+
+export async function updateInvitationList(
+  cid: string,
+  emails: string[],
+  oldInvites: TInvite[]
+) {
+  const companyRef = doc(
+    db,
+    "companies",
+    cid
+  ) as DocumentReference<TCompanyWrite>;
+
+  const invites = [...oldInvites];
+
+  emails.forEach((email, i) => {
+    const inviteIndex = invites.findIndex((invite) => invite.email === email);
+    if (inviteIndex >= 0) {
+      invites[inviteIndex].token = token();
+      invites[inviteIndex].date = new Date();
+    } else {
+      invites.push({
+        email: email,
+        token: token(),
+        date: new Date(),
+      });
+    }
+  });
+
+  return await updateDoc(companyRef, { invites })
+    .then(() => invites)
+    .catch(() => null);
 }

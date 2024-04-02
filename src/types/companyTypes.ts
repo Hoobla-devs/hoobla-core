@@ -39,6 +39,14 @@ export type TInvite = {
 
 export type TCompany = TCompanyRead;
 
+export type TCompanyWithEmployees = Omit<TCompany, "employees"> & {
+  employees: TEmployerUser[];
+};
+
+export type TCompanyWithCreator = Omit<TCompany, "creator"> & {
+  creator: TEmployerUser;
+};
+
 export type TCompanyWrite = TCompanyBase & {
   employees: DocumentReference<TEmployerUser>[];
   jobs: DocumentReference<TJobWrite>[];

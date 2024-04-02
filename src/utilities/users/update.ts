@@ -1,11 +1,11 @@
-import { doc, DocumentReference } from "firebase/firestore";
+import { doc, DocumentReference, Timestamp } from "firebase/firestore";
 import { db } from "../../firebase/init";
 import { TGender } from "../../types/baseTypes";
 import { TCompanyCreatorData, TCompanyWrite } from "../../types/companyTypes";
 import {
   TEmployerFormData,
+  TFreelancerContractWrite,
   TFreelancerFormData,
-  TFreelancerStatus,
   TFreelancerUnapprovedTags,
   TFreelancerUser,
   TFreelancerWrite,
@@ -59,6 +59,8 @@ export function convertEditFreelancerFormToFreelancerWrite(
     }
   }
 
+  const freelancerContract = freelancerUser.freelancer.contract;
+
   const selectedReviewsWrite =
     selectedReviews?.map((review) => {
       const reviewRef = doc(
@@ -73,6 +75,14 @@ export function convertEditFreelancerFormToFreelancerWrite(
   // Create freelancerWrite object
   const freelancerWrite = {
     ...freelancerData,
+    ...(freelancerContract && {
+      contract: {
+        ...freelancerContract,
+        ...(freelancerContract.date && {
+          date: Timestamp.fromDate(freelancerContract.date),
+        }),
+      } as TFreelancerContractWrite,
+    }),
     gender: gender as TGender,
     address: freelancerAddress,
     company: freelancerCompany,
@@ -99,8 +109,6 @@ export function updateNotificationField(
     | "cancelledJobMails",
   value: boolean
 ) {
-  console.log("updateSMSNotifications", uid, value);
-
   const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
   updateDoc(userRef, { [`settings.${notificationField}`]: value });
 }
@@ -237,6 +245,12 @@ export async function saveFreelancerForm(
   callback();
 }
 
+/**
+ * Adds a pre-signed contract link to user and sets signed to true.
+ * @param freelancerUser
+ * @param documentStorageUrl
+ * @returns
+ */
 export async function addContractToFreelancer(
   freelancerUser: TFreelancerUser,
   documentStorageUrl: string
@@ -247,8 +261,10 @@ export async function addContractToFreelancer(
     freelancerUser.general.uid
   ) as DocumentReference<TUserWrite>;
 
+  const documentId = freelancerUser.freelancer.contract?.documentId || "";
+
   const newContractData = {
-    ...freelancerUser.freelancer.contract,
+    documentId,
     link: documentStorageUrl,
     signed: true,
     date: new Date(),

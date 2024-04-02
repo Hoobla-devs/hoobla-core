@@ -13,7 +13,7 @@ import {
 export const jobConverter = {
   toFirestore(job: TJobRead): TJobWrite {
     // remove id and applicants from job
-    const { terms, logs, jobInfo, id, ...data } = job;
+    const { terms, logs, jobInfo, id, signatures, ...data } = job;
 
     // convert the terms to a firestore timestamp
     const newLogs = logs.map((log) => {
@@ -23,6 +23,24 @@ export const jobConverter = {
       };
     });
 
+    const signaturesWrite = signatures
+      ? {
+          ...signatures,
+          ...(signatures.employer && {
+            employer: {
+              ...signatures.employer,
+              date: Timestamp.fromDate(signatures.employer.date),
+            },
+          }),
+          ...(signatures.freelancer && {
+            freelancer: {
+              ...signatures.freelancer,
+              date: Timestamp.fromDate(signatures.freelancer.date),
+            },
+          }),
+        }
+      : null;
+
     const { deadline, ...jobInfoData } = jobInfo;
 
     // return that data
@@ -30,6 +48,7 @@ export const jobConverter = {
       ...data,
       terms: terms ? Timestamp.fromDate(terms) : null,
       logs: newLogs,
+      signatures: signaturesWrite,
       jobInfo: {
         ...jobInfoData,
         ...(deadline && { deadline: Timestamp.fromDate(deadline) }),
@@ -41,35 +60,61 @@ export const jobConverter = {
     snapshot: QueryDocumentSnapshot<TJobWrite>,
     options: SnapshotOptions
   ): TJobRead {
-    const snapData = snapshot.data(options);
-    const { terms, logs, jobInfo, ...data } = snapData;
-
-    const newLogs = logs.map((log) => {
+    try {
+      const snapData = snapshot.data(options);
+      const { terms, logs, jobInfo, signatures, ...data } = snapData;
+  
+      const newLogs = logs.map((log) => {
+        return {
+          ...log,
+          date: log.date.toDate(),
+        };
+      });
+  
+      const signaturesRead = signatures
+        ? {
+            ...signatures,
+            ...(signatures.employer && {
+              employer: {
+                ...signatures.employer,
+                date: signatures.employer.date.toDate(),
+              },
+            }),
+            ...(signatures.freelancer && {
+              freelancer: {
+                ...signatures.freelancer,
+                date: signatures.freelancer.date.toDate(),
+              },
+            }),
+          }
+        : null;
+  
+      const { deadline, ...jobInfoData } = jobInfo;
+  
       return {
-        ...log,
-        date: log.date.toDate(),
+        ...data,
+        id: snapshot.id,
+        terms: terms ? terms.toDate() : null,
+        logs: newLogs,
+        signatures: signaturesRead,
+        jobInfo: {
+          ...jobInfoData,
+          ...(deadline && { deadline: deadline.toDate() }),
+        },
       };
-    });
-
-    const { deadline, ...jobInfoData } = jobInfo;
-
-    return {
-      ...data,
-      terms: terms ? terms.toDate() : null,
-      logs: newLogs,
-      id: snapshot.id,
-      jobInfo: {
-        ...jobInfoData,
-        ...(deadline && { deadline: deadline.toDate() }),
-      },
-    };
+    } catch (error) {
+      console.log("Error on: ", snapshot.id);
+      throw new Error("converter error!")
+      
+    }
   },
 };
 
 export const applicantConverter = {
   toFirestore(applicant: TApplicantRead): TApplicantWrite {
+    const { id, ...applicantData } = applicant;
     return {
-      ...applicant,
+      ...applicantData,
       offer: {
         ...applicant.offer,
         date: Timestamp.fromDate(applicant.offer.date),

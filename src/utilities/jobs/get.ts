@@ -21,7 +21,6 @@ import {
   TJobWrite,
   TOffer,
 } from "../../types/jobTypes";
-import { TFreelancerUser } from "../../types/userTypes";
 import { getCompany } from "../companies/get";
 import { getFreelancer } from "../users/get";
 import { getAllApplicants, getApplicant } from "./applicants/get";

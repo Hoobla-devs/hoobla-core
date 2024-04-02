@@ -7,7 +7,8 @@ export type TFreelancerStatus =
   | "inReview"
   | "approved"
   | "denied"
-  | "requiresSignature";
+  | "requiresSignature"
+  | "inactive";
 
 export type TUserBase = {
   deleted?: boolean;
@@ -94,7 +95,7 @@ export type TFreelancerBase = {
   experience: TExperience[];
   education: TEducation[];
   unapprovedTags?: TFreelancerUnapprovedTags | null;
-  jobs: DocumentReference<TJobWrite>[]; // TODO
+  jobs: DocumentReference<TJobWrite>[];
   status: TFreelancerStatus;
   social?: TFreelancerSocial;
   address: TFreelancerAddress | null;
@@ -104,6 +105,7 @@ export type TFreelancerBase = {
 export type TFreelancerRead = TFreelancerBase & {
   contract?: TFreelancerContractRead;
   selectedReviews?: string[]; // List of review id's
+  inactiveSince?: Date;
 };
 
 export type TFreelancer = Omit<TFreelancerRead, "selectedReviews"> & {
@@ -113,6 +115,7 @@ export type TFreelancer = Omit<TFreelancerRead, "selectedReviews"> & {
 export type TFreelancerWrite = TFreelancerBase & {
   contract?: TFreelancerContractWrite;
   selectedReviews?: DocumentReference<TReviewWrite>[];
+  inactiveSince?: Timestamp;
 };
 
 export type TFreelancerContractRead = {

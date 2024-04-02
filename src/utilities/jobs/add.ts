@@ -64,7 +64,7 @@ export function convertFormJobToJobRead(
     id: "",
     name: formJob.name,
     description: formJob.description,
-    type: formJob.type,
+    type: formJob.type ? formJob.type : "notSure",
     status: formJob.status,
     company: doc(db, "companies", company) as DocumentReference<TCompanyWrite>,
     creator: doc(db, "users", creator) as DocumentReference<TEmployerUser>,
@@ -94,8 +94,6 @@ export function convertFormJobToJobRead(
     },
   };
 
-  console.log("Job to be created: ", job);
-
   return job;
 }
 
@@ -121,9 +119,6 @@ export async function createJob(data: TJobRead) {
     });
 
   const companyRef = data.company;
-
-  console.log("Company ref: ", companyRef);
-  console.log("Job ref: ", jobRef);
 
   await updateDoc(companyRef, {
     jobs: arrayUnion(jobRef),
