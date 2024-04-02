@@ -1,30 +1,29 @@
-import { arrayUnion, doc, DocumentReference } from 'firebase/firestore';
-import { applicantConverter } from '../../../converters/job';
-import { db } from '../../../firebase/init';
+import { arrayUnion, doc, DocumentReference } from "firebase/firestore";
+import { applicantConverter } from "../../../converters/job";
+import { db } from "../../../firebase/init";
 import {
   TOffer,
   TJobWrite,
   TApplicantWrite,
   TContactStatus,
   TJobStatus,
-  TOfferType,
-} from '../../../types/jobTypes';
-import { TGeneral } from '../../../types/userTypes';
-import { updateDoc } from '../../updateDoc';
+} from "../../../types/jobTypes";
+import { TGeneral } from "../../../types/userTypes";
+import { updateDoc } from "../../updateDoc";
 
 const contactLogs = {
   approved: {
-    title: 'Tengiliðaupplýsingar samþykktar',
+    title: "Tengiliðaupplýsingar samþykktar",
     description: (name: string) =>
       `${name} hefur samþykkt birtingu tengiliðaupplýsinga`,
   },
   denied: {
-    title: 'Tengiliðaupplýsingum hafnað',
+    title: "Tengiliðaupplýsingum hafnað",
     description: (name: string) =>
       `${name} hefur hafnað birtingu tengiliðaupplýsinga og þar með dregið tilboðið sitt til baka`,
   },
   requested: {
-    title: 'Beiðni um tengiliðaupplýsingar',
+    title: "Beiðni um tengiliðaupplýsingar",
     description: (name: string) =>
       `Beiðni send á ${name} um að fá tengiliðaupplýsingar`,
   },
@@ -36,20 +35,20 @@ export async function changeJobOffer(
   offer: TOffer
 ) {
   // create the job reference
-  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
 
   // take out all non numbers from offer
   offer = {
     ...offer,
-    hourlyRate: offer.hourlyRate.replaceAll(/[^0-9]/g, '') || '',
-    fixedRate: offer.fixedRate.replaceAll(/[^0-9]/g, '') || '',
+    hourlyRate: offer.hourlyRate.replaceAll(/[^0-9]/g, "") || "",
+    fixedRate: offer.fixedRate.replaceAll(/[^0-9]/g, "") || "",
   };
 
-  const applicationRef = doc(jobRef, 'applicants', uid).withConverter(
+  const applicationRef = doc(jobRef, "applicants", uid).withConverter(
     applicantConverter
   ) as DocumentReference<TApplicantWrite>;
 
-  await updateDoc(applicationRef, { offer }).catch(err => {
+  await updateDoc(applicationRef, { offer }).catch((err) => {
     throw new Error(`Error adding application to job: ${err}`);
   });
 
@@ -59,21 +58,21 @@ export async function changeJobOffer(
 export async function addAcceptedRate(
   applicantId: string,
   jobId: string,
-  offerType: TOfferType
+  acceptedRate: TOffer["acceptedRate"]
 ): Promise<boolean> {
   // create the job reference
-  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
 
   const applicationRef = doc(
     jobRef,
-    'applicants',
+    "applicants",
     applicantId
   ) as DocumentReference<TApplicantWrite>;
 
   return await updateDoc(applicationRef, {
-    'offer.acceptedRate': offerType,
+    "offer.acceptedRate": acceptedRate,
   })
-    .catch(err => {
+    .catch((err) => {
       console.log(`Error adding application to job: ${err}`);
       return false;
     })
@@ -87,7 +86,7 @@ export async function updateContactApproval(
   status: TContactStatus
 ) {
   try {
-    const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
+    const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
     const applicantRef = doc(
       db,
       `jobs/${jobId}/applicants`,
@@ -107,8 +106,8 @@ export async function updateContactApproval(
           }),
         });
       })
-      .catch(error => {
-        throw new Error('Could not update freelancer contact status: ', error);
+      .catch((error) => {
+        throw new Error("Could not update freelancer contact status: ", error);
       });
     return true;
   } catch (error) {
