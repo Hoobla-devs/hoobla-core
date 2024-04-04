@@ -74,15 +74,15 @@ export const userConverter = {
     try {
       const snapData = snapshot.data(options);
       const { general, freelancer, ...props } = snapData;
-  
+
       const { createdAt, updatedAt, ...generalProps } = general;
-  
+
       let freelancerRead: TFreelancerRead | undefined = undefined;
-  
+
       if (freelancer) {
         const { contract, selectedReviews, inactiveSince, ...freelancerProps } =
           freelancer;
-  
+
         freelancerRead = {
           ...freelancerProps,
         };
@@ -102,7 +102,7 @@ export const userConverter = {
           freelancerRead.inactiveSince = inactiveSince.toDate();
         }
       }
-  
+
       return {
         ...props,
         general: {
@@ -115,9 +115,8 @@ export const userConverter = {
       };
     } catch (error) {
       console.log("Error on: ", snapshot.id);
-      throw new Error("converter error!")
+      throw new Error("converter error!");
     }
-      
   },
 };
 

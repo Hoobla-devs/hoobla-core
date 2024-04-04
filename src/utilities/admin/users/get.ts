@@ -13,10 +13,13 @@ import {
 import { userConverter } from "../../../converters/user";
 import { db } from "../../../firebase/init";
 import {
+  TFreelancerRead,
   TFreelancerUser,
+  TReview,
   TUserRead,
   TUserWrite,
 } from "../../../types/userTypes";
+import { getSelectedReviews } from "../../users/reviews/get";
 
 export async function getAllFreelancers(): Promise<TFreelancerUser[]> {
   const usersRef = collection(db, "users").withConverter(
@@ -90,7 +93,18 @@ export function freelancerListener(
       freelancerRef.withConverter(userConverter)
     );
     if (userSnapshot.exists()) {
-      const freelancerUser = userSnapshot.data() as TFreelancerUser;
+      const freelancer = userSnapshot.data().freelancer as TFreelancerRead;
+      let reviews: TReview[] = [];
+      if (freelancer.selectedReviews) {
+        reviews = await getSelectedReviews(uid, freelancer.selectedReviews);
+      }
+      const freelancerUser = {
+        ...userSnapshot.data(),
+        freelancer: {
+          ...freelancer,
+          selectedReviews: reviews,
+        },
+      } as TFreelancerUser;
       callback(freelancerUser);
     }
   });
