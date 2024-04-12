@@ -105,3 +105,16 @@ export async function getCompanyWithCreator(
 
   return { ...company, creator };
 }
+
+export async function getEmployerCompanies(
+  companiesRef: DocumentReference<TCompanyWrite>[]
+): Promise<TCompanyRead[]> {
+  const companies = await Promise.all(
+    companiesRef.map(async (ref) => {
+      const company = await _getCompanyFromRef(ref);
+      return company;
+    })
+  );
+
+  return companies;
+}
