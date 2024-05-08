@@ -11,12 +11,62 @@ import {
   TJobBase,
   TJobFormData,
   TJobStatus,
+  TJobWithAllData,
   TJobWrite,
   TLog,
   TLogWrite,
+  TReasonId,
+  TSignatures,
   TUnapprovedTags,
 } from "../../../types/jobTypes";
 import { updateDoc } from "../../updateDoc";
+
+// TODO: This function can be used to update more info from the jobPage. Update as needed
+export async function updateJobInfo(jobId: string, jobInfo: TJobWithAllData) {
+  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+
+  return await updateDoc(jobRef, {
+    description: jobInfo.description,
+    "jobInfo.deadline": jobInfo.jobInfo.deadline,
+  })
+    .then(() => true)
+    .catch(() => false);
+}
+
+export async function updateJobSignatures(
+  jobId: string,
+  signatures: TSignatures
+) {
+  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+
+  return await updateDoc(jobRef, {
+    signatures: signatures,
+  })
+    .then(() => true)
+    .catch(() => false);
+}
+
+export async function updateJobFreelancer(
+  jobId: string,
+  freelancerId: string,
+  notSelectedReason: TReasonId
+) {
+  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+  const freelancerRef = doc(
+    jobRef,
+    "freelancers",
+    freelancerId
+  ) as DocumentReference<TFreelancerApplicant>;
+
+  const success = await updateDoc(jobRef, {
+    notSelectedReason: notSelectedReason,
+    freelancers: [freelancerRef],
+  })
+    .then(() => true)
+    .catch(() => false);
+
+  return success;
+}
 
 export async function updateJobStatus(
   jobId: string,
