@@ -69,15 +69,15 @@ export type TJobWithAllData = Omit<
 };
 
 export type TJobStatus =
-  | "inReview"
-  | "approved"
-  | "denied"
-  | "chooseFreelancers"
-  | "requiresSignature"
-  | "inProgress"
-  | "readyForReview"
-  | "completed"
-  | "cancelled";
+  | "inReview" // Job has been created and admin needs to approve it for it to be visible
+  | "approved" // Job has been approved by admin and is visible in job list
+  | "denied" // Job has been denied by admin and is not visible in job list
+  | "chooseFreelancers" // Admin has selected applicants and the company now needs to choose freelancers
+  | "requiresSignature" // Company has chosen freelancers and now freelancer needs to sign a contract. Company has already signed
+  | "inProgress" // Both parties have signed the contract and the job is in progress
+  | "readyForReview" // Freelancer has completed the job and is now awaiting a review from the company
+  | "completed" // Job has been completed
+  | "cancelled"; // Job has been cancelled
 
 export type TLog = {
   date: Date;

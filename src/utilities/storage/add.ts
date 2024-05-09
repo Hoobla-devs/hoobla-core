@@ -52,11 +52,12 @@ export async function uploadFile(
   const photoRef = ref(storage, path);
 
   await uploadBytes(photoRef, file, metaData)
-    .then((snapshot) => {
+    .then(() => {
       console.log("Uploaded file!");
     })
     .catch((error) => {
-      console.log("Upload failed!");
+      console.log("Upload failed!", error);
+      throw new Error("Upload failed!");
     });
 
   return getDownloadURL(photoRef)
