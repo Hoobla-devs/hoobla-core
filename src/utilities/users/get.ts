@@ -1,7 +1,6 @@
 import { doc, DocumentReference, getDoc, onSnapshot } from "firebase/firestore";
 import { userConverter } from "../../converters/user";
 import { db } from "../../firebase/init";
-import { TCompany } from "../../types/companyTypes";
 import {
   TEmployer,
   TEmployerUser,
@@ -15,6 +14,49 @@ import {
 import { getCompany } from "../companies/get";
 import { getSelectedReviews } from "./reviews/get";
 
+async function getUserEmployerProps(user: TUserRead) {
+  let newEmployer: TEmployer | undefined;
+  let newEmployers: TEmployer[] = [];
+
+  try {
+    if (user.employer) {
+      const company = await getCompany(user.employer.company);
+      newEmployer = {
+        ...user.employer,
+        ...(company && { company }),
+      };
+    }
+  } catch (error) {
+    console.log('failed to fetch company for user.employer', error);
+  }
+
+  try {
+    if (user.employers) {
+      newEmployers = await Promise.all(
+        user.employers.map(async (employer) => {
+          const company = await getCompany(employer.company);
+          return {
+            ...employer,
+            ...(company && { company }),
+          };
+        })
+        );
+      }
+    } catch (error) {
+      console.log('failed to fetch company for user.employers', error);
+    }
+
+  const shouldConcat = !newEmployers.some(
+    (employer) => employer.company.id === newEmployer?.company.id
+  );
+
+  if (newEmployer && shouldConcat) {
+    newEmployers = newEmployers.concat(newEmployer);
+  }
+
+  return { newEmployer, newEmployers };
+}
+
 async function _getUserFromRef(
   userRef: DocumentReference<TUserWrite>
 ): Promise<TUser> {
@@ -24,20 +66,8 @@ async function _getUserFromRef(
     throw new Error("User does not exist.");
   }
   const userData = userSnap.data();
-  const { employer, freelancer, ...rest } = userData;
-
-  let newEmployer: TEmployer | undefined;
-  let company: TCompany | undefined;
-
-  if (employer) {
-    // get the company
-    company = await getCompany(employer.company);
-    newEmployer = {
-      ...employer,
-      ...(company && { company }),
-    };
-  }
-
+  const { employer, employers, freelancer, ...rest } = userData;
+  const { newEmployer, newEmployers } = await getUserEmployerProps(userData);
   let newFreelancer: TFreelancer | undefined;
   if (freelancer) {
     const selectedReviews = await getSelectedReviews(
@@ -57,6 +87,9 @@ async function _getUserFromRef(
     }),
     ...(freelancer && {
       freelancer: newFreelancer,
+    }),
+    ...(newEmployers && {
+      employers: newEmployers,
     }),
   };
 }
@@ -120,19 +153,11 @@ export async function onUserChange(
   const unsubscribe = onSnapshot(userRef, async (doc) => {
     if (doc.exists()) {
       const userData = doc.data();
-      const { employer, freelancer, ...rest } = userData;
+      const { employer, employers, freelancer, ...rest } = userData;
 
-      let newEmployer: TEmployer | undefined;
-      let company: TCompany | undefined;
-
-      if (employer) {
-        // get the company
-        company = await getCompany(employer.company);
-        newEmployer = {
-          ...employer,
-          ...(company && { company }),
-        };
-      }
+      const { newEmployer, newEmployers } = await getUserEmployerProps(
+        userData
+      );
 
       let newFreelancer: TFreelancer | undefined;
       if (freelancer) {
@@ -153,6 +178,9 @@ export async function onUserChange(
         }),
         ...(freelancer && {
           freelancer: newFreelancer,
+        }),
+        ...(newEmployers && {
+          employers: newEmployers,
         }),
       });
     } else {
