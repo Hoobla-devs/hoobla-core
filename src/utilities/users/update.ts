@@ -4,11 +4,11 @@ import {
   Timestamp,
   arrayUnion,
   getDoc,
-} from "firebase/firestore";
-import { userConverter } from "../../converters/user";
-import { db } from "../../firebase/init";
-import { TGender } from "../../types/baseTypes";
-import { TCompanyCreatorData, TCompanyWrite } from "../../types/companyTypes";
+} from 'firebase/firestore';
+import { userConverter } from '../../converters/user';
+import { db } from '../../firebase/init';
+import { TGender } from '../../types/baseTypes';
+import { TCompanyCreatorData, TCompanyWrite } from '../../types/companyTypes';
 import {
   TEmployer,
   TEmployerFormData,
@@ -24,11 +24,11 @@ import {
   TUser,
   TUserRead,
   TUserWrite,
-} from "../../types/userTypes";
-import { uploadPhoto } from "../storage/add";
-import { deletePhoto } from "../storage/delete";
-import { updateDoc } from "../updateDoc";
-import { updateReview } from "./reviews/update";
+} from '../../types/userTypes';
+import { uploadPhoto } from '../storage/add';
+import { deletePhoto } from '../storage/delete';
+import { updateDoc } from '../updateDoc';
+import { updateReview } from './reviews/update';
 
 export function convertEditFreelancerFormToFreelancerWrite(
   freelancerUser: TFreelancerUser,
@@ -73,12 +73,12 @@ export function convertEditFreelancerFormToFreelancerWrite(
   const freelancerContract = freelancerUser.freelancer.contract;
 
   const selectedReviewsWrite =
-    selectedReviews?.map((review) => {
+    selectedReviews?.map(review => {
       const reviewRef = doc(
         db,
-        "users",
+        'users',
         uid,
-        "reviews",
+        'reviews',
         review.id
       ) as DocumentReference<TReviewWrite>;
       return reviewRef;
@@ -107,20 +107,20 @@ export function convertEditFreelancerFormToFreelancerWrite(
   return freelancerWrite;
 }
 
-export function switchLocale(uid: string, lang: "is" | "en") {
-  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
-  updateDoc(userRef, { "general.lang": lang });
+export function switchLocale(uid: string, lang: 'is' | 'en') {
+  const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
+  updateDoc(userRef, { 'general.lang': lang });
 }
 
 export function updateNotificationField(
   uid: string,
   notificationField:
-    | "SMSNotifications"
-    | "deniedOfferMails"
-    | "cancelledJobMails",
+    | 'SMSNotifications'
+    | 'deniedOfferMails'
+    | 'cancelledJobMails',
   value: boolean
 ) {
-  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
+  const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
   updateDoc(userRef, { [`settings.${notificationField}`]: value });
 }
 
@@ -128,8 +128,8 @@ export function updateJobTitlesNotificationSettings(
   uid: string,
   jobTitles: string[]
 ) {
-  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
-  updateDoc(userRef, { "settings.excludedJobTitleNotifications": jobTitles });
+  const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
+  updateDoc(userRef, { 'settings.excludedJobTitleNotifications': jobTitles });
 }
 
 export async function addEmployerDataAndCompanyToUser(
@@ -137,20 +137,17 @@ export async function addEmployerDataAndCompanyToUser(
   employerData: TCompanyCreatorData,
   companyRef: DocumentReference<TCompanyWrite>
 ) {
-  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
+  const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
   return updateDoc(userRef, {
-    "general.name": employerData.name,
-    "general.ssn": employerData.ssn,
-    "general.phone": employerData.phone,
-    "employer.position": employerData.position,
-    "employer.company": companyRef,
-    employers: arrayUnion({
-      position: employerData.position,
-      company: companyRef,
-    }),
+    'general.name': employerData.name,
+    'general.ssn': employerData.ssn,
+    'general.phone': employerData.phone,
+    'employer.position': employerData.position,
+    'employer.company': companyRef,
+    employers: arrayUnion({ ...employerData, company: companyRef }),
   })
-    .catch((error) => {
-      throw new Error("Error adding employer data to user: " + error);
+    .catch(error => {
+      throw new Error('Error adding employer data to user: ' + error);
     })
     .then(() => true);
 }
@@ -180,8 +177,8 @@ export async function updateFreelancerResume(
     const file = freelancerFormData.photo?.file;
     // upload
     const [originalUrl, url] = await Promise.all([
-      await uploadPhoto(originalFile!, "users/" + uid + "/original"),
-      await uploadPhoto(file!, "users/" + uid + "/cropped"),
+      await uploadPhoto(originalFile!, 'users/' + uid + '/original'),
+      await uploadPhoto(file!, 'users/' + uid + '/cropped'),
     ]);
 
     freelancerWrite.photo = {
@@ -194,24 +191,24 @@ export async function updateFreelancerResume(
 
   // Update all reviews visability
   await Promise.all(
-    allReviews.map(async (review) => {
+    allReviews.map(async review => {
       await updateReview(uid, review.id, { show: review.show });
     })
   );
 
   return await updateDoc(
-    doc(db, "users", uid) as DocumentReference<TUserWrite>,
+    doc(db, 'users', uid) as DocumentReference<TUserWrite>,
     {
-      "general.name": name,
-      "general.phone": phone,
-      "general.ssn": ssn,
-      "general.updatedAt": new Date(),
+      'general.name': name,
+      'general.phone': phone,
+      'general.ssn': ssn,
+      'general.updatedAt': new Date(),
 
       freelancer: freelancerWrite,
     }
   )
     .then(() => true)
-    .catch((error) => {
+    .catch(error => {
       console.log(error);
       return false;
     });
@@ -221,35 +218,97 @@ export async function updateEmployerInfo(
   uid: string,
   employerFormData: TEmployerFormData
 ) {
-  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
+  const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
   return await updateDoc(userRef, {
-    "general.name": employerFormData.name,
-    "general.phone": employerFormData.phone,
-    "employer.position": employerFormData.position,
-    "general.updatedAt": new Date(),
+    'general.name': employerFormData.name,
+    'general.phone': employerFormData.phone,
+    'employer.position': employerFormData.position,
+    'general.updatedAt': new Date(),
   })
     .then(() => true)
     .catch(() => false);
 }
 
 export async function updateUserEmployerData(uid: string, employer: TEmployer) {
-  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
+  const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
   const companyRef = doc(
     db,
-    "companies",
+    'companies',
     employer.company.id
   ) as DocumentReference<TCompanyWrite>;
 
   try {
     await updateDoc(userRef, {
-      "employer.company": companyRef,
-      "employer.position": employer.position,
+      'employer.company': companyRef,
+      'employer.position': employer.position,
     });
 
     return true;
   } catch (error) {
-    console.log("Error updating user employer data: ", error);
+    console.log('Error updating user employer data: ', error);
     return false;
+  }
+}
+
+// When a user registers as an employer, this function is called to add the user to the company's employees list.
+export async function registerEmployerUser(
+  cid: string,
+  uid: string,
+  token: string,
+  data: TEmployerFormData
+): Promise<boolean> {
+  const companyRef = doc(
+    db,
+    'companies',
+    cid
+  ) as DocumentReference<TCompanyWrite>;
+  const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
+
+  try {
+    const companySnapshot = await getDoc(companyRef);
+    const companyData = companySnapshot.data() as TCompanyWrite;
+
+    const isUserAlreadyEmployed = companyData.employees.some(
+      employee => employee.id === uid
+    );
+    // Remove invite from company invites list
+    const inviteList = companyData.invites.filter(
+      invite => invite.token !== token
+    );
+
+    // Update the company employees list if applicable and remove invite
+    await updateDoc(companyRef, {
+      employees: isUserAlreadyEmployed
+        ? companyData.employees
+        : arrayUnion(userRef),
+      invites: inviteList,
+    });
+
+    if (isUserAlreadyEmployed) {
+      return true;
+    }
+
+    // Update the user with the new employer info
+    await updateDoc(userRef, {
+      employer: {
+        company: companyRef,
+        position: data.position,
+      },
+      employers: arrayUnion({
+        company: companyRef,
+        position: data.position,
+      }),
+      'general.name': data.name,
+      'general.phone': data.phone,
+      'general.ssn': data.ssn,
+      'general.createdAt': new Date(),
+      'general.updatedAt': new Date(),
+    });
+
+    return true; // Success
+  } catch (error) {
+    console.error('Failed to update company and user documents:', error);
+    return false; // Failure
   }
 }
 
@@ -259,7 +318,7 @@ export async function saveFreelancerForm(
   callback: Function
 ) {
   const { uid } = user.general;
-  const userRef = doc(db, "users", uid) as DocumentReference<TUserWrite>;
+  const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
   await updateDoc(userRef, {
     freelancerForm: {
       ...data,
@@ -274,8 +333,8 @@ export async function saveFreelancerForm(
           }
         : null,
     },
-  }).catch((err) => {
-    alert("Could not save!!!");
+  }).catch(err => {
+    alert('Could not save!!!');
   });
 
   callback();
@@ -293,11 +352,11 @@ export async function addContractToFreelancer(
 ) {
   const userRef = doc(
     db,
-    "users",
+    'users',
     freelancerUser.general.uid
   ) as DocumentReference<TUserWrite>;
 
-  const documentId = freelancerUser.freelancer.contract?.documentId || "";
+  const documentId = freelancerUser.freelancer.contract?.documentId || '';
 
   const newContractData = {
     documentId,
@@ -307,13 +366,13 @@ export async function addContractToFreelancer(
   };
 
   const newStatus =
-    freelancerUser.freelancer.status === "requiresSignature"
-      ? "inReview"
+    freelancerUser.freelancer.status === 'requiresSignature'
+      ? 'inReview'
       : freelancerUser.freelancer.status;
 
   return await updateDoc(userRef, {
-    "freelancer.contract": newContractData,
-    "freelancer.status": newStatus,
+    'freelancer.contract': newContractData,
+    'freelancer.status': newStatus,
   })
     .then(() => {
       return true;
