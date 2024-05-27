@@ -2,7 +2,7 @@
   "name": "@kongulo-is/hoobla-core",
   "version": "0.0.25",
   "description": "Hoobla core",
-  "repository": "kongulo-is/hoobla-core",
+  "repository": "Hoobla-devs/hoobla-core",
   "main": "./src/index.js",
   "types": "./lib/index.d.ts",
   "scripts": {
