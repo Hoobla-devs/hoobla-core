@@ -105,6 +105,21 @@ export const resetJobContractProcess = async (
     });
 };
 
+export const addSignedContractToJob = async (
+  jobId: string,
+  documentStorageUrl: string,
+  log: TLog
+) => {
+  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+
+  return await updateDoc(jobRef, {
+    documentStorageUrl,
+    logs: arrayUnion(log),
+  })
+    .then(() => true)
+    .catch(() => false);
+};
+
 // Update selected applicants list with the list provided
 export async function updateSelectedApplicants(
   jobId: string,
