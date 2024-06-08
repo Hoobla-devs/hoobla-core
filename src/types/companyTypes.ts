@@ -1,13 +1,13 @@
-import { DocumentReference, Timestamp } from "@firebase/firestore";
-import { TJobWrite } from "./jobTypes";
-import { TEmployerUser } from "./userTypes";
+import { DocumentReference, Timestamp } from '@firebase/firestore';
+import { TJobWrite } from './jobTypes';
+import { TEmployerUser } from './userTypes';
 
 export const companySizeList = [
-  { value: 0, label: "1-10" },
-  { value: 1, label: "11-50" },
-  { value: 2, label: "51-100" },
-  { value: 3, label: "101-500" },
-  { value: 4, label: "500+" },
+  { value: 0, label: '1-10' },
+  { value: 1, label: '11-50' },
+  { value: 2, label: '51-100' },
+  { value: 3, label: '101-500' },
+  { value: 4, label: '500+' },
 ];
 
 export type TCompanyBase = {
@@ -39,11 +39,11 @@ export type TInvite = {
 
 export type TCompany = TCompanyRead;
 
-export type TCompanyWithEmployees = Omit<TCompany, "employees"> & {
+export type TCompanyWithEmployees = Omit<TCompany, 'employees'> & {
   employees: TEmployerUser[];
 };
 
-export type TCompanyWithCreator = Omit<TCompany, "creator"> & {
+export type TCompanyWithCreator = Omit<TCompany, 'creator'> & {
   creator: TEmployerUser;
 };
 
@@ -69,9 +69,21 @@ export type TCompanyCreatorData = {
   position: string;
 };
 
-export type TCompanyFormData = Omit<TCompanyBase, "logo"> & {
+export type TCompanyFormData = Omit<TCompanyBase, 'logo'> & {
   invites: string[];
   logo: { originalFile: File; file: File; url: string } | null;
   oldLogo?: { url: string };
   creator?: TCompanyCreatorData;
+  heardAboutUs?: HeardAboutUsOption;
 };
+
+export type HeardAboutUsOption =
+  | 'previousCustomer'
+  | 'socialMedia'
+  | 'friendReferred'
+  | 'coffeeShop'
+  | 'advertisement'
+  | 'radio'
+  | 'newspaper'
+  | 'previouslyCollaborated'
+  | 'notSure';
