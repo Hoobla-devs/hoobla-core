@@ -85,5 +85,6 @@ export type HeardAboutUsOption =
   | 'advertisement'
   | 'radio'
   | 'newspaper'
+  | 'email'
   | 'previouslyCollaborated'
   | 'notSure';
