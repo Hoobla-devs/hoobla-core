@@ -27,6 +27,7 @@ export async function getCompanyById(companyId: string) {
     companyId
   ) as DocumentReference<TCompanyWrite>;
   const company = await _getCompanyFromRef(companyRef);
+
   return company;
 }
 
@@ -92,8 +93,16 @@ export async function getCompany(
 }
 
 export async function getCompanyWithEmployees(
-  companyRef: DocumentReference<TCompanyWrite>
+  companyRef: string | DocumentReference<TCompanyWrite>
 ): Promise<TCompanyWithEmployees> {
+  if (typeof companyRef === 'string') {
+    companyRef = doc(
+      db,
+      'companies',
+      companyRef
+    ) as DocumentReference<TCompanyWrite>;
+  }
+
   const company = await _getCompanyFromRef(companyRef);
 
   const employees = await Promise.all(

@@ -3,32 +3,34 @@ import {
   DocumentReference,
   arrayUnion,
   Timestamp,
-} from "firebase/firestore";
-import { jobConverter } from "../../converters/job";
-import { db } from "../../firebase/init";
+} from 'firebase/firestore';
+import { jobConverter } from '../../converters/job';
+import { db } from '../../firebase/init';
 import {
   TFreelancerApplicant,
+  TJobEmployee,
+  TJobEmployeeWrite,
   TJobRead,
   TJobWithApplicants,
   TJobWrite,
   TLogWrite,
-} from "../../types/jobTypes";
-import { TEmployerUser, TFreelancerUser } from "../../types/userTypes";
-import { updateDoc } from "../updateDoc";
+} from '../../types/jobTypes';
+import { TEmployerUser, TFreelancerUser } from '../../types/userTypes';
+import { updateDoc } from '../updateDoc';
 
 export async function agreeTerms(jobId: string) {
-  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
   const mission = await updateDoc(jobRef, {
     terms: new Date(),
     logs: arrayUnion({
       date: new Date(),
-      status: "termsAccepted",
-      title: "Skilmálar samþykktir",
-      description: "Fyrirtæki hefur samþykkt skilmála Hoobla.",
+      status: 'termsAccepted',
+      title: 'Skilmálar samþykktir',
+      description: 'Fyrirtæki hefur samþykkt skilmála Hoobla.',
     }),
   })
-    .catch((err) => {
+    .catch(err => {
       throw new Error(`Error agreeing to terms: ${err}`);
     })
     .then(() => true);
@@ -41,15 +43,15 @@ export async function selectFreelancer(
   selectedFreelancer: TFreelancerApplicant,
   jobData: Partial<TJobWrite>
 ) {
-  const jobRef = doc(db, "jobs", job.id) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', job.id) as DocumentReference<TJobWrite>;
 
-  const freelancerRef = doc(jobRef, "applicants", selectedFreelancer.id);
+  const freelancerRef = doc(jobRef, 'applicants', selectedFreelancer.id);
 
   const log: TLogWrite = {
     date: Timestamp.fromDate(new Date()),
     status: job.status,
     description: `${selectedFreelancer.general.name} valinn fyrir verkefnið og samningur búinn til`,
-    title: "Giggari valinn",
+    title: 'Giggari valinn',
   };
 
   return await updateDoc(jobRef, {
@@ -57,7 +59,7 @@ export async function selectFreelancer(
     logs: arrayUnion(log),
     ...jobData,
   })
-    .catch((err) => {
+    .catch(err => {
       console.log(`Error selecting freelancer: ${err}`);
       return false;
     })
@@ -69,24 +71,24 @@ export async function addCompanySignature(
   employerUser: TEmployerUser,
   jobData: Partial<TJobWrite>
 ) {
-  const jobRef = doc(db, "jobs", job.id) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', job.id) as DocumentReference<TJobWrite>;
 
   const company = employerUser.employer.company;
 
   const log: TLogWrite = {
     date: Timestamp.fromDate(new Date()),
-    status: "requiresSignature",
+    status: 'requiresSignature',
     description: `${company.name} hefur skrifað undir samning fyrir verkefnið ${job.name}`,
-    title: "Fyrirtæki skrifar undir",
+    title: 'Fyrirtæki skrifar undir',
   };
 
   return await updateDoc(jobRef, {
-    "signatures.employer": {
+    'signatures.employer': {
       date: new Date(),
       id: employerUser.general.uid,
     },
     logs: arrayUnion(log),
-    status: "requiresSignature",
+    status: 'requiresSignature',
     ...jobData,
   })
     .then(() => true)
@@ -98,22 +100,22 @@ export async function addFreelancerSignature(
   freelancerUser: TFreelancerUser,
   jobData: Partial<TJobWrite>
 ) {
-  const jobRef = doc(db, "jobs", job.id) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', job.id) as DocumentReference<TJobWrite>;
 
   const log: TLogWrite = {
     date: Timestamp.fromDate(new Date()),
-    status: "inProgress",
+    status: 'inProgress',
     description: `${freelancerUser.general.name} skrifar undir samning fyrir verkefnið ${job.name}.`,
-    title: "Giggari skrifar undir",
+    title: 'Giggari skrifar undir',
   };
 
   return await updateDoc(jobRef, {
-    "signatures.freelancer": {
+    'signatures.freelancer': {
       date: new Date(),
       id: freelancerUser.general.uid,
     },
     logs: arrayUnion(log),
-    status: "inProgress",
+    status: 'inProgress',
     ...jobData,
   })
     .then(() => true)
@@ -121,15 +123,16 @@ export async function addFreelancerSignature(
 }
 
 export async function finishJob(jobId: string) {
-  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
   return await updateDoc(jobRef, {
-    status: "completed",
+    status: 'completed',
     logs: arrayUnion({
       date: new Date(),
-      status: "completed",
-      title: "Verkefni lokið",
-      description: "Fyrirtæki hefur veitt endurgjöf og verkefni því formlega lokið",
+      status: 'completed',
+      title: 'Verkefni lokið',
+      description:
+        'Fyrirtæki hefur veitt endurgjöf og verkefni því formlega lokið',
     }),
   })
     .then(() => true)
@@ -137,13 +140,13 @@ export async function finishJob(jobId: string) {
 }
 
 export async function updateJob(jobId: string) {
-  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
   return await updateDoc(jobRef, {
-    status: "completed",
+    status: 'completed',
     logs: arrayUnion({
       date: new Date(),
-      status: "completed",
+      status: 'completed',
     }),
   })
     .then(() => true)
@@ -151,10 +154,23 @@ export async function updateJob(jobId: string) {
 }
 
 export async function editJob(jobId: string, jobData: TJobRead) {
-  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
   const jobDataWrite = jobConverter.toFirestore(jobData);
   return await updateDoc(jobRef, jobDataWrite)
+    .then(() => true)
+    .catch(() => false);
+}
+
+export async function updateJobEmployeeList(
+  jobId: string,
+  employees: TJobEmployee[]
+) {
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
+
+  return await updateDoc(jobRef, {
+    employees,
+  })
     .then(() => true)
     .catch(() => false);
 }
