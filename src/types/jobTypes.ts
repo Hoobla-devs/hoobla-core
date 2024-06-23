@@ -16,6 +16,7 @@ export type TJobBase = {
   creator: DocumentReference<TEmployerUser>;
   freelancers: DocumentReference<TApplicant>[]; // Þau sem taka verkið að sér
   selectedApplicants: DocumentReference<TApplicant>[]; // Þau sem Hoobla 3-5 velja
+  employees?: TJobEmployeeWrite[];
   notSelectedReason?: TReasonId;
 } & TTagsId;
 
@@ -45,6 +46,7 @@ export type TJobEmployeeWrite = {
 export type TJobEmployee = {
   id: string;
   name: string;
+  photo?: string;
   email: string;
   position: string;
   permission: TJobEmployeePermission;
@@ -56,7 +58,6 @@ export type TJobRead = TJobBase & {
   logs: TLog[];
   jobInfo: TJobInfoRead;
   signatures: TSignatures | null;
-  employees?: TJobEmployee[];
 };
 
 export type TJob = TJobRead & {
@@ -64,10 +65,16 @@ export type TJob = TJobRead & {
   applicants?: TApplicant[]; // TODO: breyta í map?   // Allir sem hafa sent inn umsókn
 };
 
+export type TJobWithEmployeesAndApplicants = Omit<
+  TJob,
+  'employees' | 'applicants'
+> & {
+  employees: TJobEmployee[];
+  applicants: TFreelancerApplicant[];
+};
+
 export type TJobWithApplicants = Omit<TJob, 'applicants'> & {
   applicants: TFreelancerApplicant[];
-  // selectedApplicants: (TFreelancerApplicant)[];
-  // freelancers: (TFreelancerApplicant)[];
 };
 
 export type TJobWithCompany = Omit<TJob, 'company'> & {

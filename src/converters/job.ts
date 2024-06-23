@@ -2,21 +2,20 @@ import {
   QueryDocumentSnapshot,
   SnapshotOptions,
   Timestamp,
-} from "firebase/firestore";
+} from 'firebase/firestore';
 import {
   TApplicantRead,
   TApplicantWrite,
   TJobRead,
   TJobWrite,
-} from "../types/jobTypes";
+} from '../types/jobTypes';
 
 export const jobConverter = {
   toFirestore(job: TJobRead): TJobWrite {
     // remove id and applicants from job
     const { terms, logs, jobInfo, id, signatures, ...data } = job;
-
     // convert the terms to a firestore timestamp
-    const newLogs = logs.map((log) => {
+    const newLogs = logs.map(log => {
       return {
         ...log,
         date: Timestamp.fromDate(log.date),
@@ -53,6 +52,7 @@ export const jobConverter = {
         ...jobInfoData,
         ...(deadline && { deadline: Timestamp.fromDate(deadline) }),
       },
+      employees: [],
     };
   },
 
@@ -63,14 +63,14 @@ export const jobConverter = {
     try {
       const snapData = snapshot.data(options);
       const { terms, logs, jobInfo, signatures, ...data } = snapData;
-  
-      const newLogs = logs.map((log) => {
+
+      const newLogs = logs.map(log => {
         return {
           ...log,
           date: log.date.toDate(),
         };
       });
-  
+
       const signaturesRead = signatures
         ? {
             ...signatures,
@@ -88,9 +88,9 @@ export const jobConverter = {
             }),
           }
         : null;
-  
+
       const { deadline, ...jobInfoData } = jobInfo;
-  
+
       return {
         ...data,
         id: snapshot.id,
@@ -103,9 +103,8 @@ export const jobConverter = {
         },
       };
     } catch (error) {
-      console.log("Error on: ", snapshot.id);
-      throw new Error("converter error!")
-      
+      console.log('Error on: ', snapshot.id);
+      throw new Error('converter error!');
     }
   },
 };
@@ -118,7 +117,7 @@ export const applicantConverter = {
       offer: {
         ...applicant.offer,
         date: Timestamp.fromDate(applicant.offer.date),
-        acceptedRate: "",
+        acceptedRate: '',
       },
     };
   },

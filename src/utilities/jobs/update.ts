@@ -168,8 +168,16 @@ export async function updateJobEmployeeList(
 ) {
   const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
+  const updatedEmployess = employees.map(employee => {
+    return {
+      user: doc(db, 'users', employee.id),
+      position: employee.position,
+      permission: employee.permission,
+    } as TJobEmployeeWrite;
+  });
+
   return await updateDoc(jobRef, {
-    employees,
+    employees: updatedEmployess,
   })
     .then(() => true)
     .catch(() => false);

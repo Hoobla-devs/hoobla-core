@@ -7,10 +7,10 @@ import {
   getDoc,
   doc,
   CollectionReference,
-} from "firebase/firestore";
-import { jobConverter } from "../../converters/job";
-import { db } from "../../firebase/init";
-import { TCompany } from "../../types/companyTypes";
+} from 'firebase/firestore';
+import { jobConverter } from '../../converters/job';
+import { db } from '../../firebase/init';
+import { TCompany } from '../../types/companyTypes';
 import {
   TApplicant,
   TApplicantWrite,
@@ -20,25 +20,49 @@ import {
   TJobWithCompany,
   TJobWrite,
   TOffer,
-} from "../../types/jobTypes";
-import { getCompany } from "../companies/get";
-import { getFreelancer } from "../users/get";
-import { getAllApplicants, getApplicant } from "./applicants/get";
+  TJobEmployeeWrite,
+  TJobEmployee,
+} from '../../types/jobTypes';
+import { getCompany } from '../companies/get';
+import { getFreelancer, getUserById, getUserGeneralInfo } from '../users/get';
+import { getAllApplicants, getApplicant } from './applicants/get';
 
 async function _getJobFromRef(jobRef: DocumentReference<TJobWrite>) {
   const jobSnap = await getDoc(jobRef.withConverter(jobConverter));
   if (!jobSnap.exists()) {
-    throw new Error("Job does not exist.");
+    throw new Error('Job does not exist.');
   }
   const jobData = jobSnap.data();
   return jobData;
 }
 
+// Get job with applicants, employees, and company
+export async function getJobWithApplicantsAndEmployees(
+  ref: string | DocumentReference<TJobWrite>
+) {
+  const job = await getJobWithApplicants(ref);
+
+  const employees: TJobEmployee[] = await Promise.all(
+    job.employees?.map(async (employee: TJobEmployeeWrite) => {
+      const user = await getUserGeneralInfo(employee.user.id);
+      return {
+        id: employee.user.id,
+        name: user.name,
+        email: user.email,
+        position: employee.position,
+        permission: employee.permission,
+      };
+    }) || []
+  );
+
+  return { ...job, employees };
+}
+
 export async function getJob(
   ref: string | DocumentReference<TJobWrite>
 ): Promise<TJob> {
-  if (typeof ref === "string") {
-    ref = doc(db, "jobs", ref) as DocumentReference<TJobWrite>;
+  if (typeof ref === 'string') {
+    ref = doc(db, 'jobs', ref) as DocumentReference<TJobWrite>;
   }
 
   const job = await _getJobFromRef(ref);
@@ -52,8 +76,8 @@ export async function getJobWithCompany(
   ref: string | DocumentReference<TJobWrite>,
   applicantId?: string
 ): Promise<TJobWithCompany> {
-  if (typeof ref === "string") {
-    ref = doc(db, "jobs", ref) as DocumentReference<TJobWrite>;
+  if (typeof ref === 'string') {
+    ref = doc(db, 'jobs', ref) as DocumentReference<TJobWrite>;
   }
 
   const job = await _getJobFromRef(ref);
@@ -64,7 +88,7 @@ export async function getJobWithCompany(
   if (applicantId) {
     // get applicants
     const applicant = await getApplicant(
-      doc(ref, "applicants", applicantId) as DocumentReference<TApplicantWrite>
+      doc(ref, 'applicants', applicantId) as DocumentReference<TApplicantWrite>
     ).catch(() => null);
 
     if (applicant) {
@@ -80,7 +104,7 @@ export async function getJobWithCompany(
     const applicant = await getApplicant(
       doc(
         ref,
-        "applicants",
+        'applicants',
         selectedApplicantRef.id
       ) as DocumentReference<TApplicantWrite>
     ).catch(() => null);
@@ -101,8 +125,8 @@ export async function getJobWithCompany(
 export async function getJobWithApplicants(
   ref: string | DocumentReference<TJobWrite>
 ): Promise<TJobWithApplicants> {
-  if (typeof ref === "string") {
-    ref = doc(db, "jobs", ref) as DocumentReference<TJobWrite>;
+  if (typeof ref === 'string') {
+    ref = doc(db, 'jobs', ref) as DocumentReference<TJobWrite>;
   }
 
   const job = await _getJobFromRef(ref);
@@ -110,14 +134,14 @@ export async function getJobWithApplicants(
   const applicants = await getAllApplicants(
     collection(
       db,
-      "jobs",
+      'jobs',
       ref.id,
-      "applicants"
+      'applicants'
     ) as CollectionReference<TApplicantWrite>
   );
 
   const freelancerApplicants: TFreelancerApplicant[] = await Promise.all(
-    applicants.map(async (a) => {
+    applicants.map(async a => {
       const freelancer = await getFreelancer(a.id);
       return { ...a, ...freelancer };
     })
@@ -130,15 +154,15 @@ export async function getJobWithSelectedApplicant(
   ref: string | DocumentReference<TJobWrite>,
   applicantId: string
 ): Promise<TJobWithApplicants> {
-  if (typeof ref === "string") {
-    ref = doc(db, "jobs", ref) as DocumentReference<TJobWrite>;
+  if (typeof ref === 'string') {
+    ref = doc(db, 'jobs', ref) as DocumentReference<TJobWrite>;
   }
 
   const applicantRef = doc(
     db,
-    "jobs",
+    'jobs',
     ref.id,
-    "applicants",
+    'applicants',
     applicantId
   ) as DocumentReference<TApplicantWrite>;
 
@@ -159,22 +183,21 @@ export async function getJobWithSelectedApplicant(
 export async function getApprovedJobs(): Promise<TJobWithCompany[]> {
   const querySnapshot = await getDocs(
     query(
-      collection(db, "jobs"),
-      where("status", "==", "approved"),
-      where("documentId", "==", null)
+      collection(db, 'jobs'),
+      where('status', '==', 'approved'),
+      where('documentId', '==', null)
     )
   );
 
-  const approvedJobsPromise = querySnapshot.docs.map(async (doc) => {
+  const approvedJobsPromise = querySnapshot.docs.map(async doc => {
     const job = await _getJobFromRef(doc.ref as DocumentReference<TJobWrite>);
     const company: TCompany = await getCompany(job.company);
 
     return { ...job, applicants: [], company };
   });
 
-  const approvedJobs: TJobWithCompany[] = await Promise.all(
-    approvedJobsPromise
-  );
+  const approvedJobs: TJobWithCompany[] =
+    await Promise.all(approvedJobsPromise);
 
   return approvedJobs;
 }

@@ -152,6 +152,28 @@ export async function addEmployerDataAndCompanyToUser(
     .then(() => true);
 }
 
+export async function removeEmployerDataFromUser(uid: string, cid: string) {
+  const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
+  const userSnapshot = await getDoc(userRef);
+  const userData = userSnapshot.data() as TUserWrite;
+
+  const newEmployers =
+    userData.employers?.filter(employer => employer.company.id !== cid) || [];
+
+  if (userData.employer?.company.id === cid) {
+    return updateDoc(userRef, {
+      employer: undefined,
+      employers: newEmployers,
+    })
+      .catch(error => {
+        throw new Error('Error removing employer data from user: ' + error);
+      })
+      .then(() => true);
+  } else {
+    return false;
+  }
+}
+
 export async function updateFreelancerResume(
   freelancerUser: TFreelancerUser,
   freelancerFormData: TFreelancerFormData
