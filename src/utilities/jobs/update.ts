@@ -3,6 +3,10 @@ import {
   DocumentReference,
   arrayUnion,
   Timestamp,
+  collection,
+  setDoc,
+  deleteDoc,
+  getDocs,
 } from 'firebase/firestore';
 import { jobConverter } from '../../converters/job';
 import { db } from '../../firebase/init';
@@ -73,7 +77,7 @@ export async function addCompanySignature(
 ) {
   const jobRef = doc(db, 'jobs', job.id) as DocumentReference<TJobWrite>;
 
-  const company = employerUser.employer.company;
+  const company = employerUser.activeCompany.company;
 
   const log: TLogWrite = {
     date: Timestamp.fromDate(new Date()),
@@ -167,18 +171,39 @@ export async function updateJobEmployeeList(
   employees: TJobEmployee[]
 ) {
   const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
+  const employeesCollectionRef = collection(jobRef, 'employees');
 
-  const updatedEmployess = employees.map(employee => {
-    return {
-      user: doc(db, 'users', employee.id),
-      position: employee.position,
-      permission: employee.permission,
-    } as TJobEmployeeWrite;
-  });
+  try {
+    // Fetch existing employee documents
+    const existingDocsSnapshot = await getDocs(employeesCollectionRef);
+    const existingDocs = existingDocsSnapshot.docs.map(doc => doc.id);
 
-  return await updateDoc(jobRef, {
-    employees: updatedEmployess,
-  })
-    .then(() => true)
-    .catch(() => false);
+    // Determine which documents need to be deleted
+    const newEmployeeIds = employees.map(employee => employee.id);
+    const toDelete = existingDocs.filter(id => !newEmployeeIds.includes(id));
+
+    // Delete unwanted employee documents
+    await Promise.all(
+      toDelete.map(async id => {
+        const employeeRef = doc(employeesCollectionRef, id);
+        await deleteDoc(employeeRef);
+      })
+    );
+
+    // Add/update new employee documents
+    await Promise.all(
+      employees.map(async employee => {
+        const employeeRef = doc(
+          employeesCollectionRef,
+          employee.id
+        ) as DocumentReference<TJobEmployeeWrite>;
+        await setDoc(employeeRef, { permission: employee.permission });
+      })
+    );
+
+    return true;
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
 }

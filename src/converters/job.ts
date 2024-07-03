@@ -6,6 +6,8 @@ import {
 import {
   TApplicantRead,
   TApplicantWrite,
+  TJobEmployeeRead,
+  TJobEmployeeWrite,
   TJobRead,
   TJobWrite,
 } from '../types/jobTypes';
@@ -52,7 +54,6 @@ export const jobConverter = {
         ...jobInfoData,
         ...(deadline && { deadline: Timestamp.fromDate(deadline) }),
       },
-      employees: [],
     };
   },
 
@@ -133,6 +134,25 @@ export const applicantConverter = {
         ...snapData.offer,
         ...(snapData.offer.date && { date: snapData.offer.date.toDate() }),
       },
+    };
+  },
+};
+
+export const employeeConverter = {
+  toFirestore(employee: TJobEmployeeRead): TJobEmployeeWrite {
+    const { id, ...employeeData } = employee;
+    return {
+      ...employeeData,
+    };
+  },
+  fromFirestore(
+    snapshot: QueryDocumentSnapshot<TJobEmployeeWrite>,
+    options: SnapshotOptions
+  ): TJobEmployeeRead {
+    const snapData = snapshot.data(options);
+    return {
+      ...snapData,
+      id: snapshot.id,
     };
   },
 };

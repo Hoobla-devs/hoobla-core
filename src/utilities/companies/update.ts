@@ -8,12 +8,14 @@ import {
   TInvite,
 } from '../../types/companyTypes';
 import { TEmployerUser } from '../../types/userTypes';
-import { getJobWithApplicantsAndEmployees } from '../jobs/get';
+import {
+  getJobWithApplicantsAndEmployees,
+  getJobWithEmployees,
+} from '../jobs/get';
 import { updateJobEmployeeList } from '../jobs/update';
 import { uploadPhoto } from '../storage/add';
 import { deletePhoto } from '../storage/delete';
 import { updateDoc } from '../updateDoc';
-import { removeEmployerDataFromUser } from '../users/update';
 import { getCompany } from './get';
 import { removeCompanyEmployee } from './remove';
 
@@ -72,28 +74,6 @@ export async function updateCompany(
   )
     .then(() => true)
     .catch(() => false);
-}
-
-export async function removeEmployeeFromCompany(cid: string, uid: string) {
-  const company = await getCompany(cid);
-
-  // Go through all jobs for the company and remove the employee from the jobs
-  await Promise.all(
-    company.jobs.map(async job => {
-      const jobData = await getJobWithApplicantsAndEmployees(job.id);
-
-      const newEmployees = jobData.employees.filter(
-        employee => employee.id !== uid
-      );
-      await updateJobEmployeeList(job.id, newEmployees);
-    })
-  );
-
-  // Remove the employee from the company employees list
-  await removeCompanyEmployee(cid, uid);
-
-  // Remove company from employee profile
-  await removeEmployerDataFromUser(uid, cid);
 }
 
 export async function updateInvitationList(

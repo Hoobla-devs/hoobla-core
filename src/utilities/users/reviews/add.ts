@@ -1,19 +1,19 @@
-import { addDoc, collection } from "firebase/firestore";
-import { reviewConverter } from "../../../converters/user";
-import { db } from "../../../firebase/init";
-import { TCompany } from "../../../types/companyTypes";
-import { TJob } from "../../../types/jobTypes";
-import { TReview } from "../../../types/userTypes";
+import { addDoc, collection } from 'firebase/firestore';
+import { reviewConverter } from '../../../converters/user';
+import { db } from '../../../firebase/init';
+import { TCompany } from '../../../types/companyTypes';
+import { TJob, TJobWithEmployees } from '../../../types/jobTypes';
+import { TReview } from '../../../types/userTypes';
 
 export async function addReview(
-  job: TJob,
+  job: TJob | TJobWithEmployees,
   company: TCompany,
   employerName: string,
   reviewData: { stars: number; text: string }
 ) {
   const review: TReview = {
     ...reviewData,
-    id: "",
+    id: '',
     jobTitle: job.name,
     jobDescription: job.description,
     jobInfo: {
@@ -32,7 +32,7 @@ export async function addReview(
   };
 
   return await addDoc(
-    collection(db, "users", job.freelancers[0].id, "reviews").withConverter(
+    collection(db, 'users', job.freelancers[0].id, 'reviews').withConverter(
       reviewConverter
     ),
     review

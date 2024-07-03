@@ -1,14 +1,14 @@
-import { DocumentReference, Timestamp } from "firebase/firestore";
-import { TEducation, TExperience, TGender } from "./baseTypes";
-import { TCompany, TCompanyWrite } from "./companyTypes";
-import { TApplicant, TJobWrite } from "./jobTypes";
+import { DocumentReference, Timestamp } from 'firebase/firestore';
+import { TEducation, TExperience, TGender } from './baseTypes';
+import { TCompany, TCompanyWrite } from './companyTypes';
+import { TApplicant, TJobWrite } from './jobTypes';
 
 export type TFreelancerStatus =
-  | "inReview"
-  | "approved"
-  | "denied"
-  | "requiresSignature"
-  | "inactive";
+  | 'inReview'
+  | 'approved'
+  | 'denied'
+  | 'requiresSignature'
+  | 'inactive';
 
 export type TUserBase = {
   deleted?: boolean;
@@ -27,8 +27,8 @@ export type TFreelancerUser = TUserBase & {
 };
 
 export type TEmployerUser = TUserBase & {
-  employer: TEmployer; // required
-  employers?: TEmployer[]; // Modified this line to be an array
+  activeCompany: TEmployer;
+  companies?: TEmployer[];
 };
 
 export type TUserRead = {
@@ -36,8 +36,8 @@ export type TUserRead = {
   general: TGeneral;
   freelancer?: TFreelancerRead;
   freelancerForm?: TSavedFreelancerFormData;
-  employer?: TEmployerRead;
-  employers?: TEmployerRead[]; // Added this line
+  activeCompany?: TEmployerRead;
+  companies?: TEmployerRead[]; // Added this line
   settings?: {
     SMSNotifications?: boolean;
     deniedOfferMails?: boolean;
@@ -46,9 +46,12 @@ export type TUserRead = {
   };
 };
 
-export type TUser = Omit<TUserRead, "employer" | "employers" | "freelancer"> & {
-  employer?: TEmployer;
-  employers?: TEmployer[]; // Modified this line to be an array
+export type TUser = Omit<
+  TUserRead,
+  'activeCompany' | 'companies' | 'freelancer'
+> & {
+  activeCompany?: TEmployer;
+  companies?: TEmployer[]; // Modified this line to be an array
   freelancer?: TFreelancer;
 };
 
@@ -57,8 +60,8 @@ export type TUserWrite = {
   general: TGeneralWrite;
   freelancer?: TFreelancerWrite;
   freelancerForm?: TSavedFreelancerFormData;
-  employer?: TEmployerWrite;
-  employers?: TEmployerWrite[]; // Already present
+  activeCompany?: TEmployerWrite;
+  companies?: TEmployerWrite[]; // Already present
   settings?: {
     SMSNotifications?: boolean;
     deniedOfferMails?: boolean;
@@ -72,9 +75,10 @@ export type TGeneralWrite = {
   phone: string;
   ssn: string;
   email: string;
+  photo?: { url: string; originalUrl: string };
   createdAt: Timestamp;
   updatedAt?: Timestamp;
-  lang: "is" | "en";
+  lang: 'is' | 'en';
 };
 
 export type TApplicantUser = TUserBase & TApplicant;
@@ -84,10 +88,11 @@ export type TGeneral = {
   name: string;
   phone: string;
   ssn: string;
+  photo?: { url: string; originalUrl: string };
   email: string;
   createdAt: Date;
   updatedAt?: Date;
-  lang: "is" | "en";
+  lang: 'is' | 'en';
 };
 
 export type TFreelancerBase = {
@@ -112,7 +117,7 @@ export type TFreelancerRead = TFreelancerBase & {
   inactiveSince?: Date;
 };
 
-export type TFreelancer = Omit<TFreelancerRead, "selectedReviews"> & {
+export type TFreelancer = Omit<TFreelancerRead, 'selectedReviews'> & {
   selectedReviews?: TReview[];
 };
 
@@ -182,7 +187,7 @@ export type TEmployerWrite = {
 
 export type TSavedFreelancerFormData = Omit<
   TFreelancerFormData,
-  "jobTitles" | "skills" | "languages"
+  'jobTitles' | 'skills' | 'languages'
 > & {
   jobTitles: string[];
   skills: string[];
@@ -193,7 +198,7 @@ export type TFreelancerFormData = {
   name: string;
   phone: string;
   ssn: string;
-  gender: TGender | "";
+  gender: TGender | '';
   oldPhoto?: { url: string; originalUrl: string } | null;
   photo?: { originalFile: File; file: File; url: string } | null;
   company: {
@@ -238,6 +243,8 @@ export type TEmployerFormData = {
   ssn?: string;
   phone: string;
   position: string;
+  oldPhoto?: { url: string; originalUrl: string } | null;
+  photo?: { originalFile: File; file: File; url: string } | null;
 };
 
 // * Review

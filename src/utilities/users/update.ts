@@ -4,6 +4,7 @@ import {
   Timestamp,
   arrayUnion,
   getDoc,
+  runTransaction,
 } from 'firebase/firestore';
 import { userConverter } from '../../converters/user';
 import { db } from '../../firebase/init';
@@ -142,36 +143,14 @@ export async function addEmployerDataAndCompanyToUser(
     'general.name': employerData.name,
     'general.ssn': employerData.ssn,
     'general.phone': employerData.phone,
-    'employer.position': employerData.position,
-    'employer.company': companyRef,
-    employers: arrayUnion({ ...employerData, company: companyRef }),
+    'activeCompany.position': employerData.position,
+    'activeCompany.company': companyRef,
+    companies: arrayUnion({ ...employerData, company: companyRef }),
   })
     .catch(error => {
       throw new Error('Error adding employer data to user: ' + error);
     })
     .then(() => true);
-}
-
-export async function removeEmployerDataFromUser(uid: string, cid: string) {
-  const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
-  const userSnapshot = await getDoc(userRef);
-  const userData = userSnapshot.data() as TUserWrite;
-
-  const newEmployers =
-    userData.employers?.filter(employer => employer.company.id !== cid) || [];
-
-  if (userData.employer?.company.id === cid) {
-    return updateDoc(userRef, {
-      employer: undefined,
-      employers: newEmployers,
-    })
-      .catch(error => {
-        throw new Error('Error removing employer data from user: ' + error);
-      })
-      .then(() => true);
-  } else {
-    return false;
-  }
 }
 
 export async function updateFreelancerResume(
@@ -244,8 +223,10 @@ export async function updateEmployerInfo(
   return await updateDoc(userRef, {
     'general.name': employerFormData.name,
     'general.phone': employerFormData.phone,
-    'employer.position': employerFormData.position,
+    'activeCompany.position': employerFormData.position,
     'general.updatedAt': new Date(),
+    'general.photo.originalUrl': employerFormData.oldPhoto?.originalUrl,
+    'general.photo.url': employerFormData.oldPhoto?.url,
   })
     .then(() => true)
     .catch(() => false);
@@ -261,8 +242,8 @@ export async function updateUserEmployerData(uid: string, employer: TEmployer) {
 
   try {
     await updateDoc(userRef, {
-      'employer.company': companyRef,
-      'employer.position': employer.position,
+      'activeCompany.company': companyRef,
+      'activeCompany.position': employer.position,
     });
 
     return true;
@@ -272,7 +253,6 @@ export async function updateUserEmployerData(uid: string, employer: TEmployer) {
   }
 }
 
-// When a user registers as an employer, this function is called to add the user to the company's employees list.
 export async function registerEmployerUser(
   cid: string,
   uid: string,
@@ -287,44 +267,51 @@ export async function registerEmployerUser(
   const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
 
   try {
-    const companySnapshot = await getDoc(companyRef);
-    const companyData = companySnapshot.data() as TCompanyWrite;
+    await runTransaction(db, async transaction => {
+      const companySnapshot = await transaction.get(companyRef);
+      const companyData = companySnapshot.data() as TCompanyWrite;
 
-    const isUserAlreadyEmployed = companyData.employees.some(
-      employee => employee.id === uid
-    );
-    // Remove invite from company invites list
-    const inviteList = companyData.invites.filter(
-      invite => invite.token !== token
-    );
+      const isUserAlreadyEmployed = companyData.employees.some(
+        employee => employee.id === uid
+      );
 
-    // Update the company employees list if applicable and remove invite
-    await updateDoc(companyRef, {
-      employees: isUserAlreadyEmployed
-        ? companyData.employees
-        : arrayUnion(userRef),
-      invites: inviteList,
-    });
+      // Remove invite from company invites list
+      const inviteList = companyData.invites.filter(
+        invite => invite.token !== token
+      );
 
-    if (isUserAlreadyEmployed) {
-      return true;
-    }
+      // Update the company employees list if applicable
+      if (!isUserAlreadyEmployed) {
+        transaction.update(companyRef, {
+          employees: arrayUnion(userRef),
+        });
+      }
 
-    // Update the user with the new employer info
-    await updateDoc(userRef, {
-      employer: {
-        company: companyRef,
-        position: data.position,
-      },
-      employers: arrayUnion({
-        company: companyRef,
-        position: data.position,
-      }),
-      'general.name': data.name,
-      'general.phone': data.phone,
-      'general.ssn': data.ssn,
-      'general.createdAt': new Date(),
-      'general.updatedAt': new Date(),
+      // Update the company invites list
+      transaction.update(companyRef, {
+        invites: inviteList,
+      });
+
+      // Update the user with the new employer info
+      transaction.update(userRef, {
+        activeCompany: {
+          company: companyRef,
+          position: data.position,
+        },
+        companies: arrayUnion({
+          company: companyRef,
+          position: data.position,
+        }),
+        'general.name': data.name,
+        'general.phone': data.phone,
+        'general.ssn': data.ssn,
+        'general.createdAt': new Date(),
+        'general.updatedAt': new Date(),
+        ...(data.oldPhoto && {
+          'general.photo.url': data.oldPhoto.url,
+          'general.photo.originalUrl': data.oldPhoto.originalUrl,
+        }),
+      });
     });
 
     return true; // Success

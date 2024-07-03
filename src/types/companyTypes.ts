@@ -39,8 +39,16 @@ export type TInvite = {
 
 export type TCompany = TCompanyRead;
 
+export type TCompanyEmployee = {
+  id: string;
+  name: string;
+  email: string;
+  position: string;
+  photo?: string;
+};
+
 export type TCompanyWithEmployees = Omit<TCompany, 'employees'> & {
-  employees: TEmployerUser[];
+  employees: TCompanyEmployee[];
 };
 
 export type TCompanyWithCreator = Omit<TCompany, 'creator'> & {

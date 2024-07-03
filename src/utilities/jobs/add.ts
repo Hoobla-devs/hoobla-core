@@ -4,21 +4,24 @@ import {
   collection,
   doc,
   DocumentReference,
+  setDoc,
   Timestamp,
-} from "firebase/firestore";
-import { jobConverter } from "../../converters/job";
-import { db } from "../../firebase/init";
-import { TCompanyWrite } from "../../types/companyTypes";
+} from 'firebase/firestore';
+import { jobConverter } from '../../converters/job';
+import { db } from '../../firebase/init';
+import { TCompanyWrite } from '../../types/companyTypes';
 import {
   TJob,
+  TJobEmployeeWrite,
   TJobFormData,
   TJobRead,
   TJobWrite,
   TLog,
   TLogWrite,
-} from "../../types/jobTypes";
-import { TEmployerUser } from "../../types/userTypes";
-import { updateDoc } from "../updateDoc";
+} from '../../types/jobTypes';
+import { TEmployerUser } from '../../types/userTypes';
+import { updateDoc } from '../updateDoc';
+import { updateJobEmployeeList } from './update';
 
 function _getOfferDeadlineDate(date: Date, daysToAdd: number) {
   let workingDaysToAdd = daysToAdd;
@@ -61,13 +64,14 @@ export function convertFormJobToJobRead(
   }
 
   const job: TJobRead = {
-    id: "",
+    id: '',
     name: formJob.name,
     description: formJob.description,
-    type: formJob.type ? formJob.type : "notSure",
+    type: formJob.type ? formJob.type : 'notSure',
     status: formJob.status,
-    company: doc(db, "companies", company) as DocumentReference<TCompanyWrite>,
-    creator: doc(db, "users", creator) as DocumentReference<TEmployerUser>,
+    company: doc(db, 'companies', company) as DocumentReference<TCompanyWrite>,
+    creator: doc(db, 'users', creator) as DocumentReference<TEmployerUser>,
+    employees: [],
     selectedApplicants: [],
     documentId: null,
     freelancers: [],
@@ -79,12 +83,12 @@ export function convertFormJobToJobRead(
     terms: null,
     logs: formJob.logs || [],
     jobInfo: {
-      start: formJob.jobInfo.start || "",
-      end: formJob.jobInfo.end || "",
+      start: formJob.jobInfo.start || '',
+      end: formJob.jobInfo.end || '',
       percentage:
-        formJob.type === "partTime" ? formJob.jobInfo.percentage : null,
+        formJob.type === 'partTime' ? formJob.jobInfo.percentage : null,
       numOfHours:
-        formJob.type === "timeframe"
+        formJob.type === 'timeframe'
           ? parseInt(formJob.jobInfo.numOfHours!) || null
           : null,
       deadline: _getOfferDeadlineDate(
@@ -99,30 +103,39 @@ export function convertFormJobToJobRead(
 
 export async function createJob(data: TJobRead) {
   const log: TLog = {
-    status: "inReview",
+    status: 'inReview',
     date: new Date(),
-    title: "Verkefni stofnað",
-    description: "Verkefni stofnað og bíður samþykkis",
+    title: 'Verkefni stofnað',
+    description: 'Verkefni stofnað og bíður samþykkis',
   };
 
   data.logs.push(log);
 
   const jobRef = await addDoc(
-    collection(db, "jobs").withConverter(jobConverter),
+    collection(db, 'jobs').withConverter(jobConverter),
     data
   )
-    .catch((err) => {
+    .catch(err => {
       throw new Error(`Error adding job to user: ${err}`);
     })
-    .then((ref) => {
+    .then(ref => {
       return ref as DocumentReference<TJobWrite>;
     });
 
+  // Add creator to job employees
   const companyRef = data.company;
+  const employeesCollectionRef = collection(jobRef, 'employees');
+  const employeeRef = doc(
+    employeesCollectionRef,
+    data.creator.id
+  ) as DocumentReference<TJobEmployeeWrite>;
 
+  await setDoc(employeeRef, { permission: 'edit' });
+
+  // Add job to company
   await updateDoc(companyRef, {
     jobs: arrayUnion(jobRef),
-  }).catch((err) => {
+  }).catch(err => {
     throw new Error(`Error adding job to company: ${err}`);
   });
 

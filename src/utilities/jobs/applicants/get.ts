@@ -4,10 +4,9 @@ import {
   DocumentReference,
   getDoc,
   getDocs,
-} from "firebase/firestore";
-import { applicantConverter } from "../../../converters/job";
-import { db } from "../../../firebase/init";
-import { TApplicantWrite } from "../../../types/jobTypes";
+} from 'firebase/firestore';
+import { applicantConverter } from '../../../converters/job';
+import { TApplicantWrite } from '../../../types/jobTypes';
 
 async function _getApplicantFromRef(
   applicantRef: DocumentReference<TApplicantWrite>
@@ -16,7 +15,7 @@ async function _getApplicantFromRef(
     applicantRef.withConverter(applicantConverter)
   );
   if (!applicantSnap.exists()) {
-    throw new Error("Applicant does not exist.");
+    throw new Error('Applicant does not exist.');
   }
   const applicantData = applicantSnap.data();
   return applicantData;
@@ -26,7 +25,7 @@ export async function getAllApplicants(
   ref: CollectionReference<TApplicantWrite>
 ) {
   const applicantsSnap = await getDocs(ref.withConverter(applicantConverter));
-  const applicants = applicantsSnap.docs.map((doc) => doc.data());
+  const applicants = applicantsSnap.docs.map(doc => doc.data());
   return applicants;
 }
 

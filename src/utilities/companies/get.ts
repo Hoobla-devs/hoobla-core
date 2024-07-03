@@ -11,6 +11,7 @@ import {
 import { companyConverter } from '../../converters/company';
 import { db } from '../../firebase/init';
 import {
+  TCompanyEmployee,
   TCompanyRead,
   TCompanyWithCreator,
   TCompanyWithEmployees,
@@ -36,7 +37,7 @@ async function _getCompanyFromRef(
 ): Promise<TCompanyRead> {
   const companySnap = await getDoc(companyRef.withConverter(companyConverter));
   if (!companySnap.exists()) {
-    throw new Error('Job does not exist.');
+    throw new Error('Company does not exist.');
   }
   const companyData = companySnap.data();
   return companyData;
@@ -105,14 +106,30 @@ export async function getCompanyWithEmployees(
 
   const company = await _getCompanyFromRef(companyRef);
 
-  const employees = await Promise.all(
+  const employees: Array<TCompanyEmployee | undefined> = await Promise.all(
     company.employees.map(async empRef => {
-      const employer = await getEmployer(empRef.id);
-      return employer;
+      try {
+        const employer = await getEmployer(empRef.id);
+        return {
+          id: empRef.id,
+          name: employer.general.name,
+          email: employer.general.email,
+          photo: employer.general.photo?.url,
+          position: employer.activeCompany.position,
+        };
+      } catch (err) {
+        console.error(`Failed to fetch employer with id ${empRef.id}:`, err);
+        return undefined;
+      }
     })
   );
 
-  return { ...company, employees: employees };
+  // Filter out undefined values from the employees array
+  const validEmployees = employees.filter(
+    emp => emp !== undefined
+  ) as TCompanyEmployee[];
+
+  return { ...company, employees: validEmployees };
 }
 
 export async function getCompanyWithCreator(
