@@ -50,7 +50,6 @@ export type TJobEmployee = {
   name: string;
   photo?: string;
   email: string;
-  permission: TJobEmployeePermission;
 };
 
 export type TJobRead = TJobBase & {

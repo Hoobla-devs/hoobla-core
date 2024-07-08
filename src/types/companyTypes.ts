@@ -1,6 +1,6 @@
 import { DocumentReference, Timestamp } from '@firebase/firestore';
 import { TJobWrite } from './jobTypes';
-import { TEmployerUser } from './userTypes';
+import { TEmployerRole, TEmployerUser } from './userTypes';
 
 export const companySizeList = [
   { value: 0, label: '1-10' },
@@ -34,6 +34,9 @@ export type TCompanyRead = TCompanyBase & {
 export type TInvite = {
   token: string;
   email: string;
+  name: string;
+  position: string;
+  role: TEmployerRole;
   date: Date;
 };
 
@@ -44,6 +47,8 @@ export type TCompanyEmployee = {
   name: string;
   email: string;
   position: string;
+  phone: string;
+  role: TEmployerRole;
   photo?: string;
 };
 

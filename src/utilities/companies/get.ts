@@ -93,6 +93,41 @@ export async function getCompany(
   return company;
 }
 
+export async function getCompanyEmployee(
+  companyRef: string | DocumentReference<TCompanyWrite>,
+  employeeId: string
+): Promise<TCompanyEmployee> {
+  if (typeof companyRef === 'string') {
+    companyRef = doc(
+      db,
+      'companies',
+      companyRef
+    ) as DocumentReference<TCompanyWrite>;
+  }
+
+  const employeeRef = doc(companyRef, 'employees', employeeId);
+  const [employeeSnap, userGeneralInfo] = await Promise.all([
+    getDoc(employeeRef),
+    getUserGeneralInfo(employeeId),
+  ]);
+
+  if (!employeeSnap.exists()) {
+    throw new Error('Employee does not exist.');
+  }
+
+  const employeeData = employeeSnap.data();
+
+  return {
+    id: employeeSnap.id,
+    name: userGeneralInfo.name,
+    email: userGeneralInfo.email,
+    phone: userGeneralInfo.phone,
+    photo: userGeneralInfo.photo?.url || '',
+    position: employeeData.position,
+    role: employeeData.role,
+  };
+}
+
 export async function getCompanyWithEmployees(
   companyRef: string | DocumentReference<TCompanyWrite>
 ): Promise<TCompanyWithEmployees> {
@@ -105,18 +140,18 @@ export async function getCompanyWithEmployees(
   }
 
   const company = await _getCompanyFromRef(companyRef);
+  const employeesRef = collection(companyRef, 'employees');
+  const employeesSnap = await getDocs(employeesRef).catch(() => null);
+
+  if (!employeesSnap) {
+    throw new Error('Failed to fetch employees');
+  }
 
   const employees: Array<TCompanyEmployee | undefined> = await Promise.all(
-    company.employees.map(async empRef => {
+    employeesSnap.docs.map(async empRef => {
       try {
-        const employer = await getEmployer(empRef.id);
-        return {
-          id: empRef.id,
-          name: employer.general.name,
-          email: employer.general.email,
-          photo: employer.general.photo?.url,
-          position: employer.activeCompany.position,
-        };
+        const employer = await getCompanyEmployee(companyRef, empRef.id);
+        return employer;
       } catch (err) {
         console.error(`Failed to fetch employer with id ${empRef.id}:`, err);
         return undefined;

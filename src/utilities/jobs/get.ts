@@ -25,7 +25,7 @@ import {
   TJobWithEmployeesAndApplicants,
   TJobWithEmployees,
 } from '../../types/jobTypes';
-import { getCompany } from '../companies/get';
+import { getCompany, getCompanyEmployee } from '../companies/get';
 import { getFreelancer, getUserById, getUserGeneralInfo } from '../users/get';
 import { getAllApplicants, getApplicant } from './applicants/get';
 import { getAllEmployees } from './employees/get';
@@ -40,13 +40,27 @@ async function _getJobFromRef(jobRef: DocumentReference<TJobWrite>) {
 }
 
 export async function getJob(
-  ref: string | DocumentReference<TJobWrite>
-): Promise<TJob> {
+  ref: string | DocumentReference<TJobWrite>,
+  userId: string
+): Promise<TJob | undefined> {
   if (typeof ref === 'string') {
     ref = doc(db, 'jobs', ref) as DocumentReference<TJobWrite>;
   }
-
   const job = await _getJobFromRef(ref);
+
+  const employeesCollectionRef = collection(ref, 'employees');
+  const employeesSnapshot = await getDocs(employeesCollectionRef);
+  const employees = employeesSnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  const userHasAccess = employees.some(e => e.id === userId);
+  console.log('userHasAccess', userHasAccess, employees);
+
+  if (!userHasAccess) {
+    return undefined;
+  }
 
   let applicants: TApplicant[] = [];
 
@@ -123,13 +137,12 @@ export async function getJobWithEmployees(
 
   const employees: TJobEmployee[] = await Promise.all(
     employeeDocs.map(async e => {
-      const user = await getUserById(e.id);
+      const employee = await getCompanyEmployee(job.company.id, e.id);
       return {
         id: e.id,
-        name: user.general.name,
-        email: user.general.email,
-        permission: e.permission,
-        photo: user.general.photo?.url,
+        name: employee.name,
+        email: employee.email,
+        photo: employee.photo,
       };
     })
   );
@@ -203,7 +216,6 @@ export async function getJobWithApplicantsAndEmployees(
   const employees: TJobEmployee[] = await Promise.all(
     employeeDocs.map(async e => {
       const user = await getUserById(e.id);
-      console.log(user.general);
       return {
         id: e.id,
         name: user.general.name,

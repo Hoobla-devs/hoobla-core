@@ -1,6 +1,7 @@
 import { doc, DocumentReference, getDoc, onSnapshot } from 'firebase/firestore';
 import { userConverter } from '../../converters/user';
 import { db } from '../../firebase/init';
+import { TCompanyWithEmployees } from '../../types/companyTypes';
 import {
   TEmployer,
   TEmployerUser,
@@ -11,50 +12,46 @@ import {
   TUserRead,
   TUserWrite,
 } from '../../types/userTypes';
-import { getCompany } from '../companies/get';
+import { getCompany, getCompanyWithEmployees } from '../companies/get';
 import { getSelectedReviews } from './reviews/get';
 
-async function getUserEmployerProps(user: TUserRead) {
+async function getEmployerActiveCompany(user: TUserRead) {
   let newActiveCompany: TEmployer | undefined;
-  let newCompanies: TEmployer[] = [];
+  let userCompany: TCompanyWithEmployees | undefined;
 
-  try {
-    if (user.activeCompany) {
-      const company = await getCompany(user.activeCompany.company);
-      newActiveCompany = {
-        ...user.activeCompany,
-        ...(company && { company }),
-      };
+  if (user.activeCompany) {
+    try {
+      // Attempt to fetch the company
+      userCompany = await getCompanyWithEmployees(user.activeCompany);
+    } catch (error) {
+      console.log('Failed to fetch company for user.employer', error);
+      return undefined; // Early return if fetch fails
     }
-  } catch (error) {
-    console.log('failed to fetch company for user.employer', error);
-  }
 
-  try {
-    if (user.companies) {
-      newCompanies = await Promise.all(
-        user.companies.map(async employer => {
-          const company = await getCompany(employer.company);
-          return {
-            ...employer,
-            ...(company && { company }),
-          };
-        })
+    try {
+      // Proceed with mapping if fetching was successful
+      const userEmployee = userCompany.employees.find(
+        employee => employee.id === user.general.uid
       );
+
+      if (!userEmployee) {
+        throw new Error('User is not an employee of the active company.');
+      }
+
+      newActiveCompany = {
+        company: {
+          ...userCompany,
+          employees: [], // Clearing employees array here, ensure this is intended
+        },
+        position: userEmployee.position,
+        role: userEmployee.role,
+      };
+    } catch (error) {
+      console.log('Mapping error in getEmployerActiveCompany', error);
     }
-  } catch (error) {
-    console.log('failed to fetch company for user.employers', error);
   }
 
-  const shouldConcat = !newCompanies.some(
-    employer => employer.company.id === newActiveCompany?.company.id
-  );
-
-  if (newActiveCompany && shouldConcat) {
-    newCompanies = newCompanies.concat(newActiveCompany);
-  }
-
-  return { activeCompany: newActiveCompany, companies: newCompanies };
+  return newActiveCompany;
 }
 
 async function _getUserFromRef(
@@ -65,15 +62,13 @@ async function _getUserFromRef(
   if (!userSnap.exists()) {
     throw new Error('User does not exist.');
   }
+
   const userData = userSnap.data();
-  const {
-    activeCompany: employer,
-    companies: employers,
-    freelancer,
-    ...rest
-  } = userData;
-  const { activeCompany, companies } = await getUserEmployerProps(userData);
+  const { activeCompany, freelancer, ...rest } = userData;
+
+  let newActiveCompany: TEmployer | undefined;
   let newFreelancer: TFreelancer | undefined;
+
   if (freelancer) {
     const selectedReviews = await getSelectedReviews(
       userRef.id,
@@ -85,16 +80,17 @@ async function _getUserFromRef(
     };
   }
 
+  if (activeCompany) {
+    newActiveCompany = await getEmployerActiveCompany(userData);
+  }
+
   return {
     ...rest,
-    ...(employer && {
-      activeCompany: activeCompany,
+    ...(activeCompany && {
+      activeCompany: newActiveCompany,
     }),
     ...(freelancer && {
       freelancer: newFreelancer,
-    }),
-    ...(companies && {
-      companies: companies,
     }),
   };
 }
@@ -157,14 +153,9 @@ export async function onUserChange(
   const unsubscribe = onSnapshot(userRef, async doc => {
     if (doc.exists()) {
       const userData = doc.data();
-      const {
-        activeCompany: employer,
-        companies: employers,
-        freelancer,
-        ...rest
-      } = userData;
+      const { activeCompany: employer, freelancer, ...rest } = userData;
 
-      const { activeCompany, companies } = await getUserEmployerProps(userData);
+      const activeCompany = await getEmployerActiveCompany(userData);
 
       let newFreelancer: TFreelancer | undefined;
       if (freelancer) {
@@ -185,9 +176,6 @@ export async function onUserChange(
         }),
         ...(freelancer && {
           freelancer: newFreelancer,
-        }),
-        ...(companies && {
-          companies: companies,
         }),
       });
     } else {

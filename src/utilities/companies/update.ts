@@ -1,4 +1,4 @@
-import { doc, DocumentReference } from 'firebase/firestore';
+import { doc, DocumentReference, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase/init';
 import {
   TCompany,
@@ -7,17 +7,11 @@ import {
   TCompanyWrite,
   TInvite,
 } from '../../types/companyTypes';
-import { TEmployerUser } from '../../types/userTypes';
-import {
-  getJobWithApplicantsAndEmployees,
-  getJobWithEmployees,
-} from '../jobs/get';
-import { updateJobEmployeeList } from '../jobs/update';
+import { TEmployerRole, TEmployerWrite } from '../../types/userTypes';
 import { uploadPhoto } from '../storage/add';
 import { deletePhoto } from '../storage/delete';
 import { updateDoc } from '../updateDoc';
 import { getCompany } from './get';
-import { removeCompanyEmployee } from './remove';
 
 function rand() {
   return Math.random().toString(36).slice(2); // remove `0.`
@@ -76,6 +70,23 @@ export async function updateCompany(
     .catch(() => false);
 }
 
+export async function inviteEmployee(cid: string, invite: TInvite) {
+  const companyRef = doc(
+    db,
+    'companies',
+    cid
+  ) as DocumentReference<TCompanyWrite>;
+
+  const company = await getCompany(companyRef);
+  const invites = company.invites;
+
+  invites.push({ ...invite, token: token(), date: new Date() });
+
+  return await updateDoc(companyRef, { invites })
+    .then(() => invite)
+    .catch(() => null);
+}
+
 export async function updateInvitationList(
   cid: string,
   emails: string[],
@@ -94,16 +105,32 @@ export async function updateInvitationList(
     if (inviteIndex >= 0) {
       invites[inviteIndex].token = token();
       invites[inviteIndex].date = new Date();
-    } else {
-      invites.push({
-        email: email,
-        token: token(),
-        date: new Date(),
-      });
     }
   });
 
   return await updateDoc(companyRef, { invites })
     .then(() => invites)
     .catch(() => null);
+}
+
+export async function updateEmployeeRole(
+  cid: string,
+  uid: string,
+  role: TEmployerRole
+) {
+  const companyRef = doc(
+    db,
+    'companies',
+    cid
+  ) as DocumentReference<TCompanyWrite>;
+  const employeeRef = doc(
+    companyRef,
+    'employees',
+    uid
+  ) as DocumentReference<TEmployerWrite>;
+
+  // Use setDoc with merge option to create or update the role field
+  await setDoc(employeeRef, { role: role }, { merge: true })
+    .then(() => true)
+    .catch(() => false);
 }

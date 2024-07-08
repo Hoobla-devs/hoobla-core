@@ -28,7 +28,6 @@ export type TFreelancerUser = TUserBase & {
 
 export type TEmployerUser = TUserBase & {
   activeCompany: TEmployer;
-  companies?: TEmployer[];
 };
 
 export type TUserRead = {
@@ -36,8 +35,8 @@ export type TUserRead = {
   general: TGeneral;
   freelancer?: TFreelancerRead;
   freelancerForm?: TSavedFreelancerFormData;
-  activeCompany?: TEmployerRead;
-  companies?: TEmployerRead[]; // Added this line
+  activeCompany?: DocumentReference<TCompanyWrite>;
+  companies?: TEmployerRead[];
   settings?: {
     SMSNotifications?: boolean;
     deniedOfferMails?: boolean;
@@ -46,12 +45,8 @@ export type TUserRead = {
   };
 };
 
-export type TUser = Omit<
-  TUserRead,
-  'activeCompany' | 'companies' | 'freelancer'
-> & {
+export type TUser = Omit<TUserRead, 'activeCompany' | 'freelancer'> & {
   activeCompany?: TEmployer;
-  companies?: TEmployer[]; // Modified this line to be an array
   freelancer?: TFreelancer;
 };
 
@@ -60,8 +55,8 @@ export type TUserWrite = {
   general: TGeneralWrite;
   freelancer?: TFreelancerWrite;
   freelancerForm?: TSavedFreelancerFormData;
-  activeCompany?: TEmployerWrite;
-  companies?: TEmployerWrite[]; // Already present
+  activeCompany?: DocumentReference<TCompanyWrite>;
+  companies?: DocumentReference<TCompanyWrite>[];
   settings?: {
     SMSNotifications?: boolean;
     deniedOfferMails?: boolean;
@@ -168,19 +163,24 @@ export type TFreelancerSocial = {
   website: string;
 };
 
+export type TEmployerRole = 'employee' | 'admin';
+
 export type TEmployerRead = {
   position: string;
-  company: DocumentReference<TCompanyWrite>; // TODO: This variable might be phased out in the future. User companies will be used primarily
+  role: TEmployerRole;
+  company: DocumentReference<TCompanyWrite>;
 };
 
 export type TEmployer = {
+  role: TEmployerRole;
   position: string;
   company: TCompany;
 };
 
 export type TEmployerWrite = {
+  role: TEmployerRole;
   position: string;
-  company: DocumentReference<TCompanyWrite>; // TODO: This variable might be phased out in the future. User companies will be used primarily
+  company: DocumentReference<TCompanyWrite>;
 };
 
 // * Freelancer Form

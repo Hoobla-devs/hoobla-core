@@ -13,7 +13,7 @@ import { db } from '../../firebase/init';
 import { getCompany, getCompanyWithEmployees } from './get';
 import { TEmployerUser, TUser } from '../../types/userTypes';
 import { getEmployer } from '../users/get';
-import { getJobWithEmployees } from '../jobs/get';
+import { getEmployeeJob } from '../jobs/get';
 import { updateJobEmployeeList } from '../jobs/update';
 
 export async function removeCompanyInvite(companyId: string, token: string) {
@@ -42,7 +42,7 @@ export async function removeCompanyEmployee(companyId: string, userId: string) {
   ) as DocumentReference<TUser>;
 
   const [company, employeeData] = await Promise.all([
-    getCompanyWithEmployees(companyId),
+    getCompanyEmployees(companyId),
     getEmployer(employeeToRemoveRef.id),
   ]);
 
