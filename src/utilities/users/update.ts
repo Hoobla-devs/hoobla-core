@@ -5,11 +5,18 @@ import {
   arrayUnion,
   getDoc,
   runTransaction,
+  setDoc,
+  collection,
 } from 'firebase/firestore';
 import { userConverter } from '../../converters/user';
 import { db } from '../../firebase/init';
 import { TGender } from '../../types/baseTypes';
-import { TCompanyCreatorData, TCompanyWrite } from '../../types/companyTypes';
+import {
+  TCompanyCreatorData,
+  TCompanyEmployeeWrite,
+  TCompanyWrite,
+  TInvite,
+} from '../../types/companyTypes';
 import {
   TEmployer,
   TEmployerFormData,
@@ -29,6 +36,7 @@ import {
 import { uploadPhoto } from '../storage/add';
 import { deletePhoto } from '../storage/delete';
 import { updateDoc } from '../updateDoc';
+import { getUserById } from './get';
 import { updateReview } from './reviews/update';
 
 export function convertEditFreelancerFormToFreelancerWrite(
@@ -143,9 +151,8 @@ export async function addEmployerDataAndCompanyToUser(
     'general.name': employerData.name,
     'general.ssn': employerData.ssn,
     'general.phone': employerData.phone,
-    'activeCompany.position': employerData.position,
-    'activeCompany.company': companyRef,
-    companies: arrayUnion({ ...employerData, company: companyRef }),
+    activeCompany: companyRef,
+    companies: arrayUnion(companyRef),
   })
     .catch(error => {
       throw new Error('Error adding employer data to user: ' + error);
@@ -217,16 +224,33 @@ export async function updateFreelancerResume(
 
 export async function updateEmployerInfo(
   uid: string,
+  cid: string,
   employerFormData: TEmployerFormData
 ) {
+  // Step 1: Update employee permission under company
   const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
+  const companyRef = doc(
+    db,
+    'companies',
+    cid
+  ) as DocumentReference<TCompanyWrite>;
+  const employeeRef = doc(
+    companyRef,
+    'employees',
+    uid
+  ) as DocumentReference<TCompanyEmployeeWrite>;
+
+  await updateDoc(employeeRef, { position: employerFormData.position });
+
+  // Step 2: Update user data
   return await updateDoc(userRef, {
     'general.name': employerFormData.name,
     'general.phone': employerFormData.phone,
-    'activeCompany.position': employerFormData.position,
     'general.updatedAt': new Date(),
-    'general.photo.originalUrl': employerFormData.oldPhoto?.originalUrl,
-    'general.photo.url': employerFormData.oldPhoto?.url,
+    ...(employerFormData.oldPhoto && {
+      'general.photo.originalUrl': employerFormData.oldPhoto.originalUrl,
+      'general.photo.url': employerFormData.oldPhoto.url,
+    }),
   })
     .then(() => true)
     .catch(() => false);
@@ -242,8 +266,7 @@ export async function updateUserEmployerData(uid: string, employer: TEmployer) {
 
   try {
     await updateDoc(userRef, {
-      'activeCompany.company': companyRef,
-      'activeCompany.position': employer.position,
+      activeCompany: companyRef,
     });
 
     return true;
@@ -256,7 +279,7 @@ export async function updateUserEmployerData(uid: string, employer: TEmployer) {
 export async function registerEmployerUser(
   cid: string,
   uid: string,
-  token: string,
+  invite: TInvite,
   data: TEmployerFormData
 ): Promise<boolean> {
   const companyRef = doc(
@@ -264,28 +287,24 @@ export async function registerEmployerUser(
     'companies',
     cid
   ) as DocumentReference<TCompanyWrite>;
-  const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
+  const userRef = doc(db, 'users', uid);
+  const employeesCollectionRef = collection(companyRef, 'employees');
+  const employeeRef = doc(employeesCollectionRef, uid);
 
   try {
     await runTransaction(db, async transaction => {
       const companySnapshot = await transaction.get(companyRef);
       const companyData = companySnapshot.data() as TCompanyWrite;
 
-      const isUserAlreadyEmployed = companyData.employees.some(
-        employee => employee.id === uid
-      );
+      transaction.set(employeeRef, {
+        position: data.position,
+        role: invite.role,
+      });
 
       // Remove invite from company invites list
       const inviteList = companyData.invites.filter(
-        invite => invite.token !== token
+        companyInvite => companyInvite.token !== invite.token
       );
-
-      // Update the company employees list if applicable
-      if (!isUserAlreadyEmployed) {
-        transaction.update(companyRef, {
-          employees: arrayUnion(userRef),
-        });
-      }
 
       // Update the company invites list
       transaction.update(companyRef, {
@@ -294,14 +313,8 @@ export async function registerEmployerUser(
 
       // Update the user with the new employer info
       transaction.update(userRef, {
-        activeCompany: {
-          company: companyRef,
-          position: data.position,
-        },
-        companies: arrayUnion({
-          company: companyRef,
-          position: data.position,
-        }),
+        activeCompany: companyRef,
+        companies: arrayUnion(companyRef),
         'general.name': data.name,
         'general.phone': data.phone,
         'general.ssn': data.ssn,

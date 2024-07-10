@@ -26,7 +26,6 @@ export type TCompanyBase = {
 
 export type TCompanyRead = TCompanyBase & {
   invites: TInvite[];
-  employees: DocumentReference<TEmployerUser>[]; // TODO:   DocumentReference<TProgramWrite, DocumentData>;
   jobs: DocumentReference<TJobWrite>[];
   creator: DocumentReference<TEmployerUser>;
   id: string;
@@ -41,6 +40,11 @@ export type TInvite = {
 };
 
 export type TCompany = TCompanyRead;
+
+export type TCompanyEmployeeWrite = {
+  position: string;
+  role: TEmployerRole;
+};
 
 export type TCompanyEmployee = {
   id: string;

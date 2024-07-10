@@ -8,18 +8,11 @@ import {
   TInvite,
 } from '../../types/companyTypes';
 import { TEmployerRole, TEmployerWrite } from '../../types/userTypes';
+import { generateCompanyInviteToken } from '../basicHelpers';
 import { uploadPhoto } from '../storage/add';
 import { deletePhoto } from '../storage/delete';
 import { updateDoc } from '../updateDoc';
 import { getCompany } from './get';
-
-function rand() {
-  return Math.random().toString(36).slice(2); // remove `0.`
-}
-
-function token() {
-  return rand() + rand() + rand(); // to make it longer
-}
 
 export function convertEditCompanyFormToCompanyRead(
   company: TCompany,
@@ -80,7 +73,7 @@ export async function inviteEmployee(cid: string, invite: TInvite) {
   const company = await getCompany(companyRef);
   const invites = company.invites;
 
-  invites.push({ ...invite, token: token(), date: new Date() });
+  invites.push(invite);
 
   return await updateDoc(companyRef, { invites })
     .then(() => invite)
@@ -103,7 +96,7 @@ export async function updateInvitationList(
   emails.forEach((email, i) => {
     const inviteIndex = invites.findIndex(invite => invite.email === email);
     if (inviteIndex >= 0) {
-      invites[inviteIndex].token = token();
+      invites[inviteIndex].token = generateCompanyInviteToken();
       invites[inviteIndex].date = new Date();
     }
   });

@@ -1,4 +1,4 @@
-import { Timestamp } from "firebase/firestore";
+import { Timestamp } from 'firebase/firestore';
 
 export const isEmptyObject = (obj: Object) =>
   Object.keys(obj || {}).length === 0;
@@ -30,17 +30,17 @@ export const capitalizeFirstLetter = (str: string) => {
 
 // Function to convert a Date object to a string in the format "dd-mm-yyyy"
 export function dateToString(date: Date): string {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
   return `${day}-${month}-${year}`;
 }
 
 // Function to convert a string in the format "dd-mm-yyyy" to a Date object
 export function stringToDate(dateStr: string): Date {
-  const [day, month, year] = dateStr.split("-").map(Number);
+  const [day, month, year] = dateStr.split('-').map(Number);
   if (isNaN(day) || isNaN(month) || isNaN(year)) {
-    throw new Error("Invalid date string");
+    throw new Error('Invalid date string');
   }
   return new Date(year, month - 1, day); // Month is 0-based in JavaScript
 }
@@ -75,4 +75,11 @@ export const calculateWorkingDaysUntil = (targetDate: Date): number => {
   }
 
   return workingDaysCount;
+};
+
+export const generateCompanyInviteToken = () => {
+  function rand() {
+    return Math.random().toString(36).slice(2); // remove `0.`
+  }
+  return rand() + rand() + rand();
 };

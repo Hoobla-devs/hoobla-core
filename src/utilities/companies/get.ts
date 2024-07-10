@@ -142,7 +142,6 @@ export async function getCompanyWithEmployees(
   const company = await _getCompanyFromRef(companyRef);
   const employeesRef = collection(companyRef, 'employees');
   const employeesSnap = await getDocs(employeesRef).catch(() => null);
-
   if (!employeesSnap) {
     throw new Error('Failed to fetch employees');
   }

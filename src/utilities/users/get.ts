@@ -28,6 +28,7 @@ async function getEmployerActiveCompany(user: TUserRead) {
       return undefined; // Early return if fetch fails
     }
 
+    console.log('userCompany', userCompany.employees);
     try {
       // Proceed with mapping if fetching was successful
       const userEmployee = userCompany.employees.find(
@@ -41,7 +42,6 @@ async function getEmployerActiveCompany(user: TUserRead) {
       newActiveCompany = {
         company: {
           ...userCompany,
-          employees: [], // Clearing employees array here, ensure this is intended
         },
         position: userEmployee.position,
         role: userEmployee.role,

@@ -11,13 +11,14 @@ import {
   TReviewWrite,
   TUserWrite,
 } from '../types/userTypes';
-import { TCompanyWrite } from '../types/companyTypes';
+import { TCompanyEmployeeWrite, TCompanyWrite } from '../types/companyTypes';
 import { TNotificationWrite } from '../types/baseTypes';
 
 type AllWrites =
   | TJobWrite
   | TUserWrite
   | TEmployerWrite
+  | TCompanyEmployeeWrite
   | TCompanyWrite
   | TApplicantWrite
   | TFreelancerWrite
