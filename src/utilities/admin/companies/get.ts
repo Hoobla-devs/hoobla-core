@@ -9,15 +9,21 @@ export async function getCompanies(): Promise<TCompanyWithCreator[]> {
     companyConverter
   );
   const companiesSnap = await getDocs(companiesRef);
+  const employeesCollection = collection(companiesRef, "employees");
+  const employeesSnap = await getDocs(employeesCollection);
 
   const companiesPromise = companiesSnap.docs.map(async (doc) => {
     try {
       const company = doc.data();
       const creator = await getEmployer(company.creator.id);
-      return { ...company, creator };
+      return {
+        ...company,
+        creator,
+        employeesCount: employeesSnap?.docs.length || 0,
+      };
     } catch (error) {
       console.log("Error getting company:", doc.id);
-      throw new Error("Errror getting company!")
+      throw new Error("Errror getting company!");
     }
   });
 
