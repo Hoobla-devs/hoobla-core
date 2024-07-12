@@ -72,9 +72,12 @@ export type TCompanyWrite = TCompanyBase & {
 };
 
 export type TInviteWrite = {
+  date: Timestamp;
   token: string;
   email: string;
-  date: Timestamp;
+  name: string;
+  position: string;
+  role: TEmployerRole;
 };
 
 // * Form Types

@@ -28,7 +28,6 @@ async function getEmployerActiveCompany(user: TUserRead) {
       return undefined; // Early return if fetch fails
     }
 
-    console.log('userCompany', userCompany.employees);
     try {
       // Proceed with mapping if fetching was successful
       const userEmployee = userCompany.employees.find(
@@ -123,7 +122,7 @@ export async function getEmployer(id: string): Promise<TEmployerUser> {
   const userRef = doc(db, 'users', id) as DocumentReference<TUserWrite>;
   const user = await _getUserFromRef(userRef);
   if (user && user.activeCompany) {
-    return { ...user, activeCompany: user.activeCompany }; // Ensure employer property is present
+    return { ...user, activeCompany: user.activeCompany, companies: [] }; // TODO: Add companies here
   } else {
     throw new Error('User is not an employer.');
   }

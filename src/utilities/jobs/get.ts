@@ -56,15 +56,12 @@ export async function getJob(
   }));
 
   const userHasAccess = employees.some(e => e.id === userId);
-  console.log('userHasAccess', userHasAccess, employees);
 
   if (!userHasAccess) {
     return undefined;
   }
 
-  let applicants: TApplicant[] = [];
-
-  return { ...job, applicants: applicants };
+  return job;
 }
 
 export async function getJobWithCompany(

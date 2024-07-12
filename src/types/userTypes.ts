@@ -28,6 +28,7 @@ export type TFreelancerUser = TUserBase & {
 
 export type TEmployerUser = TUserBase & {
   activeCompany: TEmployer;
+  companies: TEmployer[];
 };
 
 export type TUserRead = {

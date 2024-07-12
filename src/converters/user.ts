@@ -4,8 +4,8 @@ import {
   QueryDocumentSnapshot,
   SnapshotOptions,
   Timestamp,
-} from "firebase/firestore";
-import { db } from "../firebase/init";
+} from 'firebase/firestore';
+import { db } from '../firebase/init';
 import {
   TFreelancerRead,
   TFreelancerWrite,
@@ -13,7 +13,7 @@ import {
   TReviewWrite,
   TUserRead,
   TUserWrite,
-} from "../types/userTypes";
+} from '../types/userTypes';
 
 export const userConverter = {
   toFirestore(user: TUserRead): TUserWrite {
@@ -42,12 +42,12 @@ export const userConverter = {
       }
       if (selectedReviews) {
         freelancerWrite.selectedReviews = selectedReviews.map(
-          (reviewId) =>
+          reviewId =>
             doc(
               db,
-              "users",
+              'users',
               general.uid,
-              "reviews",
+              'reviews',
               reviewId
             ) as DocumentReference<TReviewWrite>
         );
@@ -65,6 +65,7 @@ export const userConverter = {
         ...(updatedAt && { updatedAt: Timestamp.fromDate(updatedAt) }),
       },
       ...(freelancerWrite && { freelancer: freelancerWrite }),
+      companies: [], // TODO: Add companies here
     };
   },
   fromFirestore(
@@ -95,7 +96,7 @@ export const userConverter = {
         }
         if (selectedReviews) {
           freelancerRead.selectedReviews = selectedReviews.map(
-            (reviewRef) => reviewRef.id
+            reviewRef => reviewRef.id
           );
         }
         if (inactiveSince) {
@@ -112,10 +113,11 @@ export const userConverter = {
           ...(updatedAt && { updatedAt: updatedAt.toDate() }),
         },
         ...(freelancerRead && { freelancer: freelancerRead }),
+        companies: [], // TODO: Add companies here
       };
     } catch (error) {
-      console.log("Error on: ", snapshot.id);
-      throw new Error("converter error!");
+      console.log('Error on: ', snapshot.id);
+      throw new Error('converter error!');
     }
   },
 };

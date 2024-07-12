@@ -2,14 +2,14 @@ import {
   QueryDocumentSnapshot,
   SnapshotOptions,
   Timestamp,
-} from "firebase/firestore";
-import { TCompanyRead, TCompanyWrite } from "../types/companyTypes";
+} from 'firebase/firestore';
+import { TCompanyRead, TCompanyWrite } from '../types/companyTypes';
 
 export const companyConverter = {
   toFirestore(company: TCompanyRead): TCompanyWrite {
     const { invites, id, ...props } = company;
 
-    const newInvites = invites.map((i) => ({
+    const newInvites = invites.map(i => ({
       ...i,
       date: Timestamp.fromDate(i.date),
     }));
@@ -17,6 +17,7 @@ export const companyConverter = {
     return {
       ...props,
       invites: newInvites,
+      employees: [],
     };
   },
 
@@ -30,11 +31,11 @@ export const companyConverter = {
       return {
         ...props,
         id: snapshot.id,
-        invites: invites.map((i) => ({ ...i, date: i.date.toDate() })),
+        invites: invites.map(i => ({ ...i, date: i.date.toDate() })),
       };
     } catch (error) {
-      console.log("Error on: ", snapshot.id);
-      throw new Error("converter error!");
+      console.log('Error on: ', snapshot.id);
+      throw new Error('converter error!');
     }
   },
 };

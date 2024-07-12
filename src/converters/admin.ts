@@ -2,8 +2,8 @@ import {
   QueryDocumentSnapshot,
   SnapshotOptions,
   Timestamp,
-} from "firebase/firestore";
-import { TAdminRead, TAdminWrite } from "../types/adminTypes";
+} from 'firebase/firestore';
+import { TAdminRead, TAdminWrite } from '../types/adminTypes';
 
 export const adminConverter = {
   toFirestore(admin: TAdminRead): TAdminWrite {
@@ -11,7 +11,7 @@ export const adminConverter = {
 
     return {
       ...adminProps,
-      invites: invites.map((invite) => ({
+      invites: invites.map(invite => ({
         ...invite,
         date: Timestamp.fromDate(invite.date),
       })),
@@ -28,9 +28,10 @@ export const adminConverter = {
     return {
       ...props,
       uid: snapshot.id,
-      invites: invites.map((invite) => ({
+      invites: invites.map(invite => ({
         ...invite,
         date: invite.date.toDate(),
+        name: invite.name,
       })),
       createdAt: createdAt.toDate(),
     };

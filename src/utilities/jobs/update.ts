@@ -12,6 +12,7 @@ import { jobConverter } from '../../converters/job';
 import { db } from '../../firebase/init';
 import {
   TFreelancerApplicant,
+  TJob,
   TJobEmployee,
   TJobEmployeeWrite,
   TJobRead,
@@ -43,7 +44,7 @@ export async function agreeTerms(jobId: string) {
 }
 
 export async function selectFreelancer(
-  job: TJobWithApplicants,
+  job: TJob,
   selectedFreelancer: TFreelancerApplicant,
   jobData: Partial<TJobWrite>
 ) {
@@ -197,7 +198,7 @@ export async function updateJobEmployeeList(
           employeesCollectionRef,
           employee.id
         ) as DocumentReference<TJobEmployeeWrite>;
-        await setDoc(employeeRef, { permission: employee.permission });
+        await setDoc(employeeRef, { permission: 'edit' }); // TODO: Remove this? Unused atm
       })
     );
 
