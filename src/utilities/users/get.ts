@@ -59,7 +59,7 @@ async function _getUserFromRef(
   const userSnap = await getDoc(userRef.withConverter(userConverter));
 
   if (!userSnap.exists()) {
-    throw new Error('User does not exist.');
+    throw new Error(`User with id ${userRef.id} does not exist.`);
   }
 
   const userData = userSnap.data();
