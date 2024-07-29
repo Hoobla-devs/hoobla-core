@@ -133,7 +133,7 @@ export async function getUserGeneralInfo(uid: string): Promise<TGeneral> {
   const userSnap = await getDoc(userRef.withConverter(userConverter));
 
   if (!userSnap.exists()) {
-    throw new Error('User does not exist.');
+    throw new Error(`User with id ${uid} does not exist.`);
   }
   const userData = userSnap.data();
   const { general, ...rest } = userData;
