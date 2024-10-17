@@ -7,9 +7,9 @@ import {
   query,
   QuerySnapshot,
   where,
-} from "firebase/firestore";
-import { companyConverter } from "../../converters/company";
-import { db } from "../../firebase/init";
+} from 'firebase/firestore';
+import { companyConverter } from '../../converters/company';
+import { db } from '../../firebase/init';
 import {
   TCompanyEmployee,
   TCompanyRead,
@@ -17,14 +17,14 @@ import {
   TCompanyWithEmployees,
   TCompanyWrite,
   TInvite,
-} from "../../types/companyTypes";
-import { TEmployerUser } from "../../types/userTypes";
-import { getEmployer, getUserGeneralInfo } from "../users/get";
+} from '../../types/companyTypes';
+import { TEmployerUser } from '../../types/userTypes';
+import { getEmployer, getUserGeneralInfo } from '../users/get';
 
 export async function getCompanyById(companyId: string) {
   const companyRef = doc(
     db,
-    "companies",
+    'companies',
     companyId
   ) as DocumentReference<TCompanyWrite>;
   const company = await _getCompanyFromRef(companyRef);
@@ -37,7 +37,7 @@ async function _getCompanyFromRef(
 ): Promise<TCompanyRead> {
   const companySnap = await getDoc(companyRef.withConverter(companyConverter));
   if (!companySnap.exists()) {
-    throw new Error("Company does not exist.");
+    throw new Error('Company does not exist.');
   }
   const companyData = companySnap.data();
   return companyData;
@@ -49,14 +49,14 @@ export async function checkIfEmailsInUse(
 ) {
   // Check if employer is already an employee
   const currEmployerMails = await Promise.all(
-    empRefList.map(async (empRef) => {
+    empRefList.map(async empRef => {
       const employerInfo = await getUserGeneralInfo(empRef.id);
 
       return employerInfo.email;
     })
   );
 
-  const invalidEmails = emails.filter((email) =>
+  const invalidEmails = emails.filter(email =>
     currEmployerMails.includes(email)
   );
   if (invalidEmails.length > 0) {
@@ -67,8 +67,8 @@ export async function checkIfEmailsInUse(
 
 export async function checkIfCompanyExists(ssn: string) {
   try {
-    const companyRef = collection(db, "company");
-    const companyQuery = query(companyRef, where("ssn", "==", ssn));
+    const companyRef = collection(db, 'company');
+    const companyQuery = query(companyRef, where('ssn', '==', ssn));
     const companyQuerySnapshot = (await getDocs(
       companyQuery
     )) as QuerySnapshot<TCompanyWrite>;
@@ -82,10 +82,10 @@ export async function checkIfCompanyExists(ssn: string) {
 export async function getCompany(
   companyRef: string | DocumentReference<TCompanyWrite>
 ) {
-  if (typeof companyRef === "string") {
+  if (typeof companyRef === 'string') {
     companyRef = doc(
       db,
-      "companies",
+      'companies',
       companyRef
     ) as DocumentReference<TCompanyWrite>;
   }
@@ -97,22 +97,22 @@ export async function getCompanyEmployee(
   companyRef: string | DocumentReference<TCompanyWrite>,
   employeeId: string
 ): Promise<TCompanyEmployee> {
-  if (typeof companyRef === "string") {
+  if (typeof companyRef === 'string') {
     companyRef = doc(
       db,
-      "companies",
+      'companies',
       companyRef
     ) as DocumentReference<TCompanyWrite>;
   }
 
-  const employeeRef = doc(companyRef, "employees", employeeId);
+  const employeeRef = doc(companyRef, 'employees', employeeId);
   const [employeeSnap, userGeneralInfo] = await Promise.all([
     getDoc(employeeRef),
     getUserGeneralInfo(employeeId),
   ]);
 
   if (!employeeSnap.exists()) {
-    throw new Error("Employee does not exist.");
+    throw new Error('Employee does not exist.');
   }
 
   const employeeData = employeeSnap.data();
@@ -122,7 +122,7 @@ export async function getCompanyEmployee(
     name: userGeneralInfo.name,
     email: userGeneralInfo.email,
     phone: userGeneralInfo.phone,
-    photo: userGeneralInfo.photo?.url || "",
+    photo: userGeneralInfo.photo?.url || '',
     position: employeeData.position,
     role: employeeData.role,
   };
@@ -131,29 +131,26 @@ export async function getCompanyEmployee(
 export async function getCompanyWithEmployees(
   companyRef: string | DocumentReference<TCompanyWrite>
 ): Promise<TCompanyWithEmployees> {
-  if (typeof companyRef === "string") {
+  if (typeof companyRef === 'string') {
     companyRef = doc(
       db,
-      "companies",
+      'companies',
       companyRef
     ) as DocumentReference<TCompanyWrite>;
   }
 
   const company = await _getCompanyFromRef(companyRef);
-  const employeesRef = collection(companyRef, "employees");
-  const employeesSnap = await getDocs(employeesRef).catch((e) => {
-    console.log("Error fetching employeesSnap: ", e);
+  const employeesRef = collection(companyRef, 'employees');
+  const employeesSnap = await getDocs(employeesRef).catch(e => {
+    console.log('Error fetching employeesSnap: ', e);
     return null;
   });
-  console.log("company: ", company);
-  console.log("employeesRef: ", employeesRef);
-  console.log("employeesSnap: ", employeesSnap);
   if (!employeesSnap) {
-    throw new Error("Failed to fetch employees");
+    throw new Error('Failed to fetch employees');
   }
 
   const employees: Array<TCompanyEmployee | undefined> = await Promise.all(
-    employeesSnap.docs.map(async (empRef) => {
+    employeesSnap.docs.map(async empRef => {
       try {
         const employer = await getCompanyEmployee(companyRef, empRef.id);
         return employer;
@@ -166,7 +163,7 @@ export async function getCompanyWithEmployees(
 
   // Filter out undefined values from the employees array
   const validEmployees = employees.filter(
-    (emp) => emp !== undefined
+    emp => emp !== undefined
   ) as TCompanyEmployee[];
 
   return { ...company, employees: validEmployees };
@@ -186,7 +183,7 @@ export async function getEmployerCompanies(
   companiesRef: DocumentReference<TCompanyWrite>[]
 ): Promise<TCompanyRead[]> {
   const companies = await Promise.all(
-    companiesRef.map(async (ref) => {
+    companiesRef.map(async ref => {
       const company = await _getCompanyFromRef(ref);
       return company;
     })
