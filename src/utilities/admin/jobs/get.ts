@@ -106,6 +106,7 @@ type OptionalRelations = {
   creator?: TEmployerUser;
   applicants?: TFreelancerApplicant[];
   selectedApplicants?: TFreelancerApplicant[];
+  freelancers?: TFreelancerApplicant[];
   employees?: TCompanyEmployee[];
 };
 
@@ -137,6 +138,7 @@ export async function getJobWithRelations(
     applicants: undefined,
     selectedApplicants: undefined,
     creator: undefined,
+    freelancers: undefined,
   };
 
   // Prepare promises for parallel execution
@@ -144,25 +146,38 @@ export async function getJobWithRelations(
 
   if (relations.includes('creator')) {
     promises.push(
-      getEmployer(job.creator.id).then(creator => {
-        result.creator = creator;
-      })
+      getEmployer(job.creator.id)
+        .then(creator => {
+          result.creator = creator;
+        })
+        .catch(err => {
+          console.log('Error getting creator', err);
+        })
     );
   }
 
   if (relations.includes('company')) {
     promises.push(
-      getCompany(job.company).then(company => {
-        result.company = company;
-      })
+      getCompany(job.company)
+        .then(company => {
+          result.company = company;
+        })
+        .catch(err => {
+          console.log('Error getting company', err);
+        })
     );
   }
 
   if (relations.includes('employees')) {
     promises.push(
-      getCompanyWithEmployees(job.company).then(company => {
-        result.employees = company.employees;
-      })
+      getCompanyWithEmployees(job.company)
+        .then(company => {
+          result.employees = company.employees;
+        })
+        .catch(err => {
+          console.log('Error getting employees', err);
+          result.employees = [];
+        })
     );
   }
 
@@ -170,15 +185,21 @@ export async function getJobWithRelations(
     promises.push(
       getAllApplicants(
         collection(jobRef, 'applicants') as CollectionReference<TApplicantWrite>
-      ).then(async applicants => {
-        const freelancerApplicants: TFreelancerApplicant[] = await Promise.all(
-          applicants.map(async a => {
-            const freelancer = await getFreelancer(a.id);
-            return { ...a, ...freelancer };
-          })
-        );
-        result.applicants = freelancerApplicants;
-      })
+      )
+        .then(async applicants => {
+          const freelancerApplicants: TFreelancerApplicant[] =
+            await Promise.all(
+              applicants.map(async a => {
+                const freelancer = await getFreelancer(a.id);
+                return { ...a, ...freelancer };
+              })
+            );
+          result.applicants = freelancerApplicants;
+        })
+        .catch(err => {
+          console.log('Error getting applicants', err);
+          result.applicants = [];
+        })
     );
   }
 
@@ -189,18 +210,50 @@ export async function getJobWithRelations(
           jobRef,
           'selectedApplicants'
         ) as CollectionReference<TApplicantWrite>
-      ).then(async selectedApplicants => {
-        const freelancerApplicants: TFreelancerApplicant[] = await Promise.all(
-          selectedApplicants.map(async a => {
-            const freelancer = await getFreelancer(a.id);
-            return { ...a, ...freelancer };
-          })
-        );
-        result.selectedApplicants = freelancerApplicants;
-      })
+      )
+        .then(async selectedApplicants => {
+          const freelancerApplicants: TFreelancerApplicant[] =
+            await Promise.all(
+              selectedApplicants.map(async a => {
+                const freelancer = await getFreelancer(a.id);
+                return { ...a, ...freelancer };
+              })
+            );
+          result.selectedApplicants = freelancerApplicants;
+        })
+        .catch(err => {
+          console.log('Error getting selected applicants', err);
+          result.selectedApplicants = [];
+        })
     );
   }
 
+  if (relations.includes('freelancers')) {
+    promises.push(
+      getAllApplicants(
+        collection(
+          jobRef,
+          'freelancers'
+        ) as CollectionReference<TApplicantWrite>
+      )
+        .then(async freelancers => {
+          console.log('Freelancers', freelancers);
+          const freelancerApplicants: TFreelancerApplicant[] =
+            await Promise.all(
+              freelancers.map(async a => {
+                const freelancer = await getFreelancer(a.id);
+                return { ...a, ...freelancer };
+              })
+            );
+          console.log('Freelancer applicants', freelancerApplicants);
+          result.freelancers = freelancerApplicants;
+        })
+        .catch(err => {
+          console.log('Error getting freelancers', err);
+          result.freelancers = [];
+        })
+    );
+  }
   // Execute all promises in parallel
   await Promise.all(promises);
 

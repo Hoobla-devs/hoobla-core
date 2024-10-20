@@ -242,11 +242,13 @@ export type TEmailJobData = {
 };
 
 export type TSendAlertResult = {
-  recipient: string;
+  recipient: {
+    name: string;
+    email: string;
+    phone: string;
+  };
   emailSent: boolean;
   smsSent: boolean;
-  emailSuccess?: boolean;
-  smsSuccess?: boolean;
   excludedDueToTitles: boolean;
 };
 
