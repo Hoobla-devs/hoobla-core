@@ -203,31 +203,6 @@ export async function getJobWithRelations(
     );
   }
 
-  if (relations.includes('selectedApplicants')) {
-    promises.push(
-      getAllApplicants(
-        collection(
-          jobRef,
-          'selectedApplicants'
-        ) as CollectionReference<TApplicantWrite>
-      )
-        .then(async selectedApplicants => {
-          const freelancerApplicants: TFreelancerApplicant[] =
-            await Promise.all(
-              selectedApplicants.map(async a => {
-                const freelancer = await getFreelancer(a.id);
-                return { ...a, ...freelancer };
-              })
-            );
-          result.selectedApplicants = freelancerApplicants;
-        })
-        .catch(err => {
-          console.log('Error getting selected applicants', err);
-          result.selectedApplicants = [];
-        })
-    );
-  }
-
   if (relations.includes('freelancers')) {
     promises.push(
       getAllApplicants(
@@ -256,6 +231,15 @@ export async function getJobWithRelations(
   }
   // Execute all promises in parallel
   await Promise.all(promises);
+
+  // TODO: This doesn't work if applicants are not present
+  if (relations.includes('selectedApplicants') && result.applicants) {
+    result.selectedApplicants = result.applicants.filter(applicant =>
+      job.selectedApplicants.some(
+        selected => selected.id === applicant.general.uid
+      )
+    );
+  }
 
   return result;
 }
