@@ -131,6 +131,21 @@ export async function getJobWithRelations(
   const job = jobSnap.data();
   if (!job) throw new Error('Job not found');
 
+  const jobApplicants = await getAllApplicants(
+    collection(jobRef, 'applicants') as CollectionReference<TApplicantWrite>
+  );
+
+  const applicantsWithFreelancerProps: TFreelancerApplicant[] =
+    await Promise.all(
+      jobApplicants.map(async applicant => {
+        const freelancer = await getFreelancer(applicant.id);
+        return {
+          ...applicant,
+          ...freelancer,
+        };
+      })
+    );
+
   const result: TJobWithRelations = {
     ...job,
     employees: undefined,
@@ -182,53 +197,15 @@ export async function getJobWithRelations(
   }
 
   if (relations.includes('applicants')) {
-    promises.push(
-      getAllApplicants(
-        collection(jobRef, 'applicants') as CollectionReference<TApplicantWrite>
-      )
-        .then(async applicants => {
-          const freelancerApplicants: TFreelancerApplicant[] =
-            await Promise.all(
-              applicants.map(async a => {
-                const freelancer = await getFreelancer(a.id);
-                return { ...a, ...freelancer };
-              })
-            );
-          result.applicants = freelancerApplicants;
-        })
-        .catch(err => {
-          console.log('Error getting applicants', err);
-          result.applicants = [];
-        })
-    );
+    result.applicants = applicantsWithFreelancerProps;
   }
 
   if (relations.includes('freelancers')) {
-    promises.push(
-      getAllApplicants(
-        collection(
-          jobRef,
-          'freelancers'
-        ) as CollectionReference<TApplicantWrite>
-      )
-        .then(async freelancers => {
-          console.log('Freelancers', freelancers);
-          const freelancerApplicants: TFreelancerApplicant[] =
-            await Promise.all(
-              freelancers.map(async a => {
-                const freelancer = await getFreelancer(a.id);
-                return { ...a, ...freelancer };
-              })
-            );
-          console.log('Freelancer applicants', freelancerApplicants);
-          result.freelancers = freelancerApplicants;
-        })
-        .catch(err => {
-          console.log('Error getting freelancers', err);
-          result.freelancers = [];
-        })
+    result.freelancers = applicantsWithFreelancerProps.filter(applicant =>
+      job.freelancers.some(freelancerRef => freelancerRef.id === applicant.id)
     );
   }
+
   // Execute all promises in parallel
   await Promise.all(promises);
 
