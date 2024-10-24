@@ -31,6 +31,13 @@ export type TEmployerUser = TUserBase & {
   companies: TEmployer[];
 };
 
+export type TUserNotificationSettings = {
+  SMSNotifications?: boolean;
+  deniedOfferMails?: boolean;
+  cancelledJobMails?: boolean;
+  excludedJobTitleNotifications?: string[];
+};
+
 export type TUserRead = {
   deleted?: boolean;
   general: TGeneral;
@@ -38,12 +45,7 @@ export type TUserRead = {
   freelancerForm?: TSavedFreelancerFormData;
   activeCompany?: DocumentReference<TCompanyWrite>;
   companies?: TEmployerRead[];
-  settings?: {
-    SMSNotifications?: boolean;
-    deniedOfferMails?: boolean;
-    cancelledJobMails?: boolean;
-    excludedJobTitleNotifications?: string[];
-  };
+  settings?: TUserNotificationSettings;
 };
 
 export type TUser = Omit<TUserRead, 'activeCompany' | 'freelancer'> & {

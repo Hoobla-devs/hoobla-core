@@ -246,10 +246,13 @@ export type TSendAlertResult = {
     name: string;
     email: string;
     phone: string;
+    smsEnabled: boolean;
+    emailEnabled: boolean;
   };
   emailSent: boolean;
   smsSent: boolean;
-  excludedDueToTitles: boolean;
+  emailNotificationDisabled: boolean;
+  smsNotificationDisabled: boolean;
 };
 
 export type TJobRelation =
