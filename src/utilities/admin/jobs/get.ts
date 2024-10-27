@@ -136,6 +136,8 @@ export async function getJobWithRelations(
     collection(jobRef, 'applicants') as CollectionReference<TApplicantWrite>
   );
 
+  console.log('test');
+
   const applicantsWithFreelancerProps: TFreelancerApplicant[] =
     await Promise.all(
       jobApplicants.map(async applicant => {
@@ -157,7 +159,6 @@ export async function getJobWithRelations(
     freelancers: undefined,
   };
 
-  // Prepare promises for parallel execution
   const promises: Promise<void>[] = [];
 
   if (relations.includes('creator')) {
