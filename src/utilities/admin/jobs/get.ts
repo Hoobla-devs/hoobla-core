@@ -27,6 +27,7 @@ import {
   getCompanyWithEmployees,
 } from '../../companies/get';
 import { getAllApplicants } from '../../jobs/applicants/get';
+import { getJobEmployees } from '../../jobs/get';
 import { getEmployer, getFreelancer, getUserById } from '../../users/get';
 
 export async function getAllJobs(): Promise<TJobWithCompany[]> {
@@ -107,7 +108,7 @@ type OptionalRelations = {
   applicants?: TFreelancerApplicant[];
   selectedApplicants?: TFreelancerApplicant[];
   freelancers?: TFreelancerApplicant[];
-  employees?: TCompanyEmployee[];
+  employees?: TJobEmployee[];
 };
 
 // Modify TJobWithRelations to make all relations optional
@@ -185,9 +186,9 @@ export async function getJobWithRelations(
 
   if (relations.includes('employees')) {
     promises.push(
-      getCompanyWithEmployees(job.company)
-        .then(company => {
-          result.employees = company.employees;
+      getJobEmployees(job.id)
+        .then(employees => {
+          result.employees = employees;
         })
         .catch(err => {
           console.log('Error getting employees', err);
