@@ -1,5 +1,5 @@
-import { Timestamp } from "firebase/firestore";
-import { TInvite, TInviteWrite } from "./companyTypes";
+import { Timestamp } from 'firebase/firestore';
+import { TInvite, TInviteWrite } from './companyTypes';
 
 export type TAdminBase = {
   name: string;
@@ -19,4 +19,9 @@ export type TAdmin = TAdminRead;
 export type TAdminWrite = TAdminBase & {
   invites: TInviteWrite[];
   createdAt: Timestamp;
+};
+
+export type TTestType = {
+  name: string;
+  value: number;
 };
