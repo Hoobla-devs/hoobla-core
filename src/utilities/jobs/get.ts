@@ -126,6 +126,37 @@ export async function getJobWithCompanyAndApplicant(
   };
 }
 
+export async function getJobEmployees(
+  ref: string | DocumentReference<TJobWrite>
+): Promise<TJobEmployee[]> {
+  if (typeof ref === 'string') {
+    ref = doc(db, 'jobs', ref) as DocumentReference<TJobWrite>;
+  }
+
+  const employeeDocs = await getAllEmployees(
+    collection(
+      db,
+      'jobs',
+      ref.id,
+      'employees'
+    ) as CollectionReference<TJobEmployeeWrite>
+  );
+
+  const employees: TJobEmployee[] = await Promise.all(
+    employeeDocs.map(async e => {
+      const employee = await getUserById(e.id);
+      return {
+        id: e.id,
+        name: employee.general.name,
+        email: employee.general.email,
+        photo: employee.general.photo?.url,
+      };
+    })
+  );
+
+  return employees;
+}
+
 export async function getJobWithEmployees(
   ref: string | DocumentReference<TJobWrite>
 ): Promise<TJobWithEmployees> {

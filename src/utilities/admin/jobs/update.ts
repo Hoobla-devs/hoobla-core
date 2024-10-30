@@ -2,9 +2,10 @@ import {
   arrayUnion,
   doc,
   DocumentReference,
+  FieldValue,
   Timestamp,
-} from "firebase/firestore";
-import { db } from "../../../firebase/init";
+} from 'firebase/firestore';
+import { db } from '../../../firebase/init';
 import {
   TFreelancerApplicant,
   TJob,
@@ -18,17 +19,27 @@ import {
   TReasonId,
   TSignatures,
   TUnapprovedTags,
-} from "../../../types/jobTypes";
-import { updateDoc } from "../../updateDoc";
+} from '../../../types/jobTypes';
+import { updateDoc } from '../../updateDoc';
 
-// TODO: This function can be used to update more info from the jobPage. Update as needed
-export async function updateJobInfo(jobId: string, jobInfo: TJobWithAllData) {
-  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+export async function updateJobInfo(
+  jobId: string,
+  description: string,
+  deadline?: Date
+) {
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
-  return await updateDoc(jobRef, {
-    description: jobInfo.description,
-    "jobInfo.deadline": jobInfo.jobInfo.deadline,
-  })
+  return await updateDoc(
+    jobRef,
+    deadline
+      ? {
+          description: description,
+          'jobInfo.deadline': Timestamp.fromDate(deadline),
+        }
+      : {
+          description: description,
+        }
+  )
     .then(() => true)
     .catch(() => false);
 }
@@ -37,7 +48,7 @@ export async function updateJobSignatures(
   jobId: string,
   signatures: TSignatures
 ) {
-  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
   return await updateDoc(jobRef, {
     signatures: signatures,
@@ -51,10 +62,10 @@ export async function updateJobFreelancer(
   freelancerId: string,
   notSelectedReason: TReasonId
 ) {
-  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
   const freelancerRef = doc(
     jobRef,
-    "freelancers",
+    'freelancers',
     freelancerId
   ) as DocumentReference<TFreelancerApplicant>;
 
@@ -73,7 +84,7 @@ export async function updateJobStatus(
   status: TJobStatus,
   log: TLog
 ) {
-  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
   return await updateDoc(jobRef, {
     status: status,
@@ -90,7 +101,7 @@ export const resetJobContractProcess = async (
   documentStorageUrl: string,
   log: TLog
 ) => {
-  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
   return await updateDoc(jobRef, {
     documentId,
@@ -99,7 +110,7 @@ export const resetJobContractProcess = async (
     logs: arrayUnion(log),
   })
     .then(() => true)
-    .catch((err) => {
+    .catch(err => {
       console.error(err);
       return false;
     });
@@ -110,7 +121,7 @@ export const addSignedContractToJob = async (
   documentStorageUrl: string,
   log: TLog
 ) => {
-  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
   return await updateDoc(jobRef, {
     documentStorageUrl,
@@ -125,10 +136,10 @@ export async function updateSelectedApplicants(
   jobId: string,
   updatedApplicants: TFreelancerApplicant[]
 ) {
-  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
-  const applicantsRefList = updatedApplicants.map((a) => {
-    return doc(jobRef, "applicants", a.id);
+  const applicantsRefList = updatedApplicants.map(a => {
+    return doc(jobRef, 'applicants', a.id);
   });
 
   return await updateDoc(jobRef, {
@@ -140,17 +151,17 @@ export async function updateSelectedApplicants(
 
 // Submit the list of selectedApplicants so company can view and select them
 export async function submitSelectedApplicants(jobId: string) {
-  const jobRef = doc(db, "jobs", jobId) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
   const log: TLogWrite = {
-    status: "chooseFreelancers",
+    status: 'chooseFreelancers',
     date: Timestamp.fromDate(new Date()),
-    title: "Giggarar valdir",
-    description: "Giggarar valdir og tilkynning send á stofnanda verkefnis",
+    title: 'Giggarar valdir',
+    description: 'Giggarar valdir og tilkynning send á stofnanda verkefnis',
   };
 
   return await updateDoc(jobRef, {
-    status: "chooseFreelancers",
+    status: 'chooseFreelancers',
     logs: arrayUnion(log),
   })
     .then(() => true)
@@ -160,10 +171,10 @@ export async function submitSelectedApplicants(jobId: string) {
 export async function addTagToJob(
   id: string,
   tagId: string,
-  type: "jobTitles" | "skills" | "languages",
-  updatedUnapprovedTags: TJobBase["unapprovedTags"]
+  type: 'jobTitles' | 'skills' | 'languages',
+  updatedUnapprovedTags: TJobBase['unapprovedTags']
 ) {
-  const userRef = doc(db, "jobs", id) as DocumentReference<TJobWrite>;
+  const userRef = doc(db, 'jobs', id) as DocumentReference<TJobWrite>;
 
   return await updateDoc(userRef, {
     [type]: arrayUnion(tagId),
@@ -177,24 +188,24 @@ export async function updateJobApplication(
   job: TJob,
   jobFormData: TJobFormData
 ) {
-  const jobRef = doc(db, "jobs", job.id) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', job.id) as DocumentReference<TJobWrite>;
 
   const { unapprovedTags, type } = jobFormData;
-  const jobType = type as "notSure" | "partTime" | "timeframe";
+  const jobType = type as 'notSure' | 'partTime' | 'timeframe';
 
   const noUnapprovedTags =
     !unapprovedTags ||
-    Object.values(unapprovedTags).every((tag) => tag?.length === 0);
+    Object.values(unapprovedTags).every(tag => tag?.length === 0);
 
   return await updateDoc(jobRef, {
     name: jobFormData.name,
     description: jobFormData.description,
-    "jobInfo.start": jobFormData.jobInfo.start || "",
-    "jobInfo.end": jobFormData.jobInfo.end || "",
-    "jobInfo.percentage":
-      jobType === "partTime" ? jobFormData.jobInfo.percentage : null,
-    "jobInfo.numOfHours":
-      jobType === "timeframe"
+    'jobInfo.start': jobFormData.jobInfo.start || '',
+    'jobInfo.end': jobFormData.jobInfo.end || '',
+    'jobInfo.percentage':
+      jobType === 'partTime' ? jobFormData.jobInfo.percentage : null,
+    'jobInfo.numOfHours':
+      jobType === 'timeframe'
         ? parseInt(jobFormData.jobInfo.numOfHours!) || null
         : null,
     unapprovedTags: noUnapprovedTags
@@ -206,5 +217,5 @@ export async function updateJobApplication(
     languages: jobFormData.languages,
   })
     .then(() => true)
-    .catch((err) => false);
+    .catch(err => false);
 }

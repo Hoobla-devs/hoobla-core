@@ -105,6 +105,7 @@ export const jobConverter = {
       };
     } catch (error) {
       console.log('Error on: ', snapshot.id);
+      console.log(error);
       throw new Error('converter error!');
     }
   },

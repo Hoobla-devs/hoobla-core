@@ -1,5 +1,10 @@
 import { DocumentReference, Timestamp } from 'firebase/firestore';
-import { TCompany, TCompanyWithEmployees, TCompanyWrite } from './companyTypes';
+import {
+  TCompany,
+  TCompanyEmployee,
+  TCompanyWithEmployees,
+  TCompanyWrite,
+} from './companyTypes';
 import { TTagsId } from './refrencesTypes';
 import { TJobTitle } from './tagTypes';
 import { TEmployerUser, TFreelancerUser, TUser } from './userTypes';
@@ -235,3 +240,47 @@ export type TEmailJobData = {
   description: string;
   jobTitles?: Omit<TJobTitle, 'relatedJobs' | 'relatedSkills'>[];
 };
+
+export type TSendAlertResult = {
+  recipient: {
+    name: string;
+    email: string;
+    phone: string;
+    smsEnabled: boolean;
+    emailEnabled: boolean;
+  };
+  emailSent: boolean;
+  smsSent: boolean;
+  emailNotificationDisabled: boolean;
+  smsNotificationDisabled: boolean;
+};
+
+export type TJobRelation =
+  | 'company'
+  | 'creator'
+  | 'employees'
+  | 'freelancers'
+  | 'applicants'
+  | 'selectedApplicants';
+
+// Define a helper type for optional relations
+type OptionalRelations = {
+  company?: TCompany;
+  creator?: TEmployerUser;
+  applicants?: TFreelancerApplicant[];
+  selectedApplicants?: TFreelancerApplicant[];
+  freelancers?: TFreelancerApplicant[];
+  employees?: TCompanyEmployee[];
+};
+
+// Modify TJobWithRelations to make all relations optional
+export type TJobWithRelations = Omit<
+  TJob,
+  | 'employees'
+  | 'company'
+  | 'applicants'
+  | 'selectedApplicants'
+  | 'freelancers'
+  | 'creator'
+> &
+  OptionalRelations;
