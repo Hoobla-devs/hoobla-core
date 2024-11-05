@@ -80,9 +80,13 @@ export async function addCompanySignature(
 
   const company = employerUser.activeCompany.company;
 
+  const jobStatus = job.signatures?.freelancer
+    ? 'inProgress'
+    : 'requiresSignature';
+
   const log: TLogWrite = {
     date: Timestamp.fromDate(new Date()),
-    status: 'requiresSignature',
+    status: jobStatus,
     description: `${company.name} hefur skrifað undir samning fyrir verkefnið ${job.name}`,
     title: 'Fyrirtæki skrifar undir',
   };
@@ -93,7 +97,7 @@ export async function addCompanySignature(
       id: employerUser.general.uid,
     },
     logs: arrayUnion(log),
-    status: 'requiresSignature',
+    status: jobStatus,
     ...jobData,
   })
     .then(() => true)
@@ -107,9 +111,13 @@ export async function addFreelancerSignature(
 ) {
   const jobRef = doc(db, 'jobs', job.id) as DocumentReference<TJobWrite>;
 
+  const jobStatus = job.signatures?.employer
+    ? 'inProgress'
+    : 'requiresSignature';
+
   const log: TLogWrite = {
     date: Timestamp.fromDate(new Date()),
-    status: 'inProgress',
+    status: jobStatus,
     description: `${freelancerUser.general.name} skrifar undir samning fyrir verkefnið ${job.name}.`,
     title: 'Giggari skrifar undir',
   };
@@ -120,7 +128,7 @@ export async function addFreelancerSignature(
       id: freelancerUser.general.uid,
     },
     logs: arrayUnion(log),
-    status: 'inProgress',
+    status: jobStatus,
     ...jobData,
   })
     .then(() => true)
