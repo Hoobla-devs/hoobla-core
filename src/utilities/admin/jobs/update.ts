@@ -25,21 +25,20 @@ import { updateDoc } from '../../updateDoc';
 export async function updateJobInfo(
   jobId: string,
   description: string,
-  deadline?: Date
+  deadline?: Date,
+  start?: string,
+  end?: string
 ) {
   const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
-  return await updateDoc(
-    jobRef,
-    deadline
-      ? {
-          description: description,
-          'jobInfo.deadline': Timestamp.fromDate(deadline),
-        }
-      : {
-          description: description,
-        }
-  )
+  const updateData: Record<string, any> = {};
+
+  if (description) updateData.description = description;
+  if (deadline) updateData['jobInfo.deadline'] = Timestamp.fromDate(deadline);
+  if (start) updateData['jobInfo.start'] = start;
+  if (end) updateData['jobInfo.end'] = end;
+
+  return await updateDoc(jobRef, updateData)
     .then(() => true)
     .catch(() => false);
 }
@@ -93,43 +92,6 @@ export async function updateJobStatus(
     .then(() => true)
     .catch(() => false);
 }
-
-// Adds new documentId and documentStorageUrl to job and removes all existing signatures
-export const resetJobContractProcess = async (
-  jobId: string,
-  documentId: string,
-  documentStorageUrl: string,
-  log: TLog
-) => {
-  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
-
-  return await updateDoc(jobRef, {
-    documentId,
-    documentStorageUrl,
-    signatures: null,
-    logs: arrayUnion(log),
-  })
-    .then(() => true)
-    .catch(err => {
-      console.error(err);
-      return false;
-    });
-};
-
-export const addSignedContractToJob = async (
-  jobId: string,
-  documentStorageUrl: string,
-  log: TLog
-) => {
-  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
-
-  return await updateDoc(jobRef, {
-    documentStorageUrl,
-    logs: arrayUnion(log),
-  })
-    .then(() => true)
-    .catch(() => false);
-};
 
 // Update selected applicants list with the list provided
 export async function updateSelectedApplicants(
@@ -218,4 +180,62 @@ export async function updateJobApplication(
   })
     .then(() => true)
     .catch(err => false);
+}
+
+export async function resetSignatures(jobId: string, adminName: string) {
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
+
+  const log: TLogWrite = {
+    status: 'requiresSignature',
+    date: Timestamp.fromDate(new Date()),
+    title: `${adminName} hefur endurstillt undirskriftir`,
+    description: 'Undirskriftir endurstilltar',
+  };
+
+  return await updateDoc(jobRef, {
+    signatures: null,
+    status: 'requiresSignature',
+  })
+    .then(() => true)
+    .catch(() => false);
+}
+
+// Used on admin side when updating the contract
+export async function updateJobContractData(
+  jobId: string,
+  documentId: string,
+  storageUrl: string,
+  adminName: string
+) {
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
+
+  const log: TLogWrite = {
+    status: 'requiresSignature',
+    date: Timestamp.fromDate(new Date()),
+    title: `${adminName} hefur endurstillt samningsferli`,
+    description: 'Samningsferli endurstillt',
+  };
+
+  return await updateDoc(jobRef, {
+    status: 'requiresSignature',
+    signatures: null,
+    documentId: documentId,
+    documentStorageUrl: storageUrl,
+    logs: arrayUnion(log),
+  })
+    .then(() => true)
+    .catch(() => false);
+}
+
+export async function updateJobContractStorageUrl(
+  jobId: string,
+  storageUrl: string
+) {
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
+
+  return await updateDoc(jobRef, {
+    documentStorageUrl: storageUrl,
+  })
+    .then(() => true)
+    .catch(() => false);
 }
