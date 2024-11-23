@@ -54,13 +54,28 @@ export async function updateCompany(
     companyLogo
   );
 
+  const companyRef = doc(
+    db,
+    'companies',
+    id
+  ) as DocumentReference<TCompanyWrite>;
   // Step 3: Update the company with the photo url
-  return await updateDoc(
-    doc(db, 'companies', id) as DocumentReference<TCompanyWrite>,
-    companyRead
-  )
-    .then(() => true)
-    .catch(() => false);
+  return await updateDoc(companyRef, {
+    name: companyRead.name,
+    phone: companyRead.phone,
+    address: companyRead.address,
+    size: companyRead.size,
+    website: companyRead.website,
+    logo: companyRead.logo,
+  })
+    .then(() => {
+      console.log('success');
+      return true;
+    })
+    .catch(e => {
+      console.log('arghhhh errror: ', e);
+      return false;
+    });
 }
 
 export async function inviteEmployee(cid: string, invite: TInvite) {

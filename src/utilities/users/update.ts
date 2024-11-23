@@ -150,7 +150,8 @@ export async function addEmployerDataAndCompanyToUser(
   return updateDoc(userRef, {
     'general.name': employerData.name,
     'general.ssn': employerData.ssn,
-    'general.phone': employerData.phone,
+    'general.phone.number': employerData.phone.number,
+    'general.phone.countryCode': employerData.phone.countryCode,
     activeCompany: companyRef,
     companies: arrayUnion(companyRef),
   })
@@ -208,7 +209,8 @@ export async function updateFreelancerResume(
     doc(db, 'users', uid) as DocumentReference<TUserWrite>,
     {
       'general.name': name,
-      'general.phone': phone,
+      'general.phone.number': phone.number,
+      'general.phone.countryCode': phone.countryCode,
       'general.ssn': ssn,
       'general.updatedAt': new Date(),
 
@@ -245,7 +247,8 @@ export async function updateEmployerInfo(
   // Step 2: Update user data
   return await updateDoc(userRef, {
     'general.name': employerFormData.name,
-    'general.phone': employerFormData.phone,
+    'general.phone.number': employerFormData.phone.number,
+    'general.phone.countryCode': employerFormData.phone.countryCode,
     'general.updatedAt': new Date(),
     ...(employerFormData.oldPhoto && {
       'general.photo.originalUrl': employerFormData.oldPhoto.originalUrl,
@@ -316,7 +319,8 @@ export async function registerEmployerUser(
         activeCompany: companyRef,
         companies: arrayUnion(companyRef),
         'general.name': data.name,
-        'general.phone': data.phone,
+        'general.phone.number': data.phone.number,
+        'general.phone.countryCode': data.phone.countryCode,
         'general.ssn': data.ssn,
         'general.createdAt': new Date(),
         'general.updatedAt': new Date(),

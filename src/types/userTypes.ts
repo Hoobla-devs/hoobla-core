@@ -70,7 +70,10 @@ export type TUserWrite = {
 
 export type TGeneralWrite = {
   name: string;
-  phone: string;
+  phone: {
+    number: string;
+    countryCode: string;
+  };
   ssn: string;
   email: string;
   photo?: { url: string; originalUrl: string };
@@ -84,7 +87,10 @@ export type TApplicantUser = TUserBase & TApplicant;
 export type TGeneral = {
   uid: string;
   name: string;
-  phone: string;
+  phone: {
+    number: string;
+    countryCode: string;
+  };
   ssn: string;
   photo?: { url: string; originalUrl: string };
   email: string;
@@ -199,7 +205,10 @@ export type TSavedFreelancerFormData = Omit<
 
 export type TFreelancerFormData = {
   name: string;
-  phone: string;
+  phone: {
+    number: string;
+    countryCode: string;
+  };
   ssn: string;
   gender: TGender | '';
   oldPhoto?: { url: string; originalUrl: string } | null;
@@ -244,7 +253,10 @@ export type TFreelancerFormData = {
 export type TEmployerFormData = {
   name: string;
   ssn?: string;
-  phone: string;
+  phone: {
+    number: string;
+    countryCode: string;
+  };
   position: string;
   oldPhoto?: { url: string; originalUrl: string } | null;
   photo?: { originalFile: File; file: File; url: string } | null;

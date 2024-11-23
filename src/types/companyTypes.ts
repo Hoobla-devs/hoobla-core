@@ -1,19 +1,22 @@
-import { DocumentReference, Timestamp } from "@firebase/firestore";
-import { TJobWrite } from "./jobTypes";
-import { TEmployerRole, TEmployerUser } from "./userTypes";
+import { DocumentReference, Timestamp } from '@firebase/firestore';
+import { TJobWrite } from './jobTypes';
+import { TEmployerRole, TEmployerUser } from './userTypes';
 
 export const companySizeList = [
-  { value: 0, label: "1-10" },
-  { value: 1, label: "11-50" },
-  { value: 2, label: "51-100" },
-  { value: 3, label: "101-500" },
-  { value: 4, label: "500+" },
+  { value: 0, label: '1-10' },
+  { value: 1, label: '11-50' },
+  { value: 2, label: '51-100' },
+  { value: 3, label: '101-500' },
+  { value: 4, label: '500+' },
 ];
 
 export type TCompanyBase = {
   name: string;
   ssn: string;
-  phone: string;
+  phone: {
+    number: string;
+    countryCode: string;
+  };
   address: {
     address: string;
     postcode: string;
@@ -51,16 +54,19 @@ export type TCompanyEmployee = {
   name: string;
   email: string;
   position: string;
-  phone: string;
+  phone: {
+    number: string;
+    countryCode: string;
+  };
   role: TEmployerRole;
   photo?: string;
 };
 
-export type TCompanyWithEmployees = Omit<TCompany, "employees"> & {
+export type TCompanyWithEmployees = Omit<TCompany, 'employees'> & {
   employees: TCompanyEmployee[];
 };
 
-export type TCompanyWithCreator = Omit<TCompany, "creator"> & {
+export type TCompanyWithCreator = Omit<TCompany, 'creator'> & {
   creator: TEmployerUser;
   employeesCount: number;
 };
@@ -86,11 +92,14 @@ export type TInviteWrite = {
 export type TCompanyCreatorData = {
   ssn: string;
   name: string;
-  phone: string;
+  phone: {
+    number: string;
+    countryCode: string;
+  };
   position: string;
 };
 
-export type TCompanyFormData = Omit<TCompanyBase, "logo"> & {
+export type TCompanyFormData = Omit<TCompanyBase, 'logo'> & {
   invites: string[];
   logo: { originalFile: File; file: File; url: string } | null;
   oldLogo?: { url: string };
@@ -99,13 +108,13 @@ export type TCompanyFormData = Omit<TCompanyBase, "logo"> & {
 };
 
 export type HeardAboutUsOption =
-  | "previousCustomer"
-  | "socialMedia"
-  | "friendReferred"
-  | "coffeeShop"
-  | "advertisement"
-  | "radio"
-  | "newspaper"
-  | "email"
-  | "previouslyCollaborated"
-  | "notSure";
+  | 'previousCustomer'
+  | 'socialMedia'
+  | 'friendReferred'
+  | 'coffeeShop'
+  | 'advertisement'
+  | 'radio'
+  | 'newspaper'
+  | 'email'
+  | 'previouslyCollaborated'
+  | 'notSure';
