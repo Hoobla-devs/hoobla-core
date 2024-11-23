@@ -1,6 +1,6 @@
-import { doc, DocumentReference, setDoc, Timestamp } from "firebase/firestore";
-import { db } from "../../../firebase/init";
-import { TAdminWrite } from "../../../types/adminTypes";
+import { doc, DocumentReference, setDoc, Timestamp } from 'firebase/firestore';
+import { db } from '../../../firebase/init';
+import { TAdminWrite } from '../../../types/adminTypes';
 
 export async function createAdminUser(
   uid: string,
@@ -8,8 +8,9 @@ export async function createAdminUser(
   email: string,
   inviter: string
 ) {
-  const adminRef = doc(db, "admins", uid) as DocumentReference<TAdminWrite>;
+  const adminRef = doc(db, 'admins', uid) as DocumentReference<TAdminWrite>;
 
+  console.log('test');
   return await setDoc(adminRef, {
     name,
     email,
@@ -19,7 +20,7 @@ export async function createAdminUser(
     inviter,
   })
     .then(() => true)
-    .catch((error) => {
+    .catch(error => {
       console.log(error);
       return false;
     });
