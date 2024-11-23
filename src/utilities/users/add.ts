@@ -3,17 +3,17 @@ import {
   doc,
   DocumentReference,
   setDoc,
-} from "firebase/firestore";
-import { db } from "../../firebase/init";
-import { TGender } from "../../types/baseTypes";
+} from 'firebase/firestore';
+import { db } from '../../firebase/init';
+import { TGender } from '../../types/baseTypes';
 import {
   TFreelancerFormData,
   TFreelancerStatus,
   TFreelancerUnapprovedTags,
   TFreelancerWrite,
   TUserWrite,
-} from "../../types/userTypes";
-import { updateDoc } from "../updateDoc";
+} from '../../types/userTypes';
+import { updateDoc } from '../updateDoc';
 
 export function convertFreelancerFormToFreelancerWrite(
   uid: string,
@@ -61,10 +61,10 @@ export function convertFreelancerFormToFreelancerWrite(
     address: freelancerAddress,
     company: freelancerCompany,
     jobs: [],
-    status: "inReview" as TFreelancerStatus,
+    status: 'inReview' as TFreelancerStatus,
     photo: {
-      originalUrl: oldPhoto?.originalUrl || "",
-      url: oldPhoto?.url || "",
+      originalUrl: oldPhoto?.originalUrl || '',
+      url: oldPhoto?.url || '',
     },
     unapprovedTags,
     selectedReviews: [],
@@ -74,18 +74,18 @@ export function convertFreelancerFormToFreelancerWrite(
 }
 
 export async function createUser(uid: string, email: string) {
-  const userRef = doc(db, "users", uid);
+  const userRef = doc(db, 'users', uid);
   await setDoc(userRef, {
     general: {
       email,
-      lang: "is",
+      lang: 'is',
       createdAt: new Date(),
     },
   })
     .then(() => {
       return true;
     })
-    .catch((error) => {
+    .catch(error => {
       console.log(error);
       return false;
     });
@@ -102,19 +102,20 @@ export async function createFreelancer(
   );
 
   return await updateDoc(
-    doc(db, "users", uid) as DocumentReference<TUserWrite>,
+    doc(db, 'users', uid) as DocumentReference<TUserWrite>,
     {
       freelancerForm: deleteField(),
-      "general.name": name,
-      "general.phone": phone,
-      "general.ssn": ssn,
-      "general.updatedAt": new Date(),
+      'general.name': name,
+      'general.phone.number': phone.number,
+      'general.phone.countryCode': phone.countryCode,
+      'general.ssn': ssn,
+      'general.updatedAt': new Date(),
 
       freelancer: freelancerWrite,
     }
   )
     .then(() => true)
-    .catch((error) => {
+    .catch(error => {
       console.log(error);
       return false;
     });
