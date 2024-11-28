@@ -2,12 +2,12 @@ import {
   QueryDocumentSnapshot,
   SnapshotOptions,
   Timestamp,
-} from "firebase/firestore";
-import { TNotificationRead, TNotificationWrite } from "../types/baseTypes";
+} from 'firebase/firestore';
+import { TNotificationRead, TNotificationWrite } from '../types/notification';
 
 export const notificationConverter = {
   toFirestore(notification: TNotificationRead): TNotificationWrite {
-    const { date, nid, ...rest } = notification;
+    const { date, ...rest } = notification;
     return {
       ...rest,
       date: Timestamp.fromDate(date),
@@ -18,11 +18,10 @@ export const notificationConverter = {
     options: SnapshotOptions
   ): TNotificationRead {
     const snapData = snapshot.data(options);
-
     return {
       ...snapData,
-      nid: snapshot.id,
       date: snapData.date.toDate(),
+      id: snapshot.id,
     };
   },
 };

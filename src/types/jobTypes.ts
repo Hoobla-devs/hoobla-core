@@ -32,6 +32,14 @@ export type TJobWrite = TJobBase & {
   signatures: TSignaturesWrite | null;
 };
 
+export type TJobRead = TJobBase & {
+  id: string;
+  terms: Date | null;
+  logs: TLog[];
+  jobInfo: TJobInfoRead;
+  signatures: TSignatures | null;
+};
+
 export type TLogWrite = {
   date: Timestamp;
   status: TJobStatus;
@@ -55,14 +63,6 @@ export type TJobEmployee = {
   name: string;
   photo?: string;
   email: string;
-};
-
-export type TJobRead = TJobBase & {
-  id: string;
-  terms: Date | null;
-  logs: TLog[];
-  jobInfo: TJobInfoRead;
-  signatures: TSignatures | null;
 };
 
 export type TJob = TJobRead & {
