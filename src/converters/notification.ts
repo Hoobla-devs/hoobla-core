@@ -1,16 +1,34 @@
 import {
+  doc,
+  DocumentReference,
   QueryDocumentSnapshot,
   SnapshotOptions,
   Timestamp,
 } from 'firebase/firestore';
+import { db } from '../firebase/init';
+import { TJobWrite } from '../types/jobTypes';
 import { TNotificationRead, TNotificationWrite } from '../types/notification';
+import { TUserWrite } from '../types/userTypes';
 
 export const notificationConverter = {
   toFirestore(notification: TNotificationRead): TNotificationWrite {
     const { date, ...rest } = notification;
     return {
-      ...rest,
       date: Timestamp.fromDate(date),
+      job: doc(db, 'jobs', notification.jobId) as DocumentReference<TJobWrite>,
+      recipient: doc(
+        db,
+        'users',
+        notification.recipientId
+      ) as DocumentReference<TUserWrite>,
+      sender: doc(
+        db,
+        'users',
+        notification.senderId
+      ) as DocumentReference<TUserWrite>,
+      accountType: notification.accountType,
+      type: notification.type,
+      read: notification.read,
     };
   },
   fromFirestore(
@@ -21,7 +39,9 @@ export const notificationConverter = {
     return {
       ...snapData,
       date: snapData.date.toDate(),
-      id: snapshot.id,
+      recipientId: snapData.recipient.id,
+      senderId: snapData.sender.id,
+      jobId: snapData.job.id,
     };
   },
 };

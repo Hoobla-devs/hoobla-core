@@ -3,8 +3,9 @@ import { TJobWrite } from './jobTypes';
 import { TUserWrite } from './userTypes';
 
 export type EmployerNotification =
-  | 'applicantsSelected' // Admin has selected a list of applicants
+  | 'applicantsSelected' // Admin has selected a list of applicants. This is done on the admin side.
   | 'contactInfoApproved' // Freelancer has approved sharing contact information
+  | 'contactInfoDenied' // Freelancer has denied sharing contact information
   | 'reviewRequested' // Admin has requested the employer to review the freelancer
   | 'freelancerSignature'; // Freelancer has signed the contract
 
@@ -14,33 +15,43 @@ export type FreelancerNotification =
   | 'employerSignature'; // Employer has signed the contract
 
 export type TNotificationWrite = {
-  jobId?: DocumentReference<TJobWrite>;
-  freelancerId?: DocumentReference<TUserWrite>;
-  employerId?: DocumentReference<TUserWrite>;
+  job: DocumentReference<TJobWrite>;
+  recipient: DocumentReference<TUserWrite>;
+  sender: DocumentReference<TUserWrite>;
+  accountType: 'freelancer' | 'employer';
   type: EmployerNotification | FreelancerNotification;
-  title: string;
-  description: string;
   date: Timestamp;
   read: boolean;
 };
 
-export type TNotificationRead = Omit<TNotificationWrite, 'date'> & {
-  id: string;
+export type TNotificationRead = {
+  jobId: string;
+  recipientId: string;
+  senderId: string;
   date: Date;
+  accountType: 'freelancer' | 'employer';
+  type: EmployerNotification | FreelancerNotification;
+  read: boolean;
 };
 
-export type TNotification = TNotificationRead & {
+export type TNotification = {
+  id: string;
+  date: Date;
+  type: EmployerNotification | FreelancerNotification;
+  accountType: 'freelancer' | 'employer';
+  read: boolean;
   job: {
     id: string;
     name: string;
   };
-  freelancer: {
+  sender: {
     id: string;
     name: string;
     photo: string;
   };
-  employer: {
+  recipient: {
     id: string;
     name: string;
+    photo: string;
   };
 };

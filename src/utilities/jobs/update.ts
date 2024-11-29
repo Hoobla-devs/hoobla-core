@@ -21,6 +21,7 @@ import {
   TLogWrite,
 } from '../../types/jobTypes';
 import { TEmployerUser, TFreelancerUser } from '../../types/userTypes';
+import { createNotification } from '../notifications/add';
 import { updateDoc } from '../updateDoc';
 
 export async function agreeTerms(jobId: string) {
@@ -100,7 +101,19 @@ export async function addCompanySignature(
     status: jobStatus,
     ...jobData,
   })
-    .then(() => true)
+    .then(() => {
+      // Create notification to freelancer
+      createNotification({
+        accountType: 'freelancer',
+        date: new Date(),
+        jobId: job.id,
+        read: false,
+        recipientId: employerUser.general.uid,
+        senderId: employerUser.general.uid,
+        type: 'employerSignature',
+      });
+      return true;
+    })
     .catch(() => false);
 }
 
@@ -131,7 +144,19 @@ export async function addFreelancerSignature(
     status: jobStatus,
     ...jobData,
   })
-    .then(() => true)
+    .then(() => {
+      // Create notification to employer
+      createNotification({
+        accountType: 'employer',
+        date: new Date(),
+        jobId: job.id,
+        read: false,
+        recipientId: job.creator.id,
+        senderId: freelancerUser.general.uid,
+        type: 'freelancerSignature',
+      });
+      return true;
+    })
     .catch(() => false);
 }
 
