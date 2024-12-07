@@ -31,12 +31,12 @@ export async function updateJobInfo(
 ) {
   const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
-  const updateData: Record<string, any> = {};
-
-  if (description) updateData.description = description;
-  if (deadline) updateData['jobInfo.deadline'] = Timestamp.fromDate(deadline);
-  if (start) updateData['jobInfo.start'] = start;
-  if (end) updateData['jobInfo.end'] = end;
+  const updateData = {
+    description,
+    'jobInfo.deadline': deadline ? Timestamp.fromDate(deadline) : undefined,
+    'jobInfo.start': start || '',
+    'jobInfo.end': end || '',
+  };
 
   return await updateDoc(jobRef, updateData)
     .then(() => true)
