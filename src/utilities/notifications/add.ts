@@ -1,13 +1,14 @@
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "../../firebase/init";
-import { TNotificationRead } from "../../types/baseTypes";
+import { collection, addDoc } from 'firebase/firestore';
+import { notificationConverter } from '../../converters/notification';
+import { db } from '../../firebase/init';
+import { TNotificationRead } from '../../types/notification';
 
-export async function addNotification(
-  notification: Omit<TNotificationRead, "nid">
-) {
-  const notificationsRef = collection(db, "notifications");
+export const createNotification = async (notification: TNotificationRead) => {
+  const notificationsRef = collection(db, 'notifications');
 
-  return await addDoc(notificationsRef, notification)
+  const notificationData = notificationConverter.toFirestore(notification);
+
+  await addDoc(notificationsRef, notificationData)
     .then(() => true)
     .catch(() => false);
-}
+};

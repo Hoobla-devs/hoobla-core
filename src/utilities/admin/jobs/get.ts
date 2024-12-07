@@ -125,7 +125,7 @@ export type TJobWithRelations = Omit<
 
 export async function getJobWithRelations(
   jid: string,
-  relations: TJobRelation[]
+  relations: TJobRelation[] = []
 ): Promise<TJobWithRelations> {
   const jobRef = doc(db, 'jobs', jid).withConverter(jobConverter);
   const jobSnap = await getDoc(jobRef);
@@ -135,8 +135,6 @@ export async function getJobWithRelations(
   const jobApplicants = await getAllApplicants(
     collection(jobRef, 'applicants') as CollectionReference<TApplicantWrite>
   );
-
-  console.log('test');
 
   const applicantsWithFreelancerProps: TFreelancerApplicant[] =
     await Promise.all(

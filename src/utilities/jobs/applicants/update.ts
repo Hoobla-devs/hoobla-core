@@ -9,7 +9,8 @@ import {
   TJobStatus,
   TOfferType,
 } from '../../../types/jobTypes';
-import { TGeneral } from '../../../types/userTypes';
+import { TGeneral, TUserWrite } from '../../../types/userTypes';
+import { createNotification } from '../../notifications/add';
 import { updateDoc } from '../../updateDoc';
 
 const contactLogs = {
@@ -82,6 +83,7 @@ export async function addAcceptedRate(
 
 export async function updateContactApproval(
   jobId: string,
+  creatorId: string,
   jobStatus: TJobStatus,
   freelancerInfo: TGeneral,
   status: TContactStatus
@@ -93,11 +95,11 @@ export async function updateContactApproval(
       `jobs/${jobId}/applicants`,
       freelancerInfo.uid
     ) as DocumentReference<TApplicantWrite>;
+
     await updateDoc(applicantRef, {
       contactApproval: status,
     })
       .then(() => {
-        // add log to job
         updateDoc(jobRef, {
           logs: arrayUnion({
             date: new Date(),
@@ -105,6 +107,23 @@ export async function updateContactApproval(
             title: contactLogs[status].title,
             description: contactLogs[status].description(freelancerInfo.name),
           }),
+        });
+
+        // Add notification to job creator that contact approval was changed
+        // If status is approved, add notification to employer, if denied add notification to freelancer
+        createNotification({
+          accountType: status === 'requested' ? 'freelancer' : 'employer', // The receiving account type
+          date: new Date(),
+          jobId: jobId,
+          read: false,
+          recipientId: status === 'requested' ? freelancerInfo.uid : creatorId,
+          senderId: status === 'requested' ? creatorId : freelancerInfo.uid,
+          type:
+            status === 'requested'
+              ? 'contactInfoRequested'
+              : status === 'denied'
+                ? 'contactInfoDenied'
+                : 'contactInfoApproved',
         });
       })
       .catch(error => {
