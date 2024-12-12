@@ -26,7 +26,7 @@ import {
   TJobWithEmployees,
 } from '../../types/jobTypes';
 import { getCompany, getCompanyEmployee } from '../companies/get';
-import { getFreelancer, getUserById, getUserGeneralInfo } from '../users/get';
+import { getFreelancer, getUserById } from '../users/get';
 import { getAllApplicants, getApplicant } from './applicants/get';
 import { getAllEmployees } from './employees/get';
 
@@ -304,7 +304,8 @@ export async function getApprovedJobs(): Promise<TJobWithCompany[]> {
     query(
       collection(db, 'jobs'),
       where('status', '==', 'approved'),
-      where('documentId', '==', null)
+      where('documentId', '==', null),
+      where('hidden', '!=', true)
     )
   );
 

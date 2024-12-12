@@ -23,6 +23,7 @@ export type TJobBase = {
   selectedApplicants: DocumentReference<TApplicant>[]; // Þau sem Hoobla 3-5 velja
   employees?: DocumentReference<TJobEmployee>[];
   notSelectedReason?: TReasonId;
+  hidden?: boolean; // Hide job from public view
 } & TTagsId;
 
 export type TJobWrite = TJobBase & {
