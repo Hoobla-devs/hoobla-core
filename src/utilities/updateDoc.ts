@@ -12,7 +12,6 @@ import {
   TUserWrite,
 } from '../types/userTypes';
 import { TCompanyEmployeeWrite, TCompanyWrite } from '../types/companyTypes';
-import { TNotificationWrite } from '../types/baseTypes';
 
 type AllWrites =
   | TJobWrite
@@ -22,8 +21,7 @@ type AllWrites =
   | TCompanyWrite
   | TApplicantWrite
   | TFreelancerWrite
-  | TReviewWrite
-  | TNotificationWrite;
+  | TReviewWrite;
 
 export function updateDoc<T extends AllWrites>(
   ref: DocumentReference<T>,
