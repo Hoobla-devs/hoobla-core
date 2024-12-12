@@ -304,8 +304,8 @@ export async function getApprovedJobs(): Promise<TJobWithCompany[]> {
     query(
       collection(db, 'jobs'),
       where('status', '==', 'approved'),
-      where('documentId', '==', null),
-      where('hidden', '!=', true)
+      where('documentId', '==', null)
+      // where('hidden', '!=', true)
     )
   );
 
