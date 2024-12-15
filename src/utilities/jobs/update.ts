@@ -105,9 +105,7 @@ export async function addCompanySignature(
       // Create notification to freelancer
       createNotification({
         accountType: 'freelancer',
-        date: new Date(),
         jobId: job.id,
-        read: false,
         recipientId: employerUser.general.uid,
         senderId: employerUser.general.uid,
         type: 'employerSignature',
@@ -148,9 +146,7 @@ export async function addFreelancerSignature(
       // Create notification to employer
       createNotification({
         accountType: 'employer',
-        date: new Date(),
         jobId: job.id,
-        read: false,
         recipientId: job.creator.id,
         senderId: freelancerUser.general.uid,
         type: 'freelancerSignature',
