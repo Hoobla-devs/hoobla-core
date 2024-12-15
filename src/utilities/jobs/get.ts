@@ -26,7 +26,7 @@ import {
   TJobWithEmployees,
 } from '../../types/jobTypes';
 import { getCompany, getCompanyEmployee } from '../companies/get';
-import { getFreelancer, getUserById, getUserGeneralInfo } from '../users/get';
+import { getFreelancer, getUserById } from '../users/get';
 import { getAllApplicants, getApplicant } from './applicants/get';
 import { getAllEmployees } from './employees/get';
 
@@ -317,5 +317,5 @@ export async function getApprovedJobs(): Promise<TJobWithCompany[]> {
     })
   );
 
-  return approvedJobs;
+  return approvedJobs.filter(job => !job.hidden);
 }

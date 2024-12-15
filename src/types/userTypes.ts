@@ -19,6 +19,7 @@ export type TUserBase = {
     cancelledJobMails?: boolean;
     excludedJobTitleNotifications?: string[];
   };
+  isAdmin?: boolean; // For testing purposes, admins can see hidden jobs
 };
 
 export type TFreelancerUser = TUserBase & {

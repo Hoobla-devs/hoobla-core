@@ -23,6 +23,7 @@ export type TJobBase = {
   selectedApplicants: DocumentReference<TApplicant>[]; // Þau sem Hoobla 3-5 velja
   employees?: DocumentReference<TJobEmployee>[];
   notSelectedReason?: TReasonId;
+  hidden?: boolean; // Hide job from public view
 } & TTagsId;
 
 export type TJobWrite = TJobBase & {
@@ -111,7 +112,8 @@ export type TJobStatus =
   | 'inProgress' // Both parties have signed the contract and the job is in progress
   | 'readyForReview' // Freelancer has completed the job and is now awaiting a review from the company
   | 'completed' // Job has been completed
-  | 'cancelled'; // Job has been cancelled
+  | 'cancelled' // Job has been cancelled
+  | 'postponed'; // Job has been postponed
 
 export type TLog = {
   date: Date;
