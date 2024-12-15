@@ -241,6 +241,7 @@ export type TEmailJobData = {
   name: string;
   description: string;
   jobTitles?: Omit<TJobTitle, 'relatedJobs' | 'relatedSkills'>[];
+  hidden: boolean;
 };
 
 export type TSendAlertResult = {
