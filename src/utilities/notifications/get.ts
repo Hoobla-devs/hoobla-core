@@ -47,6 +47,7 @@ export const getUserNotifications = async (
     if (!job || !recipient || !sender) {
       return null;
     }
+
     // If accountType is freelancer, then recipient is the freelancer and sender is the employer
     // If accountType is employer, then recipient is the employer and sender is the freelancer
     const noti: TNotification = {

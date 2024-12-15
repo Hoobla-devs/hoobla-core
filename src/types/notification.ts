@@ -22,6 +22,7 @@ export type TNotificationWrite = {
   type: EmployerNotification | FreelancerNotification;
   date: Timestamp;
   read: boolean;
+  isSystem?: boolean;
 };
 
 export type TNotificationRead = {
@@ -32,6 +33,7 @@ export type TNotificationRead = {
   accountType: 'freelancer' | 'employer';
   type: EmployerNotification | FreelancerNotification;
   read: boolean;
+  isSystem?: boolean;
 };
 
 export type TNotification = {
@@ -54,4 +56,5 @@ export type TNotification = {
     name: string;
     photo: string;
   };
+  isSystem?: boolean;
 };
