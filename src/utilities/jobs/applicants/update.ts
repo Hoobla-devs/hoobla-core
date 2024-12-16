@@ -109,6 +109,7 @@ export async function updateContactApproval(
           }),
         });
 
+        console.log('Creating notification');
         // Add notification to job creator that contact approval was changed
         // If status is approved, add notification to employer, if denied add notification to freelancer
         createNotification({
@@ -122,6 +123,8 @@ export async function updateContactApproval(
               : status === 'denied'
                 ? 'contactInfoDenied'
                 : 'contactInfoApproved',
+        }).catch(error => {
+          console.error('Error creating notification:', error);
         });
       })
       .catch(error => {
