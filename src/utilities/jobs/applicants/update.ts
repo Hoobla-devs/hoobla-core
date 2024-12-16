@@ -109,7 +109,7 @@ export async function updateContactApproval(
           }),
         });
 
-        console.log('Creating notification');
+        console.log(freelancerInfo, creatorId, status);
         // Add notification to job creator that contact approval was changed
         // If status is approved, add notification to employer, if denied add notification to freelancer
         createNotification({
