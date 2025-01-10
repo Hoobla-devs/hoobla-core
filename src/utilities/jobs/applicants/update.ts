@@ -113,9 +113,7 @@ export async function updateContactApproval(
         // If status is approved, add notification to employer, if denied add notification to freelancer
         createNotification({
           accountType: status === 'requested' ? 'freelancer' : 'employer', // The receiving account type
-          date: new Date(),
           jobId: jobId,
-          read: false,
           recipientId: status === 'requested' ? freelancerInfo.uid : creatorId,
           senderId: status === 'requested' ? creatorId : freelancerInfo.uid,
           type:
@@ -124,6 +122,8 @@ export async function updateContactApproval(
               : status === 'denied'
                 ? 'contactInfoDenied'
                 : 'contactInfoApproved',
+        }).catch(error => {
+          console.error('Error creating notification:', error);
         });
       })
       .catch(error => {

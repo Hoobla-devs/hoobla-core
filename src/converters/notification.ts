@@ -29,6 +29,7 @@ export const notificationConverter = {
       accountType: notification.accountType,
       type: notification.type,
       read: notification.read,
+      isSystem: notification.isSystem,
     };
   },
   fromFirestore(
@@ -42,6 +43,7 @@ export const notificationConverter = {
       recipientId: snapData.recipient.id,
       senderId: snapData.sender.id,
       jobId: snapData.job.id,
+      isSystem: snapData.isSystem,
     };
   },
 };

@@ -3,10 +3,21 @@ import { notificationConverter } from '../../converters/notification';
 import { db } from '../../firebase/init';
 import { TNotificationRead } from '../../types/notification';
 
-export const createNotification = async (notification: TNotificationRead) => {
+type TNotificationReadRequired = Omit<TNotificationRead, 'date' | 'read'>;
+
+export const createNotification = async (
+  notification: TNotificationReadRequired
+) => {
   const notificationsRef = collection(db, 'notifications');
 
-  const notificationData = notificationConverter.toFirestore(notification);
+  const fullNotification: TNotificationRead = {
+    ...notification,
+    date: new Date(),
+    read: false,
+    isSystem: notification.isSystem || false,
+  };
+
+  const notificationData = notificationConverter.toFirestore(fullNotification);
 
   await addDoc(notificationsRef, notificationData)
     .then(() => true)
