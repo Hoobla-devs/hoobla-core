@@ -195,6 +195,7 @@ export async function resetSignatures(jobId: string, adminName: string) {
   return await updateDoc(jobRef, {
     signatures: null,
     status: 'requiresSignature',
+    logs: arrayUnion(log),
   })
     .then(() => true)
     .catch(() => false);

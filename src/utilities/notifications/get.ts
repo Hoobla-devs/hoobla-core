@@ -41,12 +41,16 @@ export const getUserNotifications = async (
     const [job, recipient, sender] = await Promise.all([
       getJobWithRelations(notification.jobId),
       getUserById(notification.recipientId),
-      getUserById(notification.senderId),
+      getUserById(notification.senderId).catch(error => {
+        console.error('Error fetching sender:', error);
+        return null;
+      }),
     ]);
 
-    if (!job || !recipient || !sender) {
+    if (!job || !recipient) {
       return null;
     }
+
     // If accountType is freelancer, then recipient is the freelancer and sender is the employer
     // If accountType is employer, then recipient is the employer and sender is the freelancer
     const noti: TNotification = {
@@ -58,11 +62,18 @@ export const getUserNotifications = async (
         name: recipient.general.name,
         photo: '', // Recipient photo is not needed for the notification
       },
-      sender: {
-        id: sender.general.uid,
-        name: sender.general.name,
-        photo: sender.freelancer?.photo.url || sender.general.photo?.url || '',
-      },
+      sender: sender
+        ? {
+            id: sender.general.uid,
+            name: sender.general.name,
+            photo:
+              sender.freelancer?.photo.url || sender.general.photo?.url || '',
+          }
+        : {
+            id: '',
+            name: 'Hoobla',
+            photo: '',
+          },
     };
     return noti;
   });
