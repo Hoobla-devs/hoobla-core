@@ -5,32 +5,48 @@ import { TCompanyWithCreator } from '../../../types/companyTypes';
 import { getEmployer } from '../../users/get';
 
 export async function getCompanies(): Promise<TCompanyWithCreator[]> {
-  const companiesCollectionRef = collection(db, 'companies').withConverter(
-    companyConverter
-  );
-  const companiesSnap = await getDocs(companiesCollectionRef);
+  try {
+    const companiesCollectionRef = collection(db, 'companies').withConverter(
+      companyConverter
+    );
+    const companiesSnap = await getDocs(companiesCollectionRef);
 
-  const companiesPromise = companiesSnap.docs.map(async doc => {
-    try {
-      const company = doc.data();
-      const employeesCollection = collection(doc.ref, 'employees');
-      const [creator, employeesSnap] = await Promise.all([
-        getEmployer(company.creator.id),
-        getDocs(employeesCollection),
-      ]);
+    const companiesPromise = companiesSnap.docs.map(async doc => {
+      try {
+        const company = doc.data();
+        const employeesCollection = collection(doc.ref, 'employees');
 
-      return {
-        ...company,
-        creator,
-        employeesCount: employeesSnap.docs.length || 0,
-      };
-    } catch (error) {
-      console.log('Error getting company:', doc.id);
-      throw new Error('Errror getting company!');
-    }
-  });
+        const [creator, employeesSnap] = await Promise.all([
+          getEmployer(company.creator.id),
+          getDocs(employeesCollection),
+        ]).catch(error => {
+          console.error(`Failed to fetch data for company ${doc.id}:`, error);
+          throw error;
+        });
 
-  const companies: TCompanyWithCreator[] = await Promise.all(companiesPromise);
+        return {
+          ...company,
+          creator,
+          employeesCount: employeesSnap.docs.length || 0,
+        };
+      } catch (error) {
+        console.error(`Error processing company ${doc.id}:`, {
+          error,
+          companyData: doc.data(),
+          creatorId: doc.data()?.creator?.id,
+        });
+        throw new Error(`Failed to process company ${doc.id}: ${error}`);
+      }
+    });
 
-  return companies;
+    const companies = await Promise.all(companiesPromise).catch(error => {
+      console.error('Failed to process all companies:', error);
+      throw error;
+    });
+
+    return companies;
+  } catch (error) {
+    console.error('Fatal error in getCompanies:', error);
+    throw new Error(`Failed to fetch companies: ${error}`);
+  }
 }
