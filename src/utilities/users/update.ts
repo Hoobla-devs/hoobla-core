@@ -178,8 +178,14 @@ export async function updateFreelancerResume(
   if (photo) {
     // Delete old photos
     await Promise.all([
-      await deletePhoto(freelancerFormData.oldPhoto!.url),
-      await deletePhoto(freelancerFormData.oldPhoto!.originalUrl),
+      await deletePhoto(freelancerFormData.oldPhoto!.url).catch(error => {
+        console.log('Error deleting old photo with url: ', error);
+      }),
+      await deletePhoto(freelancerFormData.oldPhoto!.originalUrl).catch(
+        error => {
+          console.log('Error deleting old photo with originalUrl: ', error);
+        }
+      ),
     ]);
     // upload logo and add url to company
     const originalFile = freelancerFormData.photo?.originalFile;
