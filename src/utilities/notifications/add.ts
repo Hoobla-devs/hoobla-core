@@ -14,6 +14,7 @@ export const createNotification = async (
     ...notification,
     date: new Date(),
     read: false,
+    isSystem: notification.isSystem || false,
   };
 
   const notificationData = notificationConverter.toFirestore(fullNotification);

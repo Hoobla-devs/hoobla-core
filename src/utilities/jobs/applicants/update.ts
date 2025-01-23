@@ -122,6 +122,8 @@ export async function updateContactApproval(
               : status === 'denied'
                 ? 'contactInfoDenied'
                 : 'contactInfoApproved',
+        }).catch(error => {
+          console.error('Error creating notification:', error);
         });
       })
       .catch(error => {
