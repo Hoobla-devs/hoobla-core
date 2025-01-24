@@ -7,28 +7,27 @@ import {
 } from 'firebase/firestore';
 import { jobConverter } from '../../../converters/job';
 import { db } from '../../../firebase/init';
-import { TCompany, TCompanyEmployee } from '../../../types/companyTypes';
+import { TCompany } from '../../../types/companyTypes';
 import {
   TApplicantWrite,
   TFreelancerApplicant,
   TJob,
-  TJobBase,
   TJobEmployee,
   TJobRead,
   TJobRelation,
   TJobWithAllData,
   TJobWithCompany,
 } from '../../../types/jobTypes';
-import { TEmployerUser, TUser } from '../../../types/userTypes';
+import { TEmployerUser, TUserRead } from '../../../types/userTypes';
 import {
   getCompany,
   getCompanyById,
-  getCompanyEmployee,
   getCompanyWithEmployees,
 } from '../../companies/get';
 import { getAllApplicants } from '../../jobs/applicants/get';
-import { getJobEmployees } from '../../jobs/get';
-import { getEmployer, getFreelancer, getUserById } from '../../users/get';
+import { getFreelancer, getUserById } from '../../users/get';
+import { userConverter } from '../../../converters/user';
+import { companyConverter } from '../../../converters/company';
 
 export async function getAllJobs(): Promise<TJobWithCompany[]> {
   const jobsRef = collection(db, 'jobs').withConverter(
@@ -56,52 +55,6 @@ export async function getAllJobs(): Promise<TJobWithCompany[]> {
   return jobsWithCompany;
 }
 
-export async function getJobWithAllData(jid: string): Promise<TJobWithAllData> {
-  const jobRef = doc(db, 'jobs', jid).withConverter(jobConverter);
-  const jobSnap = await getDoc(jobRef);
-  const job = jobSnap.data();
-  if (!job) throw new Error('Job not found');
-
-  const [company, applicants, creator] = await Promise.all([
-    getCompanyWithEmployees(job.company),
-    getAllApplicants(
-      collection(jobRef, 'applicants') as CollectionReference<TApplicantWrite>
-    ),
-    getUserById(job.creator.id),
-  ]);
-
-  const freelancerApplicants: TFreelancerApplicant[] = await Promise.all(
-    applicants.map(async a => {
-      const freelancer = await getFreelancer(a.id);
-      return { ...a, ...freelancer };
-    })
-  );
-
-  // Freelancers selected for the job
-  const freelancers = freelancerApplicants.filter(a => {
-    return job.freelancers.find(
-      freelancerRef => freelancerRef.id === a.general.uid
-    );
-  });
-
-  // Freelancers picked by Hoobla for the job
-  const selectedApplicants = freelancerApplicants.filter(a => {
-    return job.selectedApplicants.find(
-      freelancerRef => freelancerRef.id === a.general.uid
-    );
-  });
-
-  return {
-    ...job,
-    company,
-    applicants: freelancerApplicants,
-    selectedApplicants,
-    freelancers,
-    creator: creator as unknown as TEmployerUser,
-  };
-}
-
-// Define a helper type for optional relations
 type OptionalRelations = {
   company?: TCompany;
   creator?: TEmployerUser;
@@ -111,7 +64,6 @@ type OptionalRelations = {
   employees?: TJobEmployee[];
 };
 
-// Modify TJobWithRelations to make all relations optional
 export type TJobWithRelations = Omit<
   TJob,
   | 'employees'
@@ -124,112 +76,127 @@ export type TJobWithRelations = Omit<
   OptionalRelations;
 
 export async function getJobWithRelations(
-  jid: string,
-  relations: TJobRelation[] = []
+  relations: TJobRelation[],
+  jid: string
 ): Promise<TJobWithRelations> {
   const jobRef = doc(db, 'jobs', jid).withConverter(jobConverter);
   const jobSnap = await getDoc(jobRef);
   const job = jobSnap.data();
   if (!job) throw new Error('Job not found');
 
-  const jobApplicants = await getAllApplicants(
-    collection(jobRef, 'applicants') as CollectionReference<TApplicantWrite>
+  const applicantsCollection = collection(
+    jobRef,
+    'applicants'
+  ) as CollectionReference<TApplicantWrite>;
+  const employeesCollection = collection(
+    jobRef,
+    'employees'
+  ) as CollectionReference<TJobEmployee>;
+
+  console.time('getCollections');
+  const [applicantIds, employeeIds] = await Promise.all([
+    getDocs(applicantsCollection).then(applicants =>
+      applicants.docs.map(doc => doc.id)
+    ),
+    getDocs(employeesCollection).then(employees =>
+      employees.docs.map(doc => doc.id)
+    ),
+  ]);
+  console.timeEnd('getCollections');
+
+  console.time('getUsers');
+  const users = await Promise.all(
+    [...applicantIds, ...employeeIds].map(async id => {
+      const userRef = doc(db, 'users', id).withConverter(userConverter);
+      const userSnap = await getDoc(userRef);
+      const user = userSnap.data();
+      return user!;
+    })
   );
+  console.timeEnd('getUsers');
 
-  const applicantsWithFreelancerProps: TFreelancerApplicant[] =
-    await Promise.all(
-      jobApplicants.map(async applicant => {
-        const freelancer = await getFreelancer(applicant.id);
-        return {
-          ...applicant,
-          ...freelancer,
-        };
-      })
-    );
-
-  const result: TJobWithRelations = {
-    ...job,
-    employees: undefined,
-    company: undefined,
-    applicants: undefined,
-    selectedApplicants: undefined,
-    creator: undefined,
-    freelancers: undefined,
-  };
-
-  const promises: Promise<void>[] = [];
-
-  if (relations.includes('creator')) {
-    promises.push(
-      getEmployer(job.creator.id)
-        .then(creator => {
-          result.creator = creator;
-        })
-        .catch(err => {
-          console.log('Error getting creator', err);
-        })
-    );
-  }
-
-  if (relations.includes('company')) {
-    promises.push(
-      getCompany(job.company)
-        .then(company => {
-          result.company = company;
-        })
-        .catch(err => {
-          console.log('Error getting company', err);
-        })
-    );
-  }
-
-  if (relations.includes('employees')) {
-    promises.push(
-      getJobEmployees(job.id)
-        .then(employees => {
-          result.employees = employees;
-        })
-        .catch(err => {
-          console.log('Error getting employees', err);
-          result.employees = [];
-        })
-    );
-  }
-
-  if (relations.includes('applicants')) {
-    result.applicants = applicantsWithFreelancerProps;
-  }
-
-  if (relations.includes('freelancers')) {
-    result.freelancers = applicantsWithFreelancerProps.filter(applicant =>
-      job.freelancers.some(freelancerRef => freelancerRef.id === applicant.id)
-    );
-  }
-
-  // Execute all promises in parallel
-  await Promise.all(promises);
-
-  // TODO: This doesn't work if applicants are not present
-  if (relations.includes('selectedApplicants') && result.applicants) {
-    result.selectedApplicants = result.applicants.filter(applicant =>
-      job.selectedApplicants.some(
-        selected => selected.id === applicant.general.uid
-      )
-    );
-  }
-
-  return result;
+  const jobWithRelations = await processJobRelations(relations, job, users);
+  return jobWithRelations;
 }
 
 export async function getAllJobsWithRelations(
   relations: TJobRelation[]
 ): Promise<TJobWithRelations[]> {
-  const jobsRef = collection(db, 'jobs').withConverter(
-    jobConverter
-  ) as CollectionReference<TJobRead>;
-  const jobsSnap = await getDocs(jobsRef);
+  // Fetch everything
+  const [users, jobs] = await Promise.all([
+    getDocs(collection(db, 'users').withConverter(userConverter)).then(users =>
+      users.docs.map(doc => doc.data())
+    ),
+    getDocs(collection(db, 'jobs').withConverter(jobConverter)).then(jobs =>
+      jobs.docs.map(doc => doc.data())
+    ),
+    getDocs(collection(db, 'companies').withConverter(companyConverter)).then(
+      companies => companies.docs.map(doc => doc.data())
+    ),
+  ]);
+
   const jobsWithRelations = await Promise.all(
-    jobsSnap.docs.map(job => getJobWithRelations(job.id, relations))
+    jobs.map(job => processJobRelations(relations, job, users))
   );
+
   return jobsWithRelations;
+}
+
+async function processJobRelations(
+  relations: TJobRelation[],
+  job: TJob,
+  users: TUserRead[]
+) {
+  let result: TJobWithRelations = {
+    ...job,
+    employees: [],
+    company: undefined,
+    applicants: [],
+    selectedApplicants: [],
+    creator: undefined,
+    freelancers: [],
+  };
+
+  console.time('getCompany');
+  if (relations.includes('company')) {
+    result.company = await getCompanyById(job.company.id);
+  }
+  console.timeEnd('getCompany');
+
+  if (relations.includes('applicants')) {
+    const applicantIds = job.applicants?.map(a => a.id);
+    const applicants = users.filter(u => applicantIds?.includes(u.general.uid));
+    result.applicants = applicants as unknown as TFreelancerApplicant[];
+  }
+
+  if (relations.includes('freelancers')) {
+    result.freelancers = result.applicants?.filter(applicant =>
+      job.freelancers.some(f => f.id === applicant.general.uid)
+    );
+  }
+
+  if (relations.includes('selectedApplicants')) {
+    result.selectedApplicants = result.applicants?.filter(applicant =>
+      job.selectedApplicants.some(s => s.id === applicant.general.uid)
+    );
+  }
+
+  if (relations.includes('employees')) {
+    const employeeIds = job.employees?.map(e => e.id);
+    const employees = users.filter(u => employeeIds?.includes(u.general.uid));
+    result.employees = employees as unknown as TJobEmployee[];
+  }
+
+  if (relations.includes('creator')) {
+    const creatorUser = users.find(u => u.general.uid === job.creator.id);
+    if (creatorUser) {
+      result.creator = creatorUser as unknown as TEmployerUser;
+    }
+  }
+
+  if (relations.includes('company')) {
+    result.company = await getCompanyById(job.company.id);
+  }
+
+  return result;
 }
