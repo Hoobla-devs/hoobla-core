@@ -76,8 +76,8 @@ export type TJobWithRelations = Omit<
   OptionalRelations;
 
 export async function getJobWithRelations(
-  relations: TJobRelation[],
-  jid: string
+  jid: string,
+  relations: TJobRelation[]
 ): Promise<TJobWithRelations> {
   const jobRef = doc(db, 'jobs', jid).withConverter(jobConverter);
   const jobSnap = await getDoc(jobRef);
