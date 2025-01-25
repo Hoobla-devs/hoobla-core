@@ -115,7 +115,12 @@ export async function getJobWithRelations(
   );
   console.timeEnd('getUsers');
 
-  const jobWithRelations = await processJobRelations(relations, job, users);
+  const jobWithRelations = await processJobRelations(
+    relations,
+    job,
+    users,
+    applicantIds
+  );
   return jobWithRelations;
 }
 
@@ -145,7 +150,8 @@ export async function getAllJobsWithRelations(
 async function processJobRelations(
   relations: TJobRelation[],
   job: TJob,
-  users: TUserRead[]
+  users: TUserRead[],
+  applicantIds: string[]
 ) {
   let result: TJobWithRelations = {
     ...job,
@@ -164,7 +170,6 @@ async function processJobRelations(
   console.timeEnd('getCompany');
 
   if (relations.includes('applicants')) {
-    const applicantIds = job.applicants?.map(a => a.id);
     const applicants = users.filter(u => applicantIds?.includes(u.general.uid));
     result.applicants = applicants as unknown as TFreelancerApplicant[];
   }
