@@ -19,7 +19,7 @@ export type TEmailContent = {
 };
 
 export type TEmailTemplate =
-  | 'applicantsSelectedReminder'
+  | 'applicantsSelected'
   | 'emailReset'
   | 'freelancerApplicationAccepted'
   | 'freelancerApplicationDenied'
@@ -27,12 +27,12 @@ export type TEmailTemplate =
   | 'giveReviewReminder'
   | 'jobDenied'
   | 'jobCancelled'
+  | 'jobPostponed'
   | 'newJobAdded'
   | 'signatureReminder';
 
 export type TEmail = {
   name: string;
-  id: TEmailTemplate;
   description: string;
   updatedAt: string;
   type: TEmailTemplate;

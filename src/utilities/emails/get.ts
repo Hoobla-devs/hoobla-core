@@ -18,10 +18,7 @@ export async function getEmailTemplateByType(
     const emailDoc = emailsSnap.docs.find(doc => doc.data().type === type);
 
     if (emailDoc) {
-      return {
-        id: emailDoc.id,
-        ...emailDoc.data(),
-      } as TEmail;
+      return emailDoc.data() as TEmail;
     }
 
     return null;
@@ -36,10 +33,7 @@ export async function getAllEmailTemplates(): Promise<TEmail[]> {
     const emailsRef = collection(db, 'emails');
     const emailsSnap = await getDocs(emailsRef);
 
-    return emailsSnap.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as TEmail[];
+    return emailsSnap.docs.map(doc => doc.data() as TEmail);
   } catch (error) {
     console.error('Error fetching email templates:', error);
     return [];
