@@ -9,6 +9,7 @@ import { jobConverter } from '../../../converters/job';
 import { db } from '../../../firebase/init';
 import { TCompany } from '../../../types/companyTypes';
 import {
+  TApplicantRead,
   TApplicantWrite,
   TFreelancerApplicant,
   TJob,
@@ -94,10 +95,8 @@ export async function getJobWithRelations(
   ) as CollectionReference<TJobEmployee>;
 
   console.time('getCollections');
-  const [applicantIds, employeeIds] = await Promise.all([
-    getDocs(applicantsCollection).then(applicants =>
-      applicants.docs.map(doc => doc.id)
-    ),
+  const [applicants, employeeIds] = await Promise.all([
+    getAllApplicants(applicantsCollection),
     getDocs(employeesCollection).then(employees =>
       employees.docs.map(doc => doc.id)
     ),
@@ -106,7 +105,7 @@ export async function getJobWithRelations(
 
   console.time('getUsers');
   const users = await Promise.all(
-    [...applicantIds, ...employeeIds].map(async id => {
+    [...applicants.map(a => a.id), ...employeeIds].map(async id => {
       const userRef = doc(db, 'users', id).withConverter(userConverter);
       const userSnap = await getDoc(userRef);
       const user = userSnap.data();
@@ -119,7 +118,7 @@ export async function getJobWithRelations(
     relations,
     job,
     users,
-    applicantIds
+    applicants
   );
   return jobWithRelations;
 }
@@ -128,7 +127,7 @@ export async function getAllJobsWithRelations(
   relations: TJobRelation[]
 ): Promise<TJobWithRelations[]> {
   // Fetch everything
-  const [users, jobs] = await Promise.all([
+  const [users, jobs, companies] = await Promise.all([
     getDocs(collection(db, 'users').withConverter(userConverter)).then(users =>
       users.docs.map(doc => doc.data())
     ),
@@ -141,7 +140,19 @@ export async function getAllJobsWithRelations(
   ]);
 
   const jobsWithRelations = await Promise.all(
-    jobs.map(job => processJobRelations(relations, job, users))
+    jobs.map(async (job: TJob) => {
+      const applicantsRef = collection(db, 'jobs', job.id, 'applicants');
+      const applicants = await getAllApplicants(
+        applicantsRef as CollectionReference<TApplicantWrite>
+      );
+      const jobWithRelations = await processJobRelations(
+        relations,
+        job,
+        users,
+        applicants
+      );
+      return jobWithRelations;
+    })
   );
 
   return jobsWithRelations;
@@ -151,7 +162,7 @@ async function processJobRelations(
   relations: TJobRelation[],
   job: TJob,
   users: TUserRead[],
-  applicantIds: string[]
+  applicants: TApplicantRead[]
 ) {
   let result: TJobWithRelations = {
     ...job,
@@ -169,9 +180,16 @@ async function processJobRelations(
   }
   console.timeEnd('getCompany');
 
+  // TODO: Put applicant details such as offer and contactApproval in the applicant object
   if (relations.includes('applicants')) {
-    const applicants = users.filter(u => applicantIds?.includes(u.general.uid));
-    result.applicants = applicants as unknown as TFreelancerApplicant[];
+    // Each entry here should have the user info as well as the applicant info
+    const applicantsWithUser = applicants
+      .map(applicant => {
+        const user = users.find(u => u.general.uid === applicant.id);
+        return user ? { ...applicant, ...user } : null;
+      })
+      .filter(Boolean);
+    result.applicants = applicantsWithUser as unknown as TFreelancerApplicant[];
   }
 
   if (relations.includes('freelancers')) {
@@ -182,7 +200,7 @@ async function processJobRelations(
 
   if (relations.includes('selectedApplicants')) {
     result.selectedApplicants = result.applicants?.filter(applicant =>
-      job.selectedApplicants.some(s => s.id === applicant.general.uid)
+      job.selectedApplicants.some(s => s.id === applicant.id)
     );
   }
 

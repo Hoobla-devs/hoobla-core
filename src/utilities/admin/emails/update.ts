@@ -22,8 +22,13 @@ export async function updateEmailTemplate(
     const querySnapshot = await getDocs(emailQuery);
 
     if (querySnapshot.empty) {
-      console.error('No email template found with type:', type);
-      return false;
+      // Create new template if none exists
+      const newTemplate = {
+        type,
+        ...updates,
+      };
+      await addDoc(emailsRef, newTemplate);
+      return true;
     }
 
     const emailDoc = querySnapshot.docs[0];

@@ -5,16 +5,25 @@ export type DynamicDataEmailOption =
   | 'creatorName'
   | 'freelancerName';
 
+export type TAlertLinkType =
+  | 'job'
+  | 'account'
+  | 'settings'
+  | 'jobs'
+  | 'jobSignature'
+  | 'jobApplicants'
+  | 'freelancerSignature';
+
 export type TEmailContent = {
   title: string;
   paragraphs: string[];
   primaryButton: {
     label: string;
-    link: string;
+    linkType: TAlertLinkType;
   } | null;
   secondaryButton?: {
     label: string;
-    link: string;
+    linkType: TAlertLinkType;
   } | null;
 };
 
@@ -29,7 +38,8 @@ export type TEmailTemplate =
   | 'jobCancelled'
   | 'jobPostponed'
   | 'newJobAdded'
-  | 'signatureReminder';
+  | 'signatureReminder'
+  | 'applicantsSelectedReminder';
 
 export type TEmail = {
   name: string;
@@ -41,3 +51,19 @@ export type TEmail = {
     en: TEmailContent;
   };
 };
+
+export type AlertDeliveryResult = {
+  type: 'email' | 'sms';
+  success: boolean;
+  recipient: string;
+  error?: string;
+};
+
+export type AlertBatchResult = {
+  totalCount: number;
+  successCount: number;
+  failureCount: number;
+  results: AlertDeliveryResult[];
+};
+
+export type AlertType = 'chooseFreelancers' | 'jobCancelled' | 'jobPostponed';

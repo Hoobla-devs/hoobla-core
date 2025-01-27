@@ -1,14 +1,82 @@
-import { DynamicDataEmailOption } from '../../types/emailTypes';
-import { TJob } from '../../types/jobTypes';
-import { TUser } from '../../types/userTypes';
+import { TAlertLinkType, TEmail, TEmailContent } from '../../types/emailTypes';
 import { getCompany } from '../companies/get';
-import { getJob, getJobWithApplicants } from '../jobs/get';
-import { getFreelancer, getUserGeneralInfo } from '../users/get';
+import { getJobWithApplicants } from '../jobs/get';
+import { getUserGeneralInfo } from '../users/get';
+
+export const LinkTypeTranslations: Record<
+  TAlertLinkType,
+  { is: string; en: string }
+> = {
+  job: { is: 'Sjá meira', en: 'View more' },
+  account: { is: 'Sjá meira', en: 'View more' },
+  settings: { is: 'Sjá meira', en: 'View more' },
+  jobs: { is: 'Sjá meira', en: 'View more' },
+  jobApplicants: { is: 'Sjá meira', en: 'View more' },
+  jobSignature: { is: 'Sjá meira', en: 'View more' },
+  freelancerSignature: { is: 'Sjá meira', en: 'View more' },
+};
+
+// Converts link type to link and label
+export function convertLinkTypeToLink(
+  lang: 'is' | 'en',
+  jobID?: string,
+  linkType?: TAlertLinkType
+): { label: string; link: string } {
+  if (linkType === 'job') {
+    return {
+      label: LinkTypeTranslations[linkType][lang],
+      link: `https://hoobla.is/jobs/${jobID}`,
+    };
+  }
+
+  if (linkType === 'account') {
+    return {
+      label: LinkTypeTranslations[linkType][lang],
+      link: `https://hoobla.is/account`,
+    };
+  }
+
+  if (linkType === 'settings') {
+    return {
+      label: LinkTypeTranslations[linkType][lang],
+      link: `https://hoobla.is/settings`,
+    };
+  }
+
+  if (linkType === 'jobs') {
+    return {
+      label: LinkTypeTranslations[linkType][lang],
+      link: `https://hoobla.is/jobs`,
+    };
+  }
+
+  if (linkType === 'jobSignature') {
+    return {
+      label: LinkTypeTranslations[linkType][lang],
+      link: `https://hoobla.is/jobs/${jobID}/signature`,
+    };
+  }
+
+  if (linkType === 'freelancerSignature') {
+    return {
+      label: LinkTypeTranslations[linkType][lang],
+      link: `https://hoobla.is/account/freelancers/signature`,
+    };
+  }
+
+  return {
+    label: lang === 'is' ? 'Sjá meira' : 'View more',
+    link: `https://hoobla.is/account`,
+  };
+}
 
 export async function convertDynamicDataToText(
   paragraphs: string[],
-  job?: TJob,
-  user?: TUser
+  data?: {
+    userName?: string;
+    companyName?: string;
+    jobName?: string;
+  }
 ) {
   const modifiedParagraphs = await Promise.all(
     paragraphs.map(async paragraph => {
@@ -24,13 +92,13 @@ export async function convertDynamicDataToText(
 
           switch (property) {
             case 'userName':
-              replacement = 'Test user name';
+              replacement = data?.userName || '';
               break;
             case 'companyName':
-              replacement = 'Test company name';
+              replacement = data?.companyName || '';
               break;
             case 'jobName':
-              replacement = 'Test job name';
+              replacement = data?.jobName || '';
               break;
             // Add more cases as needed
           }
@@ -68,3 +136,32 @@ export async function getFreelancerName(jobId: string, freelancerId: string) {
   );
   return freelancer?.general.name;
 }
+
+export const getEmailWithDynamicData = async (
+  email: TEmail,
+  lang: 'is' | 'en',
+  data: {
+    userName?: string;
+    companyName?: string;
+    jobName?: string;
+    jobID?: string;
+  }
+): Promise<{
+  title: string;
+  paragraphs: string[];
+  primaryButton: { label: string; link: string };
+}> => {
+  const emailContent = email.content[lang];
+
+  const updatedEmailContent = {
+    title: emailContent.title,
+    paragraphs: await convertDynamicDataToText(emailContent.paragraphs, data),
+    primaryButton: convertLinkTypeToLink(
+      lang,
+      data.jobID,
+      emailContent.primaryButton?.linkType
+    ), // Defaults to see more that links to account page
+  };
+
+  return updatedEmailContent;
+};
