@@ -7,13 +7,13 @@ export const LinkTypeTranslations: Record<
   TAlertLinkType,
   { is: string; en: string }
 > = {
-  job: { is: 'Sjá meira', en: 'View more' },
-  account: { is: 'Sjá meira', en: 'View more' },
-  settings: { is: 'Sjá meira', en: 'View more' },
-  jobs: { is: 'Sjá meira', en: 'View more' },
-  jobApplicants: { is: 'Sjá meira', en: 'View more' },
-  jobSignature: { is: 'Sjá meira', en: 'View more' },
-  freelancerSignature: { is: 'Sjá meira', en: 'View more' },
+  job: { is: 'Skoða starf', en: 'View job' },
+  account: { is: 'Mitt svæði', en: 'My page' },
+  settings: { is: 'Stillingar', en: 'Settings' },
+  jobs: { is: 'Sjá verkefni í boði', en: 'See available jobs' },
+  jobApplicants: { is: 'Skoða umsækjendur', en: 'View applicants' },
+  jobSignature: { is: 'Undirrita', en: 'Sign' },
+  freelancerSignature: { is: 'Undirrita', en: 'Sign' },
 };
 
 // Converts link type to link and label
