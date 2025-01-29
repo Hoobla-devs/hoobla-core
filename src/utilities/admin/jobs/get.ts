@@ -4,10 +4,11 @@ import {
   doc,
   getDoc,
   getDocs,
+  collectionGroup,
 } from 'firebase/firestore';
 import { jobConverter } from '../../../converters/job';
 import { db } from '../../../firebase/init';
-import { TCompany } from '../../../types/companyTypes';
+import { TCompany, TCompanyRead } from '../../../types/companyTypes';
 import {
   TApplicantRead,
   TApplicantWrite,
@@ -95,10 +96,13 @@ export async function getJobWithRelations(
   ) as CollectionReference<TJobEmployee>;
 
   console.time('getCollections');
-  const [applicants, employeeIds] = await Promise.all([
+  const [applicants, employeeIds, companies] = await Promise.all([
     getAllApplicants(applicantsCollection),
     getDocs(employeesCollection).then(employees =>
       employees.docs.map(doc => doc.id)
+    ),
+    getDocs(collection(db, 'companies').withConverter(companyConverter)).then(
+      companies => companies.docs.map(doc => doc.data())
     ),
   ]);
   console.timeEnd('getCollections');
@@ -118,51 +122,94 @@ export async function getJobWithRelations(
     relations,
     job,
     users,
-    applicants
+    applicants,
+    companies
   );
   return jobWithRelations;
 }
 
+// Fetch all jobs and their relations efficiently
 export async function getAllJobsWithRelations(
   relations: TJobRelation[]
 ): Promise<TJobWithRelations[]> {
-  // Fetch everything
-  const [users, jobs, companies] = await Promise.all([
-    getDocs(collection(db, 'users').withConverter(userConverter)).then(users =>
-      users.docs.map(doc => doc.data())
+  // Fetch all jobs first
+  const jobDocs = await getDocs(
+    collection(db, 'jobs').withConverter(jobConverter)
+  );
+  const jobs = jobDocs.docs.map(doc => doc.data());
+
+  // Gather all related document IDs
+  const userIds = new Set<string>();
+  const companyIds = new Set<string>();
+
+  console.time('getRelations');
+  jobs.forEach(async job => {
+    if (relations.includes('company') && job.company?.id) {
+      companyIds.add(job.company.id);
+    }
+    if (relations.includes('creator') && job.creator?.id) {
+      userIds.add(job.creator.id);
+    }
+    if (relations.includes('employees') && job.employees) {
+      job.employees.forEach(e => userIds.add(e.id));
+    }
+    if (relations.includes('selectedApplicants') && job.selectedApplicants) {
+      job.selectedApplicants.forEach(a => userIds.add(a.id));
+    }
+    if (relations.includes('applicants')) {
+      const applicantsCollection = collection(db, 'jobs', job.id, 'applicants');
+      const applicants = await getDocs(applicantsCollection);
+      console.log('applicants size', applicants.docs.length);
+      applicants.docs.forEach(doc => userIds.add(doc.id));
+    }
+  });
+  console.timeEnd('getRelations');
+
+  console.log('userIds', userIds.size);
+  console.log('companyIds', companyIds.size);
+
+  // Batch fetch users and companies in parallel
+  const [users, companies] = await Promise.all([
+    Promise.all(
+      [...userIds].map(id =>
+        getDoc(doc(db, 'users', id).withConverter(userConverter)).then(doc =>
+          doc.data()
+        )
+      )
+    ).then(results =>
+      results.filter((user): user is TUserRead => user !== undefined)
     ),
-    getDocs(collection(db, 'jobs').withConverter(jobConverter)).then(jobs =>
-      jobs.docs.map(doc => doc.data())
-    ),
-    getDocs(collection(db, 'companies').withConverter(companyConverter)).then(
-      companies => companies.docs.map(doc => doc.data())
+    Promise.all(
+      [...companyIds].map(id =>
+        getDoc(doc(db, 'companies', id).withConverter(companyConverter)).then(
+          doc => doc.data()
+        )
+      )
+    ).then(results =>
+      results.filter(
+        (company): company is TCompanyRead => company !== undefined
+      )
     ),
   ]);
 
-  const jobsWithRelations = await Promise.all(
-    jobs.map(async (job: TJob) => {
-      const applicantsRef = collection(db, 'jobs', job.id, 'applicants');
-      const applicants = await getAllApplicants(
-        applicantsRef as CollectionReference<TApplicantWrite>
-      );
-      const jobWithRelations = await processJobRelations(
-        relations,
-        job,
-        users,
-        applicants
-      );
-      return jobWithRelations;
-    })
-  );
+  // fetch all applicants
+  const applicantDocs = await getDocs(collectionGroup(db, 'applicants'));
+  const applicants = applicantDocs.docs.map(doc =>
+    doc.data()
+  ) as TApplicantRead[];
 
-  return jobsWithRelations;
+  // Process each job with its relations
+  return jobs.map(job =>
+    processJobRelations(relations, job, users, applicants, companies)
+  );
 }
 
-async function processJobRelations(
+function processJobRelations(
   relations: TJobRelation[],
   job: TJob,
   users: TUserRead[],
-  applicants: TApplicantRead[]
+  applicants: TApplicantRead[],
+  companies: TCompanyRead[]
 ) {
   let result: TJobWithRelations = {
     ...job,
@@ -176,7 +223,7 @@ async function processJobRelations(
 
   console.time('getCompany');
   if (relations.includes('company')) {
-    result.company = await getCompanyById(job.company.id);
+    result.company = companies.find(c => c.id === job.company.id);
   }
   console.timeEnd('getCompany');
 
@@ -215,10 +262,6 @@ async function processJobRelations(
     if (creatorUser) {
       result.creator = creatorUser as unknown as TEmployerUser;
     }
-  }
-
-  if (relations.includes('company')) {
-    result.company = await getCompanyById(job.company.id);
   }
 
   return result;
