@@ -208,10 +208,14 @@ export async function getAllJobsWithRelations(
 
   console.timeEnd('getUsersAndCompanies');
 
+  console.time('processJobs');
   // Process each job with its relations
-  return jobs.map(job =>
+  const mappedJobs = jobs.map(job =>
     processJobRelations(relations, job, users, applicants, companies)
   );
+  console.timeEnd('processJobs');
+
+  return mappedJobs;
 }
 
 function processJobRelations(
