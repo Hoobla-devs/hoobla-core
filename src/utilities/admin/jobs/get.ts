@@ -159,16 +159,13 @@ export async function getAllJobsWithRelations(
     if (relations.includes('applicants')) {
       const applicantsCollection = collection(db, 'jobs', job.id, 'applicants');
       const applicants = await getDocs(applicantsCollection);
-      console.log('applicants size', applicants.docs.length);
       applicants.docs.forEach(doc => userIds.add(doc.id));
     }
   });
   console.timeEnd('getRelations');
 
-  console.log('userIds', userIds.size);
-  console.log('companyIds', companyIds.size);
-
   // Batch fetch users and companies in parallel
+  console.time('getUsersAndCompanies');
   const [users, companies] = await Promise.all([
     Promise.all(
       Array.from(userIds).map(id =>
@@ -191,12 +188,14 @@ export async function getAllJobsWithRelations(
       )
     ),
   ]);
-
+  console.timeEnd('getUsersAndCompanies');
   // fetch all applicants
+  console.time('getApplicants');
   const applicantDocs = await getDocs(collectionGroup(db, 'applicants'));
   const applicants = applicantDocs.docs.map(doc =>
     doc.data()
   ) as TApplicantRead[];
+  console.timeEnd('getApplicants');
 
   // Process each job with its relations
   return jobs.map(job =>
@@ -221,15 +220,11 @@ function processJobRelations(
     freelancers: [],
   };
 
-  console.time('getCompany');
   if (relations.includes('company')) {
     result.company = companies.find(c => c.id === job.company.id);
   }
-  console.timeEnd('getCompany');
 
-  // TODO: Put applicant details such as offer and contactApproval in the applicant object
   if (relations.includes('applicants')) {
-    // Each entry here should have the user info as well as the applicant info
     const applicantsWithUser = applicants
       .map(applicant => {
         const user = users.find(u => u.general.uid === applicant.id);
