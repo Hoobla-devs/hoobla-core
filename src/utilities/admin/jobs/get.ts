@@ -143,22 +143,40 @@ export async function getAllJobsWithRelations(
   const companyIds = new Set<string>();
 
   console.time('getRelations');
-  await Promise.all(
-    jobs.map(async job => {
-      if (relations.includes('company') && job.company?.id) {
-        companyIds.add(job.company.id);
-      }
-      if (relations.includes('creator') && job.creator?.id) {
-        userIds.add(job.creator.id);
-      }
-      if (relations.includes('employees') && job.employees) {
-        job.employees.forEach(e => userIds.add(e.id));
-      }
-      const applicantsCollection = collection(db, 'jobs', job.id, 'applicants');
-      const applicants = await getDocs(applicantsCollection);
-      applicants.docs.forEach(doc => userIds.add(doc.id));
-    })
-  );
+  // Get all applicants at once using collectionGroup
+  const [allApplicants] = await Promise.all([
+    getDocs(collectionGroup(db, 'applicants')).then(snap =>
+      snap.docs.reduce(
+        (acc, doc) => {
+          const jobId = doc.ref.parent.parent?.id;
+          if (jobId) {
+            if (!acc[jobId]) acc[jobId] = [];
+            acc[jobId].push(doc.id);
+          }
+          return acc;
+        },
+        {} as Record<string, string[]>
+      )
+    ),
+  ]);
+
+  // Process all other relations without awaiting
+  jobs.forEach(job => {
+    if (relations.includes('company') && job.company?.id) {
+      companyIds.add(job.company.id);
+    }
+    if (relations.includes('creator') && job.creator?.id) {
+      userIds.add(job.creator.id);
+    }
+    if (relations.includes('employees') && job.employees) {
+      job.employees.forEach(e => userIds.add(e.id));
+    }
+    // Add applicants for this job
+    if (allApplicants[job.id]) {
+      allApplicants[job.id].forEach(applicantId => userIds.add(applicantId));
+    }
+  });
+  console.timeEnd('getRelations');
 
   // Batch fetch users, companies, and applicants in parallel
   console.time('getUsersAndCompanies');
