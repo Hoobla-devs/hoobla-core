@@ -164,9 +164,9 @@ export async function getAllJobsWithRelations(
   });
   console.timeEnd('getRelations');
 
-  // Batch fetch users and companies in parallel
+  // Batch fetch users, companies, and applicants in parallel
   console.time('getUsersAndCompanies');
-  const [users, companies] = await Promise.all([
+  const [users, companies, applicants] = await Promise.all([
     Promise.all(
       Array.from(userIds).map(id =>
         getDoc(doc(db, 'users', id).withConverter(userConverter)).then(doc =>
@@ -187,15 +187,11 @@ export async function getAllJobsWithRelations(
         (company): company is TCompanyRead => company !== undefined
       )
     ),
+    getDocs(collectionGroup(db, 'applicants')).then(
+      docs => docs.docs.map(doc => doc.data()) as TApplicantRead[]
+    ),
   ]);
   console.timeEnd('getUsersAndCompanies');
-  // fetch all applicants
-  console.time('getApplicants');
-  const applicantDocs = await getDocs(collectionGroup(db, 'applicants'));
-  const applicants = applicantDocs.docs.map(doc =>
-    doc.data()
-  ) as TApplicantRead[];
-  console.timeEnd('getApplicants');
 
   // Process each job with its relations
   return jobs.map(job =>
