@@ -6,7 +6,7 @@ import {
   getDocs,
   collectionGroup,
 } from 'firebase/firestore';
-import { jobConverter } from '../../../converters/job';
+import { applicantConverter, jobConverter } from '../../../converters/job';
 import { db } from '../../../firebase/init';
 import { TCompany, TCompanyRead } from '../../../types/companyTypes';
 import {
@@ -143,26 +143,22 @@ export async function getAllJobsWithRelations(
   const companyIds = new Set<string>();
 
   console.time('getRelations');
-  jobs.forEach(async job => {
-    if (relations.includes('company') && job.company?.id) {
-      companyIds.add(job.company.id);
-    }
-    if (relations.includes('creator') && job.creator?.id) {
-      userIds.add(job.creator.id);
-    }
-    if (relations.includes('employees') && job.employees) {
-      job.employees.forEach(e => userIds.add(e.id));
-    }
-    if (relations.includes('selectedApplicants') && job.selectedApplicants) {
-      job.selectedApplicants.forEach(a => userIds.add(a.id));
-    }
-    if (relations.includes('applicants')) {
+  await Promise.all(
+    jobs.map(async job => {
+      if (relations.includes('company') && job.company?.id) {
+        companyIds.add(job.company.id);
+      }
+      if (relations.includes('creator') && job.creator?.id) {
+        userIds.add(job.creator.id);
+      }
+      if (relations.includes('employees') && job.employees) {
+        job.employees.forEach(e => userIds.add(e.id));
+      }
       const applicantsCollection = collection(db, 'jobs', job.id, 'applicants');
       const applicants = await getDocs(applicantsCollection);
       applicants.docs.forEach(doc => userIds.add(doc.id));
-    }
-  });
-  console.timeEnd('getRelations');
+    })
+  );
 
   // Batch fetch users, companies, and applicants in parallel
   console.time('getUsersAndCompanies');
@@ -187,10 +183,11 @@ export async function getAllJobsWithRelations(
         (company): company is TCompanyRead => company !== undefined
       )
     ),
-    getDocs(collectionGroup(db, 'applicants')).then(
-      docs => docs.docs.map(doc => doc.data()) as TApplicantRead[]
-    ),
+    getDocs(
+      collectionGroup(db, 'applicants').withConverter(applicantConverter)
+    ).then(docs => docs.docs.map(doc => doc.data()) as TApplicantRead[]),
   ]);
+
   console.timeEnd('getUsersAndCompanies');
 
   // Process each job with its relations
