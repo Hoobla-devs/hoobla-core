@@ -171,7 +171,7 @@ export async function getAllJobsWithRelations(
   // Batch fetch users and companies in parallel
   const [users, companies] = await Promise.all([
     Promise.all(
-      [...userIds].map(id =>
+      Array.from(userIds).map(id =>
         getDoc(doc(db, 'users', id).withConverter(userConverter)).then(doc =>
           doc.data()
         )
@@ -180,7 +180,7 @@ export async function getAllJobsWithRelations(
       results.filter((user): user is TUserRead => user !== undefined)
     ),
     Promise.all(
-      [...companyIds].map(id =>
+      Array.from(companyIds).map(id =>
         getDoc(doc(db, 'companies', id).withConverter(companyConverter)).then(
           doc => doc.data()
         )
