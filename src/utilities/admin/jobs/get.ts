@@ -142,23 +142,24 @@ export async function getAllJobsWithRelations(
   const userIds = new Set<string>();
   const companyIds = new Set<string>();
 
+  const test = collectionGroup(db, 'applicants');
+
   console.time('getRelations');
   // Get all applicants at once using collectionGroup
-  const [allApplicants] = await Promise.all([
-    getDocs(collectionGroup(db, 'applicants')).then(snap =>
-      snap.docs.reduce(
-        (acc, doc) => {
-          const jobId = doc.ref.parent.parent?.id;
-          if (jobId) {
-            if (!acc[jobId]) acc[jobId] = [];
-            acc[jobId].push(doc.id);
-          }
-          return acc;
-        },
-        {} as Record<string, string[]>
-      )
-    ),
-  ]);
+  const allApplicants = (
+    await getDocs(collectionGroup(db, 'applicants'))
+  ).docs.reduce(
+    (acc, doc) => {
+      const jobId = doc.ref.parent.parent?.id;
+      if (!jobId) return acc;
+
+      // Initialize array only if needed
+      acc[jobId] = acc[jobId] || [];
+      acc[jobId].push(doc.id);
+      return acc;
+    },
+    {} as Record<string, string[]>
+  );
 
   // Process all other relations without awaiting
   jobs.forEach(job => {
