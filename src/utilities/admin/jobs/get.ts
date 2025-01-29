@@ -133,18 +133,17 @@ export async function getAllJobsWithRelations(
   relations: TJobRelation[]
 ): Promise<TJobWithRelations[]> {
   // Fetch all jobs first
+  console.time('getJobs');
   const jobDocs = await getDocs(
     collection(db, 'jobs').withConverter(jobConverter)
   );
   const jobs = jobDocs.docs.map(doc => doc.data());
-
+  console.timeEnd('getJobs');
   // Gather all related document IDs
   const userIds = new Set<string>();
   const companyIds = new Set<string>();
 
-  const test = collectionGroup(db, 'applicants');
-
-  console.time('getRelations');
+  console.time('getApplicants');
   // Get all applicants at once using collectionGroup
   const allApplicants = (
     await getDocs(collectionGroup(db, 'applicants'))
@@ -160,6 +159,7 @@ export async function getAllJobsWithRelations(
     },
     {} as Record<string, string[]>
   );
+  console.timeEnd('getApplicants');
 
   // Process all other relations without awaiting
   jobs.forEach(job => {
@@ -177,7 +177,6 @@ export async function getAllJobsWithRelations(
       allApplicants[job.id].forEach(applicantId => userIds.add(applicantId));
     }
   });
-  console.timeEnd('getRelations');
 
   // Batch fetch users, companies, and applicants in parallel
   console.time('getUsersAndCompanies');
