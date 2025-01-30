@@ -269,7 +269,9 @@ export async function getAllJobsWithRelations(): Promise<
         id: companiesMap[job.company.id].id,
         phone: companiesMap[job.company.id].phone.number,
       },
-      applicantsCount: applicantsByJob[job.id].length,
+      applicantsCount: applicantsByJob[job.id]
+        ? applicantsByJob[job.id].length
+        : 0,
       creator: usersMap[job.creator.id],
       employees: [],
       freelancers: [],
