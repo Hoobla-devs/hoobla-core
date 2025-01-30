@@ -15,10 +15,13 @@ import {
   TFreelancerApplicant,
   TJob,
   TJobEmployee,
+  TJobInfoRead,
   TJobRead,
   TJobRelation,
+  TJobStatus,
   TJobWithAllData,
   TJobWithCompany,
+  TLog,
 } from '../../../types/jobTypes';
 import { TEmployerUser, TUserRead } from '../../../types/userTypes';
 import {
@@ -27,9 +30,10 @@ import {
   getCompanyWithEmployees,
 } from '../../companies/get';
 import { getAllApplicants } from '../../jobs/applicants/get';
-import { getFreelancer, getUserById } from '../../users/get';
+import { getEmployer, getFreelancer, getUserById } from '../../users/get';
 import { userConverter } from '../../../converters/user';
 import { companyConverter } from '../../../converters/company';
+import { getJobEmployees } from '../../jobs/get';
 
 export async function getAllJobs(): Promise<TJobWithCompany[]> {
   const jobsRef = collection(db, 'jobs').withConverter(
@@ -57,6 +61,7 @@ export async function getAllJobs(): Promise<TJobWithCompany[]> {
   return jobsWithCompany;
 }
 
+// Define a helper type for optional relations
 type OptionalRelations = {
   company?: TCompany;
   creator?: TEmployerUser;
@@ -66,6 +71,7 @@ type OptionalRelations = {
   employees?: TJobEmployee[];
 };
 
+// Modify TJobWithRelations to make all relations optional
 export type TJobWithRelations = Omit<
   TJob,
   | 'employees'
@@ -79,200 +85,193 @@ export type TJobWithRelations = Omit<
 
 export async function getJobWithRelations(
   jid: string,
-  relations: TJobRelation[]
+  relations: TJobRelation[] = []
 ): Promise<TJobWithRelations> {
   const jobRef = doc(db, 'jobs', jid).withConverter(jobConverter);
   const jobSnap = await getDoc(jobRef);
   const job = jobSnap.data();
   if (!job) throw new Error('Job not found');
 
-  const applicantsCollection = collection(
-    jobRef,
-    'applicants'
-  ) as CollectionReference<TApplicantWrite>;
-  const employeesCollection = collection(
-    jobRef,
-    'employees'
-  ) as CollectionReference<TJobEmployee>;
-
-  console.time('getCollections');
-  const [applicants, employeeIds, companies] = await Promise.all([
-    getAllApplicants(applicantsCollection),
-    getDocs(employeesCollection).then(employees =>
-      employees.docs.map(doc => doc.id)
-    ),
-    getDocs(collection(db, 'companies').withConverter(companyConverter)).then(
-      companies => companies.docs.map(doc => doc.data())
-    ),
-  ]);
-  console.timeEnd('getCollections');
-
-  console.time('getUsers');
-  const users = await Promise.all(
-    [...applicants.map(a => a.id), ...employeeIds].map(async id => {
-      const userRef = doc(db, 'users', id).withConverter(userConverter);
-      const userSnap = await getDoc(userRef);
-      const user = userSnap.data();
-      return user!;
-    })
+  const jobApplicants = await getAllApplicants(
+    collection(jobRef, 'applicants') as CollectionReference<TApplicantWrite>
   );
-  console.timeEnd('getUsers');
 
-  const jobWithRelations = await processJobRelations(
-    relations,
-    job,
-    users,
-    applicants,
-    companies
-  );
-  return jobWithRelations;
-}
+  const applicantsWithFreelancerProps: TFreelancerApplicant[] =
+    await Promise.all(
+      jobApplicants.map(async applicant => {
+        const freelancer = await getFreelancer(applicant.id);
+        return {
+          ...applicant,
+          ...freelancer,
+        };
+      })
+    );
 
-// Fetch all jobs and their relations efficiently
-export async function getAllJobsWithRelations(
-  relations: TJobRelation[]
-): Promise<TJobWithRelations[]> {
-  // Fetch all jobs first
-  console.time('getJobs');
-  const jobDocs = await getDocs(
-    collection(db, 'jobs').withConverter(jobConverter)
-  );
-  const jobs = jobDocs.docs.map(doc => doc.data());
-  console.timeEnd('getJobs');
-  // Gather all related document IDs
-  const userIds = new Set<string>();
-  const companyIds = new Set<string>();
-
-  console.time('getApplicants');
-  // Get all applicants at once using collectionGroup
-  const allApplicants = (
-    await getDocs(collectionGroup(db, 'applicants'))
-  ).docs.reduce(
-    (acc, doc) => {
-      const jobId = doc.ref.parent.parent?.id;
-      if (!jobId) return acc;
-
-      // Initialize array only if needed
-      acc[jobId] = acc[jobId] || [];
-      acc[jobId].push(doc.id);
-      return acc;
-    },
-    {} as Record<string, string[]>
-  );
-  console.timeEnd('getApplicants');
-
-  // Process all other relations without awaiting
-  jobs.forEach(job => {
-    if (relations.includes('company') && job.company?.id) {
-      companyIds.add(job.company.id);
-    }
-    if (relations.includes('creator') && job.creator?.id) {
-      userIds.add(job.creator.id);
-    }
-    if (relations.includes('employees') && job.employees) {
-      job.employees.forEach(e => userIds.add(e.id));
-    }
-    // Add applicants for this job
-    if (allApplicants[job.id]) {
-      allApplicants[job.id].forEach(applicantId => userIds.add(applicantId));
-    }
-  });
-
-  // Batch fetch users, companies, and applicants in parallel
-  console.time('getUsersAndCompanies');
-  const [users, companies, applicants] = await Promise.all([
-    Promise.all(
-      Array.from(userIds).map(id =>
-        getDoc(doc(db, 'users', id).withConverter(userConverter)).then(doc =>
-          doc.data()
-        )
-      )
-    ).then(results =>
-      results.filter((user): user is TUserRead => user !== undefined)
-    ),
-    Promise.all(
-      Array.from(companyIds).map(id =>
-        getDoc(doc(db, 'companies', id).withConverter(companyConverter)).then(
-          doc => doc.data()
-        )
-      )
-    ).then(results =>
-      results.filter(
-        (company): company is TCompanyRead => company !== undefined
-      )
-    ),
-    getDocs(
-      collectionGroup(db, 'applicants').withConverter(applicantConverter)
-    ).then(docs => docs.docs.map(doc => doc.data()) as TApplicantRead[]),
-  ]);
-
-  console.timeEnd('getUsersAndCompanies');
-
-  console.time('processJobs');
-  // Process each job with its relations
-  const mappedJobs = jobs.map(job =>
-    processJobRelations(relations, job, users, applicants, companies)
-  );
-  console.timeEnd('processJobs');
-
-  return mappedJobs;
-}
-
-function processJobRelations(
-  relations: TJobRelation[],
-  job: TJob,
-  users: TUserRead[],
-  applicants: TApplicantRead[],
-  companies: TCompanyRead[]
-) {
-  let result: TJobWithRelations = {
+  const result: TJobWithRelations = {
     ...job,
-    employees: [],
+    employees: undefined,
     company: undefined,
-    applicants: [],
-    selectedApplicants: [],
+    applicants: undefined,
+    selectedApplicants: undefined,
     creator: undefined,
-    freelancers: [],
+    freelancers: undefined,
   };
 
-  if (relations.includes('company')) {
-    result.company = companies.find(c => c.id === job.company.id);
-  }
+  const promises: Promise<void>[] = [];
 
-  if (relations.includes('applicants')) {
-    const applicantsWithUser = applicants
-      .map(applicant => {
-        const user = users.find(u => u.general.uid === applicant.id);
-        return user ? { ...applicant, ...user } : null;
-      })
-      .filter(Boolean);
-    result.applicants = applicantsWithUser as unknown as TFreelancerApplicant[];
-  }
-
-  if (relations.includes('freelancers')) {
-    result.freelancers = result.applicants?.filter(applicant =>
-      job.freelancers.some(f => f.id === applicant.general.uid)
+  if (relations.includes('creator')) {
+    promises.push(
+      getEmployer(job.creator.id)
+        .then(creator => {
+          result.creator = creator;
+        })
+        .catch(err => {
+          console.log('Error getting creator', err);
+        })
     );
   }
 
-  if (relations.includes('selectedApplicants')) {
-    result.selectedApplicants = result.applicants?.filter(applicant =>
-      job.selectedApplicants.some(s => s.id === applicant.id)
+  if (relations.includes('company')) {
+    promises.push(
+      getCompany(job.company)
+        .then(company => {
+          result.company = company;
+        })
+        .catch(err => {
+          console.log('Error getting company', err);
+        })
     );
   }
 
   if (relations.includes('employees')) {
-    const employeeIds = job.employees?.map(e => e.id);
-    const employees = users.filter(u => employeeIds?.includes(u.general.uid));
-    result.employees = employees as unknown as TJobEmployee[];
+    promises.push(
+      getJobEmployees(job.id)
+        .then(employees => {
+          result.employees = employees;
+        })
+        .catch(err => {
+          console.log('Error getting employees', err);
+          result.employees = [];
+        })
+    );
   }
 
-  if (relations.includes('creator')) {
-    const creatorUser = users.find(u => u.general.uid === job.creator.id);
-    if (creatorUser) {
-      result.creator = creatorUser as unknown as TEmployerUser;
-    }
+  if (relations.includes('applicants')) {
+    result.applicants = applicantsWithFreelancerProps;
+  }
+
+  if (relations.includes('freelancers')) {
+    result.freelancers = applicantsWithFreelancerProps.filter(applicant =>
+      job.freelancers.some(freelancerRef => freelancerRef.id === applicant.id)
+    );
+  }
+
+  // Execute all promises in parallel
+  await Promise.all(promises);
+
+  // TODO: This doesn't work if applicants are not present
+  if (relations.includes('selectedApplicants') && result.applicants) {
+    result.selectedApplicants = result.applicants.filter(applicant =>
+      job.selectedApplicants.some(
+        selected => selected.id === applicant.general.uid
+      )
+    );
   }
 
   return result;
+}
+
+export type TJobWithAllRelations = {
+  job: {
+    title: string;
+    id: string;
+    status: TJobStatus;
+    deadline: Date | undefined;
+    info: TJobInfoRead;
+  };
+  logs: TLog[];
+  company: {
+    name: string;
+    logo: string;
+    id: string;
+    phone: string;
+  };
+  applicantsCount: number;
+  creator: TUserRead;
+  employees: TJobEmployee[];
+  freelancers: TFreelancerApplicant[];
+  selectedApplicants: TFreelancerApplicant[];
+};
+
+// Update the return type of the function
+export async function getAllJobsWithRelations(): Promise<
+  TJobWithAllRelations[]
+> {
+  console.time('getData');
+  const [jobs, applicantDocs, companies, users] = await Promise.all([
+    getDocs(collection(db, 'jobs').withConverter(jobConverter)).then(docs =>
+      docs.docs.map(doc => doc.data())
+    ),
+    getDocs(collectionGroup(db, 'applicants')).then(docs =>
+      docs.docs.map(doc => ({
+        applicant: doc.data(),
+        jobId: doc.ref.parent.parent?.id,
+      }))
+    ) as Promise<{ applicant: TApplicantRead; jobId: string }[]>,
+    getDocs(collection(db, 'companies').withConverter(companyConverter)).then(
+      docs => docs.docs.map(doc => doc.data())
+    ),
+    getDocs(collection(db, 'users').withConverter(userConverter)).then(docs =>
+      docs.docs.map(doc => doc.data())
+    ),
+  ]);
+  console.timeEnd('getData');
+  // Gather all related document IDs
+  const applicantsByJob: Record<string, TApplicantRead[]> = {};
+  const companiesMap: Record<string, TCompanyRead> = {};
+  const usersMap: Record<string, TUserRead> = {};
+
+  console.time('processData');
+  applicantDocs.forEach(applicant => {
+    if (!applicant.jobId) return;
+    if (!applicantsByJob[applicant.jobId]) {
+      applicantsByJob[applicant.jobId] = [];
+    }
+    applicantsByJob[applicant.jobId]?.push(applicant.applicant);
+  });
+
+  companies.forEach(company => {
+    companiesMap[company.id] = company;
+  });
+
+  users.forEach(user => {
+    usersMap[user.general.uid] = user;
+  });
+  console.timeEnd('processData');
+  // Process each job with its relations
+  const mappedJobs = jobs.map(job => {
+    return {
+      job: {
+        title: job.name,
+        id: job.id,
+        status: job.status,
+        deadline: job.jobInfo.deadline,
+        info: job.jobInfo,
+      },
+      logs: job.logs,
+      company: {
+        name: companiesMap[job.company.id].name,
+        logo: companiesMap[job.company.id].logo.url,
+        id: companiesMap[job.company.id].id,
+        phone: companiesMap[job.company.id].phone.number,
+      },
+      applicantsCount: applicantsByJob[job.id].length,
+      creator: usersMap[job.creator.id],
+      employees: [],
+      freelancers: [],
+      selectedApplicants: [],
+    };
+  });
+
+  return mappedJobs;
 }
