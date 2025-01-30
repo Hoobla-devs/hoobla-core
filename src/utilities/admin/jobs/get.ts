@@ -226,6 +226,10 @@ export async function getAllJobsWithRelations(): Promise<
     ),
   ]);
   console.timeEnd('getData');
+  console.log('jobs length', jobs.length);
+  console.log('applicantDocs length', applicantDocs.length);
+  console.log('companies length', companies.length);
+  console.log('users length', users.length);
   // Gather all related document IDs
   const applicantsByJob: Record<string, TApplicantRead[]> = {};
   const companiesMap: Record<string, TCompanyRead> = {};
