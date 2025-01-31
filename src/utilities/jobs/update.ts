@@ -103,13 +103,13 @@ export async function addCompanySignature(
   })
     .then(() => {
       // Create notification to freelancer
-      createNotification({
-        accountType: 'freelancer',
-        jobId: job.id,
-        recipientId: job.freelancers[0].id,
-        senderId: employerUser.general.uid,
-        type: 'employerSignature',
-      });
+      // createNotification({
+      //   accountType: 'freelancer',
+      //   jobId: job.id,
+      //   recipientId: job.freelancers[0].id,
+      //   senderId: employerUser.general.uid,
+      //   type: 'employerSignature',
+      // });
       return true;
     })
     .catch(() => false);
