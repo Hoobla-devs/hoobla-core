@@ -4,31 +4,36 @@ import {
   doc,
   getDoc,
   getDocs,
+  collectionGroup,
 } from 'firebase/firestore';
-import { jobConverter } from '../../../converters/job';
+import { applicantConverter, jobConverter } from '../../../converters/job';
 import { db } from '../../../firebase/init';
-import { TCompany, TCompanyEmployee } from '../../../types/companyTypes';
+import { TCompany, TCompanyRead } from '../../../types/companyTypes';
 import {
+  TApplicantRead,
   TApplicantWrite,
   TFreelancerApplicant,
   TJob,
-  TJobBase,
   TJobEmployee,
+  TJobInfoRead,
   TJobRead,
   TJobRelation,
+  TJobStatus,
   TJobWithAllData,
   TJobWithCompany,
+  TLog,
 } from '../../../types/jobTypes';
-import { TEmployerUser, TUser } from '../../../types/userTypes';
+import { TEmployerUser, TUserRead } from '../../../types/userTypes';
 import {
   getCompany,
   getCompanyById,
-  getCompanyEmployee,
   getCompanyWithEmployees,
 } from '../../companies/get';
 import { getAllApplicants } from '../../jobs/applicants/get';
-import { getJobEmployees } from '../../jobs/get';
 import { getEmployer, getFreelancer, getUserById } from '../../users/get';
+import { userConverter } from '../../../converters/user';
+import { companyConverter } from '../../../converters/company';
+import { getJobEmployees } from '../../jobs/get';
 
 export async function getAllJobs(): Promise<TJobWithCompany[]> {
   const jobsRef = collection(db, 'jobs').withConverter(
@@ -54,51 +59,6 @@ export async function getAllJobs(): Promise<TJobWithCompany[]> {
   const jobsWithCompany: TJobWithCompany[] = await Promise.all(jobsPromise);
 
   return jobsWithCompany;
-}
-
-export async function getJobWithAllData(jid: string): Promise<TJobWithAllData> {
-  const jobRef = doc(db, 'jobs', jid).withConverter(jobConverter);
-  const jobSnap = await getDoc(jobRef);
-  const job = jobSnap.data();
-  if (!job) throw new Error('Job not found');
-
-  const [company, applicants, creator] = await Promise.all([
-    getCompanyWithEmployees(job.company),
-    getAllApplicants(
-      collection(jobRef, 'applicants') as CollectionReference<TApplicantWrite>
-    ),
-    getUserById(job.creator.id),
-  ]);
-
-  const freelancerApplicants: TFreelancerApplicant[] = await Promise.all(
-    applicants.map(async a => {
-      const freelancer = await getFreelancer(a.id);
-      return { ...a, ...freelancer };
-    })
-  );
-
-  // Freelancers selected for the job
-  const freelancers = freelancerApplicants.filter(a => {
-    return job.freelancers.find(
-      freelancerRef => freelancerRef.id === a.general.uid
-    );
-  });
-
-  // Freelancers picked by Hoobla for the job
-  const selectedApplicants = freelancerApplicants.filter(a => {
-    return job.selectedApplicants.find(
-      freelancerRef => freelancerRef.id === a.general.uid
-    );
-  });
-
-  return {
-    ...job,
-    company,
-    applicants: freelancerApplicants,
-    selectedApplicants,
-    freelancers,
-    creator: creator as unknown as TEmployerUser,
-  };
 }
 
 // Define a helper type for optional relations
@@ -221,15 +181,103 @@ export async function getJobWithRelations(
   return result;
 }
 
-export async function getAllJobsWithRelations(
-  relations: TJobRelation[]
-): Promise<TJobWithRelations[]> {
-  const jobsRef = collection(db, 'jobs').withConverter(
-    jobConverter
-  ) as CollectionReference<TJobRead>;
-  const jobsSnap = await getDocs(jobsRef);
-  const jobsWithRelations = await Promise.all(
-    jobsSnap.docs.map(job => getJobWithRelations(job.id, relations))
-  );
-  return jobsWithRelations;
+export type TJobWithAllRelations = {
+  job: {
+    title: string;
+    id: string;
+    status: TJobStatus;
+    deadline: Date | undefined;
+    info: TJobInfoRead;
+  };
+  logs: TLog[];
+  company: {
+    name: string;
+    logo: string;
+    id: string;
+    phone: string;
+  };
+  applicantsCount: number;
+  creator: TUserRead;
+  employees: TJobEmployee[];
+  freelancers: TFreelancerApplicant[];
+  selectedApplicants: TFreelancerApplicant[];
+};
+
+// Update the return type of the function
+export async function getAllJobsWithRelations(): Promise<
+  TJobWithAllRelations[]
+> {
+  console.time('getData');
+  const [jobs, applicantDocs, companies, users] = await Promise.all([
+    getDocs(collection(db, 'jobs').withConverter(jobConverter)).then(docs =>
+      docs.docs.map(doc => doc.data())
+    ),
+    getDocs(collectionGroup(db, 'applicants')).then(docs =>
+      docs.docs.map(doc => ({
+        applicant: doc.data(),
+        jobId: doc.ref.parent.parent?.id,
+      }))
+    ) as Promise<{ applicant: TApplicantRead; jobId: string }[]>,
+    getDocs(collection(db, 'companies').withConverter(companyConverter)).then(
+      docs => docs.docs.map(doc => doc.data())
+    ),
+    getDocs(collection(db, 'users').withConverter(userConverter)).then(docs =>
+      docs.docs.map(doc => doc.data())
+    ),
+  ]);
+  console.timeEnd('getData');
+  console.log('jobs length', jobs.length);
+  console.log('applicantDocs length', applicantDocs.length);
+  console.log('companies length', companies.length);
+  console.log('users length', users.length);
+  // Gather all related document IDs
+  const applicantsByJob: Record<string, TApplicantRead[]> = {};
+  const companiesMap: Record<string, TCompanyRead> = {};
+  const usersMap: Record<string, TUserRead> = {};
+
+  console.time('processData');
+  applicantDocs.forEach(applicant => {
+    if (!applicant.jobId) return;
+    if (!applicantsByJob[applicant.jobId]) {
+      applicantsByJob[applicant.jobId] = [];
+    }
+    applicantsByJob[applicant.jobId]?.push(applicant.applicant);
+  });
+
+  companies.forEach(company => {
+    companiesMap[company.id] = company;
+  });
+
+  users.forEach(user => {
+    usersMap[user.general.uid] = user;
+  });
+  console.timeEnd('processData');
+  // Process each job with its relations
+  const mappedJobs = jobs.map(job => {
+    return {
+      job: {
+        title: job.name,
+        id: job.id,
+        status: job.status,
+        deadline: job.jobInfo.deadline,
+        info: job.jobInfo,
+      },
+      logs: job.logs,
+      company: {
+        name: companiesMap[job.company.id].name,
+        logo: companiesMap[job.company.id].logo.url,
+        id: companiesMap[job.company.id].id,
+        phone: companiesMap[job.company.id].phone.number,
+      },
+      applicantsCount: applicantsByJob[job.id]
+        ? applicantsByJob[job.id].length
+        : 0,
+      creator: usersMap[job.creator.id],
+      employees: [],
+      freelancers: [],
+      selectedApplicants: [],
+    };
+  });
+
+  return mappedJobs;
 }

@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import { connectStorageEmulator, getStorage } from 'firebase/storage';
@@ -12,16 +12,32 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app);
-export const storage = getStorage(app);
+export let app: any;
+export let db: any;
+export let auth: any;
+export let storage: any;
 
-const env = process.env.NODE_ENV;
+// Only initialize if no Firebase apps exist
+if (!getApps().length) {
+  try {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    storage = getStorage(app);
 
-if (env === 'development') {
-  // Connect Firebase Auth to the local emulator
-  connectAuthEmulator(auth, 'http://localhost:9099');
-  connectFirestoreEmulator(db, 'localhost', 4001);
-  connectStorageEmulator(storage, 'localhost', 9199);
+    const env = process.env.NODE_ENV;
+    if (env === 'development') {
+      connectAuthEmulator(auth, 'http://localhost:9099');
+      connectFirestoreEmulator(db, 'localhost', 4001);
+      connectStorageEmulator(storage, 'localhost', 9199);
+    }
+  } catch (error) {
+    console.error('Error initializing Firebase:', error);
+  }
+} else {
+  // If Firebase is already initialized, get existing instances
+  app = getApps()[0];
+  db = getFirestore(app);
+  auth = getAuth(app);
+  storage = getStorage(app);
 }

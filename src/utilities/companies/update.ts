@@ -63,6 +63,7 @@ export async function updateCompany(
   return await updateDoc(companyRef, {
     name: companyRead.name,
     phone: companyRead.phone,
+    ssn: companyRead.ssn,
     address: companyRead.address,
     size: companyRead.size,
     website: companyRead.website,

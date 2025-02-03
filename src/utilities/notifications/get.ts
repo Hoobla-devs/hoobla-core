@@ -39,7 +39,7 @@ export const getUserNotifications = async (
     const notification = doc.data();
 
     const [job, recipient, sender] = await Promise.all([
-      getJobWithRelations(notification.jobId),
+      getJobWithRelations(notification.jobId, []),
       getUserById(notification.recipientId),
       getUserById(notification.senderId).catch(error => {
         console.error('Error fetching sender:', error);
