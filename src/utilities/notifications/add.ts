@@ -23,3 +23,48 @@ export const createNotification = async (
     .then(() => true)
     .catch(() => false);
 };
+
+// Employer signs the job contract
+export const createEmployerSignatureNoti = async (
+  employerId: string,
+  freelancerId: string,
+  jobId: string
+) => {
+  createNotification({
+    accountType: 'freelancer',
+    jobId: jobId,
+    recipientId: freelancerId,
+    senderId: employerId,
+    type: 'employerSignature',
+  });
+};
+
+// Freelancer signs the job contract
+export const createFreelancerSignatureNoti = async (
+  freelancerId: string,
+  employerId: string,
+  jobId: string
+) => {
+  createNotification({
+    accountType: 'employer',
+    jobId: jobId,
+    recipientId: employerId,
+    senderId: freelancerId,
+    type: 'freelancerSignature',
+  });
+};
+
+// Company sends a contact info request to the freelancer
+export const createContactInfoRequestedNoti = async (
+  freelancerId: string,
+  employerId: string,
+  jobId: string
+) => {
+  createNotification({
+    accountType: 'freelancer',
+    jobId: jobId,
+    recipientId: freelancerId,
+    senderId: employerId,
+    type: 'contactInfoRequested',
+  });
+};

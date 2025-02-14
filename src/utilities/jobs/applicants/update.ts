@@ -9,8 +9,7 @@ import {
   TJobStatus,
   TOfferType,
 } from '../../../types/jobTypes';
-import { TGeneral, TUserWrite } from '../../../types/userTypes';
-import { createNotification } from '../../notifications/add';
+import { TGeneral } from '../../../types/userTypes';
 import { updateDoc } from '../../updateDoc';
 
 const contactLogs = {
@@ -107,23 +106,6 @@ export async function updateContactApproval(
             title: contactLogs[status].title,
             description: contactLogs[status].description(freelancerInfo.name),
           }),
-        });
-
-        // Add notification to job creator that contact approval was changed
-        // If status is approved, add notification to employer, if denied add notification to freelancer
-        createNotification({
-          accountType: status === 'requested' ? 'freelancer' : 'employer', // The receiving account type
-          jobId: jobId,
-          recipientId: status === 'requested' ? freelancerInfo.uid : creatorId,
-          senderId: status === 'requested' ? creatorId : freelancerInfo.uid,
-          type:
-            status === 'requested'
-              ? 'contactInfoRequested'
-              : status === 'denied'
-                ? 'contactInfoDenied'
-                : 'contactInfoApproved',
-        }).catch(error => {
-          console.error('Error creating notification:', error);
         });
       })
       .catch(error => {

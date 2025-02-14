@@ -16,12 +16,10 @@ import {
   TJobEmployee,
   TJobEmployeeWrite,
   TJobRead,
-  TJobWithApplicants,
   TJobWrite,
   TLogWrite,
 } from '../../types/jobTypes';
 import { TEmployerUser, TFreelancerUser } from '../../types/userTypes';
-import { createNotification } from '../notifications/add';
 import { updateDoc } from '../updateDoc';
 
 export async function agreeTerms(jobId: string) {
@@ -92,27 +90,22 @@ export async function addCompanySignature(
     title: 'Fyrirtæki skrifar undir',
   };
 
-  return await updateDoc(jobRef, {
-    'signatures.employer': {
-      date: new Date(),
-      id: employerUser.general.uid,
-    },
-    logs: arrayUnion(log),
-    status: jobStatus,
-    ...jobData,
-  })
-    .then(() => {
-      // Create notification to freelancer
-      // createNotification({
-      //   accountType: 'freelancer',
-      //   jobId: job.id,
-      //   recipientId: job.freelancers[0].id,
-      //   senderId: employerUser.general.uid,
-      //   type: 'employerSignature',
-      // });
-      return true;
-    })
-    .catch(() => false);
+  try {
+    await updateDoc(jobRef, {
+      'signatures.employer': {
+        date: new Date(),
+        id: employerUser.general.uid,
+      },
+      logs: arrayUnion(log),
+      status: jobStatus,
+      ...jobData,
+    });
+
+    return true;
+  } catch (err) {
+    console.log(`Error adding company signature: ${err}`);
+    return false;
+  }
 }
 
 export async function addFreelancerSignature(
@@ -143,14 +136,6 @@ export async function addFreelancerSignature(
     ...jobData,
   })
     .then(() => {
-      // Create notification to employer
-      createNotification({
-        accountType: 'employer',
-        jobId: job.id,
-        recipientId: job.creator.id,
-        senderId: freelancerUser.general.uid,
-        type: 'freelancerSignature',
-      });
       return true;
     })
     .catch(() => false);

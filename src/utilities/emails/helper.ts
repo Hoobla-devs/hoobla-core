@@ -14,13 +14,16 @@ export const LinkTypeTranslations: Record<
   jobApplicants: { is: 'Skoða umsækjendur', en: 'View applicants' },
   jobSignature: { is: 'Undirrita', en: 'Sign' },
   freelancerSignature: { is: 'Undirrita', en: 'Sign' },
+  employerInvitation: { is: 'Fá aðgang', en: 'Get access' },
 };
 
 // Converts link type to link and label
 export function convertLinkTypeToLink(
   lang: 'is' | 'en',
   jobID?: string,
-  linkType?: TAlertLinkType
+  linkType?: TAlertLinkType,
+  companyId?: string,
+  token?: string
 ): { label: string; link: string } {
   if (linkType === 'job') {
     return {
@@ -64,6 +67,12 @@ export function convertLinkTypeToLink(
     };
   }
 
+  if (linkType === 'employerInvitation') {
+    return {
+      label: LinkTypeTranslations[linkType][lang],
+      link: `https://hoobla.is/employers/form?token=${token}&cid=${companyId}`,
+    };
+  }
   return {
     label: lang === 'is' ? 'Sjá meira' : 'View more',
     link: `https://hoobla.is/account`,
@@ -145,6 +154,8 @@ export const getEmailWithDynamicData = async (
     companyName?: string;
     jobName?: string;
     jobID?: string;
+    companyId?: string;
+    token?: string;
   }
 ): Promise<{
   title: string;

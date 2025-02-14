@@ -1,6 +1,5 @@
 import {
   collection,
-  addDoc,
   where,
   query,
   getDocs,
@@ -10,14 +9,9 @@ import {
 } from 'firebase/firestore';
 import { notificationConverter } from '../../converters/notification';
 import { db } from '../../firebase/init';
-import {
-  TNotification,
-  TNotificationRead,
-  TNotificationWrite,
-} from '../../types/notification';
+import { TNotification, TNotificationRead } from '../../types/notification';
 import { TUser } from '../../types/userTypes';
 import { getJobWithRelations } from '../admin/jobs/get';
-import { getJob } from '../jobs/get';
 import { getUserById } from '../users/get';
 
 export const getUserNotifications = async (

@@ -12,7 +12,8 @@ export type TAlertLinkType =
   | 'jobs'
   | 'jobSignature'
   | 'jobApplicants'
-  | 'freelancerSignature';
+  | 'freelancerSignature'
+  | 'employerInvitation';
 
 export type TEmailContent = {
   title: string;
@@ -39,7 +40,16 @@ export type TEmailTemplate =
   | 'jobPostponed'
   | 'newJobAdded'
   | 'signatureReminder'
-  | 'applicantsSelectedReminder';
+  | 'applicantsSelectedReminder'
+  | 'contactRequested'
+  | 'contactRequestApproved'
+  | 'contactRequestDenied'
+  | 'employerConfirmation'
+  | 'employerInvitation'
+  | 'freelancerJobSignature'
+  | 'freelancerChosen'
+  | 'freelancerNotChosen'
+  | 'jobCreated';
 
 export type TEmail = {
   name: string;
