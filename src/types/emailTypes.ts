@@ -49,7 +49,11 @@ export type TEmailTemplate =
   | 'freelancerJobSignature'
   | 'freelancerChosen'
   | 'freelancerNotChosen'
-  | 'jobCreated';
+  | 'jobCreated'
+  | 'jobInProgress'
+  | 'jobDeleted'
+  | 'jobReview'
+  | 'freelancerApplication';
 
 export type TEmail = {
   name: string;
