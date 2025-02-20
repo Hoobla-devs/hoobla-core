@@ -82,11 +82,17 @@ export const createFreelancersChosenNoti = async (
   employerId: string,
   jobId: string
 ) => {
+  const { job, recipient, sender } = await getNotificationsEntityData(
+    jobId,
+    employerId,
+    employerId
+  );
+
   createNotification({
     accountType: 'employer',
-    jobId: jobId,
-    recipientId: employerId,
-    senderId: employerId,
+    job,
+    recipient,
+    sender,
     isSystem: true,
     type: 'applicantsSelected',
   });
