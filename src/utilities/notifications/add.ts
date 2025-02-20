@@ -24,6 +24,21 @@ export const createNotification = async (
     .catch(() => false);
 };
 
+// Create noti for employer that freelancers have been chosen
+export const createFreelancersChosenNoti = async (
+  employerId: string,
+  jobId: string
+) => {
+  createNotification({
+    accountType: 'employer',
+    jobId: jobId,
+    recipientId: employerId,
+    senderId: employerId,
+    isSystem: true,
+    type: 'applicantsSelected',
+  });
+};
+
 // Employer signs the job contract
 export const createEmployerSignatureNoti = async (
   employerId: string,
