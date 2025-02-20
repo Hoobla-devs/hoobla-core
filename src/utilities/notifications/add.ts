@@ -3,6 +3,9 @@ import { notificationConverter } from '../../converters/notification';
 import { db } from '../../firebase/init';
 import { TContactStatus } from '../../types/jobTypes';
 import { TNotificationRead } from '../../types/notification';
+import { getCompanyById } from '../companies/get';
+import { getJobWithApplicants } from '../jobs/get';
+import { getUserById } from '../users/get';
 
 type TNotificationReadRequired = Omit<TNotificationRead, 'date' | 'read'>;
 
@@ -30,19 +33,71 @@ export const createNotification = async (
   }
 };
 
+const getNotificationsEntityData = async (
+  jobId: string,
+  recipientId: string,
+  senderId: string,
+  companyId?: string
+) => {
+  const [job, recipient, sender, company] = await Promise.all([
+    getJobWithApplicants(jobId),
+    getUserById(recipientId),
+    getUserById(senderId),
+    companyId ? getCompanyById(companyId) : undefined,
+  ]);
+
+  return {
+    job: {
+      id: job.id,
+      name: job.name,
+    },
+    recipient: {
+      id: recipient.general.uid,
+      name: recipient.general.name,
+      photo: recipient.general.photo?.url || '',
+    },
+    sender: company
+      ? {
+          id: company.id,
+          name: company.name,
+          photo: company.logo?.url || '',
+        }
+      : {
+          id: sender.general.uid,
+          name: sender.general.name,
+          photo: sender.general.photo?.url || '',
+        },
+    company: company
+      ? {
+          id: company.id,
+          name: company.name,
+          photo: company.logo?.url || '',
+        }
+      : undefined,
+  };
+};
+
 // Employer signs the job contract
 export const createEmployerSignatureNoti = async (
   employerId: string,
   freelancerId: string,
-  jobId: string
+  jobId: string,
+  companyId: string
 ): Promise<boolean> => {
+  const { job, recipient, sender, company } = await getNotificationsEntityData(
+    jobId,
+    freelancerId,
+    employerId,
+    companyId
+  );
   try {
     return await createNotification({
       accountType: 'freelancer',
-      jobId: jobId,
-      recipientId: freelancerId,
-      senderId: employerId,
+      job,
+      recipient,
+      sender,
       type: 'employerSignature',
+      company,
     });
   } catch (error) {
     console.error('Failed to create employer signature notification:', error);
@@ -56,12 +111,18 @@ export const createFreelancerSignatureNoti = async (
   employerId: string,
   jobId: string
 ): Promise<boolean> => {
+  const { job, recipient, sender } = await getNotificationsEntityData(
+    jobId,
+    freelancerId,
+    employerId
+  );
+
   try {
     return await createNotification({
       accountType: 'employer',
-      jobId: jobId,
-      recipientId: employerId,
-      senderId: freelancerId,
+      job,
+      recipient,
+      sender,
       type: 'freelancerSignature',
     });
   } catch (error) {
@@ -74,15 +135,24 @@ export const createFreelancerSignatureNoti = async (
 export const createContactInfoRequestedNoti = async (
   freelancerId: string,
   employerId: string,
-  jobId: string
+  jobId: string,
+  companyId: string
 ): Promise<boolean> => {
+  const { job, recipient, sender, company } = await getNotificationsEntityData(
+    jobId,
+    freelancerId,
+    employerId,
+    companyId
+  );
+
   try {
     return await createNotification({
       accountType: 'freelancer',
-      jobId: jobId,
-      recipientId: freelancerId,
-      senderId: employerId,
+      job,
+      recipient,
+      sender,
       type: 'contactInfoRequested',
+      company,
     });
   } catch (error) {
     console.error('Failed to create contact info request notification:', error);
@@ -96,12 +166,18 @@ export const createContactInfoResponseNoti = async (
   jobId: string,
   status: TContactStatus
 ): Promise<boolean> => {
+  const { job, recipient, sender } = await getNotificationsEntityData(
+    jobId,
+    freelancerId,
+    employerId
+  );
+
   try {
     return await createNotification({
       accountType: 'employer',
-      jobId: jobId,
-      recipientId: employerId,
-      senderId: freelancerId,
+      job,
+      recipient,
+      sender,
       type: status === 'approved' ? 'contactInfoApproved' : 'contactInfoDenied',
     });
   } catch (error) {

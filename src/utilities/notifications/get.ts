@@ -4,15 +4,10 @@ import {
   query,
   getDocs,
   CollectionReference,
-  doc,
-  DocumentReference,
 } from 'firebase/firestore';
 import { notificationConverter } from '../../converters/notification';
 import { db } from '../../firebase/init';
 import { TNotification, TNotificationRead } from '../../types/notification';
-import { TUser } from '../../types/userTypes';
-import { getJobWithRelations } from '../admin/jobs/get';
-import { getUserById } from '../users/get';
 
 export const getUserNotifications = async (
   userId: string
@@ -21,10 +16,9 @@ export const getUserNotifications = async (
     notificationConverter
   ) as CollectionReference<TNotificationRead>;
 
-  const userRef = doc(db, 'users', userId) as DocumentReference<TUser>;
   const userNotifications = query(
     notificationsRef,
-    where('recipient', '==', userRef)
+    where('recipient.id', '==', userId)
   );
 
   const notificationsSnap = await getDocs(userNotifications);
@@ -32,42 +26,25 @@ export const getUserNotifications = async (
   const notifications = notificationsSnap.docs.map(async doc => {
     const notification = doc.data();
 
-    const [job, recipient, sender] = await Promise.all([
-      getJobWithRelations(notification.jobId, []),
-      getUserById(notification.recipientId),
-      getUserById(notification.senderId).catch(error => {
-        console.error('Error fetching sender:', error);
-        return null;
-      }),
-    ]);
-
-    if (!job || !recipient) {
-      return null;
-    }
-
     // If accountType is freelancer, then recipient is the freelancer and sender is the employer
     // If accountType is employer, then recipient is the employer and sender is the freelancer
     const noti: TNotification = {
-      ...notification,
+      accountType: notification.accountType,
+      date: notification.date,
+      read: notification.read,
+      type: notification.type,
       id: doc.id,
-      job: { id: job.id, name: job.name },
-      recipient: {
-        id: recipient.general.uid,
-        name: recipient.general.name,
-        photo: '', // Recipient photo is not needed for the notification
-      },
-      sender: sender
+      job: notification.job,
+      recipient: notification.recipient,
+      sender: notification.isSystem
         ? {
-            id: sender.general.uid,
-            name: sender.general.name,
-            photo:
-              sender.freelancer?.photo.url || sender.general.photo?.url || '',
-          }
-        : {
             id: '',
             name: 'Hoobla',
             photo: '',
-          },
+          }
+        : notification.company
+          ? notification.company
+          : notification.sender,
     };
     return noti;
   });
