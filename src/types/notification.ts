@@ -1,4 +1,5 @@
 import { DocumentReference, Timestamp } from 'firebase/firestore';
+import { TCompanyWrite } from './companyTypes';
 import { TJobWrite } from './jobTypes';
 import { TUserWrite } from './userTypes';
 
@@ -15,25 +16,57 @@ export type FreelancerNotification =
   | 'employerSignature'; // Employer has signed the contract
 
 export type TNotificationWrite = {
-  job: DocumentReference<TJobWrite>;
-  recipient: DocumentReference<TUserWrite>;
-  sender: DocumentReference<TUserWrite>;
+  job: {
+    id: string;
+    name: string;
+  };
+  recipient: {
+    id: string;
+    name: string;
+    photo: string;
+  };
+  sender: {
+    id: string;
+    name: string;
+    photo: string;
+  };
   accountType: 'freelancer' | 'employer';
   type: EmployerNotification | FreelancerNotification;
   date: Timestamp;
   read: boolean;
   isSystem?: boolean;
+  company?: {
+    id: string;
+    name: string;
+    photo: string;
+  };
 };
 
 export type TNotificationRead = {
-  jobId: string;
-  recipientId: string;
-  senderId: string;
+  job: {
+    id: string;
+    name: string;
+  };
+  recipient: {
+    id: string;
+    name: string;
+    photo: string;
+  };
+  sender: {
+    id: string;
+    name: string;
+    photo: string;
+  };
   date: Date;
   accountType: 'freelancer' | 'employer';
   type: EmployerNotification | FreelancerNotification;
   read: boolean;
   isSystem?: boolean;
+  company?: {
+    id: string;
+    name: string;
+    photo: string;
+  };
 };
 
 export type TNotification = {

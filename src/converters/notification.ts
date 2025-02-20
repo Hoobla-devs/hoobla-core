@@ -6,6 +6,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase/init';
+import { TCompanyWrite } from '../types/companyTypes';
 import { TJobWrite } from '../types/jobTypes';
 import { TNotificationRead, TNotificationWrite } from '../types/notification';
 import { TUserWrite } from '../types/userTypes';
@@ -15,21 +16,14 @@ export const notificationConverter = {
     const { date, ...rest } = notification;
     return {
       date: Timestamp.fromDate(date),
-      job: doc(db, 'jobs', notification.jobId) as DocumentReference<TJobWrite>,
-      recipient: doc(
-        db,
-        'users',
-        notification.recipientId
-      ) as DocumentReference<TUserWrite>,
-      sender: doc(
-        db,
-        'users',
-        notification.senderId
-      ) as DocumentReference<TUserWrite>,
+      job: notification.job,
+      recipient: notification.recipient,
+      sender: notification.sender,
       accountType: notification.accountType,
       type: notification.type,
       read: notification.read,
       isSystem: notification.isSystem,
+      company: notification.company,
     };
   },
   fromFirestore(
@@ -40,10 +34,11 @@ export const notificationConverter = {
     return {
       ...snapData,
       date: snapData.date.toDate(),
-      recipientId: snapData.recipient.id,
-      senderId: snapData.sender.id,
-      jobId: snapData.job.id,
+      recipient: snapData.recipient,
+      sender: snapData.sender,
+      job: snapData.job,
       isSystem: snapData.isSystem,
+      company: snapData.company,
     };
   },
 };
