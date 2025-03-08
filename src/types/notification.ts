@@ -17,10 +17,10 @@ export type FreelancerNotification =
   | 'newFreelancerContract'; // A new freelancer contract has been created
 
 export type TNotificationWrite = {
-  job?: {
+  job: {
     id: string;
     name: string;
-  };
+  } | null;
   recipient: {
     id: string;
     name: string;
@@ -36,11 +36,11 @@ export type TNotificationWrite = {
   date: Timestamp;
   read: boolean;
   isSystem?: boolean;
-  company?: {
+  company: {
     id: string;
     name: string;
     photo: string;
-  };
+  } | null;
 };
 
 export type TNotificationRead = {
