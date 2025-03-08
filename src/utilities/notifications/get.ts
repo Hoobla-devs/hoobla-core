@@ -45,6 +45,7 @@ export const getUserNotifications = async (
         : notification.company
           ? notification.company
           : notification.sender,
+      isSystem: notification.isSystem ?? false,
     };
     return noti;
   });

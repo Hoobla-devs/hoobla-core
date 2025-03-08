@@ -90,5 +90,5 @@ export type TNotification = {
     name: string;
     photo: string;
   };
-  isSystem?: boolean;
+  isSystem: boolean;
 };
