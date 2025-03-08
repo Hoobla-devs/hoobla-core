@@ -34,7 +34,7 @@ export const getUserNotifications = async (
       read: notification.read,
       type: notification.type,
       id: doc.id,
-      job: notification.job,
+      job: notification.job || null,
       recipient: notification.recipient,
       sender: notification.isSystem
         ? {
