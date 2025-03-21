@@ -191,8 +191,8 @@ export const createContactInfoResponseNoti = async (
 ): Promise<boolean> => {
   const { job, recipient, sender } = await getNotificationsEntityData(
     jobId,
-    freelancerId,
-    employerId
+    employerId,
+    freelancerId
   );
 
   try {
