@@ -85,6 +85,7 @@ export async function convertDynamicDataToText(
     userName?: string;
     companyName?: string;
     jobName?: string;
+    freelancerName?: string;
   }
 ) {
   const modifiedParagraphs = await Promise.all(
@@ -108,6 +109,9 @@ export async function convertDynamicDataToText(
               break;
             case 'jobName':
               replacement = data?.jobName || '';
+              break;
+            case 'freelancerName':
+              replacement = data?.freelancerName || '';
               break;
             // Add more cases as needed
           }
@@ -156,6 +160,7 @@ export const getEmailWithDynamicData = async (
     jobID?: string;
     companyId?: string;
     token?: string;
+    freelancerName?: string;
   }
 ): Promise<{
   title: string;
