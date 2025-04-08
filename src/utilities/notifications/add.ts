@@ -77,6 +77,28 @@ const getNotificationsEntityData = async (
   };
 };
 
+// Create noti for employer that freelancers have been chosen
+export const createFreelancersChosenNoti = async (
+  employerId: string,
+  jobId: string
+) => {
+  const { job, recipient, sender } = await getNotificationsEntityData(
+    jobId,
+    employerId,
+    employerId
+  );
+
+  createNotification({
+    accountType: 'employer',
+    job,
+    recipient,
+    sender,
+    isSystem: true,
+    type: 'applicantsSelected',
+    company: null,
+  });
+};
+
 // Employer signs the job contract
 export const createEmployerSignatureNoti = async (
   employerId: string,
@@ -97,7 +119,7 @@ export const createEmployerSignatureNoti = async (
       recipient,
       sender,
       type: 'employerSignature',
-      company,
+      company: company || null,
     });
   } catch (error) {
     console.error('Failed to create employer signature notification:', error);
@@ -124,6 +146,7 @@ export const createFreelancerSignatureNoti = async (
       recipient,
       sender,
       type: 'freelancerSignature',
+      company: null,
     });
   } catch (error) {
     console.error('Failed to create freelancer signature notification:', error);
@@ -152,7 +175,7 @@ export const createContactInfoRequestedNoti = async (
       recipient,
       sender,
       type: 'contactInfoRequested',
-      company,
+      company: company || null,
     });
   } catch (error) {
     console.error('Failed to create contact info request notification:', error);
@@ -168,8 +191,8 @@ export const createContactInfoResponseNoti = async (
 ): Promise<boolean> => {
   const { job, recipient, sender } = await getNotificationsEntityData(
     jobId,
-    freelancerId,
-    employerId
+    employerId,
+    freelancerId
   );
 
   try {
@@ -179,6 +202,7 @@ export const createContactInfoResponseNoti = async (
       recipient,
       sender,
       type: status === 'approved' ? 'contactInfoApproved' : 'contactInfoDenied',
+      company: null,
     });
   } catch (error) {
     console.error(

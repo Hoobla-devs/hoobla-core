@@ -13,13 +13,14 @@ export type EmployerNotification =
 export type FreelancerNotification =
   | 'contactInfoRequested' // Employer has requested the freelancer to share contact information
   | 'reviewReceived' // Employer has given the freelancer a review
-  | 'employerSignature'; // Employer has signed the contract
+  | 'employerSignature' // Employer has signed the contract
+  | 'newFreelancerContract'; // A new freelancer contract has been created
 
 export type TNotificationWrite = {
   job: {
     id: string;
     name: string;
-  };
+  } | null;
   recipient: {
     id: string;
     name: string;
@@ -35,18 +36,18 @@ export type TNotificationWrite = {
   date: Timestamp;
   read: boolean;
   isSystem?: boolean;
-  company?: {
+  company: {
     id: string;
     name: string;
     photo: string;
-  };
+  } | null;
 };
 
 export type TNotificationRead = {
   job: {
     id: string;
     name: string;
-  };
+  } | null;
   recipient: {
     id: string;
     name: string;
@@ -62,11 +63,11 @@ export type TNotificationRead = {
   type: EmployerNotification | FreelancerNotification;
   read: boolean;
   isSystem?: boolean;
-  company?: {
+  company: {
     id: string;
     name: string;
     photo: string;
-  };
+  } | null;
 };
 
 export type TNotification = {
@@ -78,7 +79,7 @@ export type TNotification = {
   job: {
     id: string;
     name: string;
-  };
+  } | null;
   sender: {
     id: string;
     name: string;
@@ -89,5 +90,5 @@ export type TNotification = {
     name: string;
     photo: string;
   };
-  isSystem?: boolean;
+  isSystem: boolean;
 };

@@ -16,14 +16,14 @@ export const notificationConverter = {
     const { date, ...rest } = notification;
     return {
       date: Timestamp.fromDate(date),
-      job: notification.job,
+      job: notification.job || null,
       recipient: notification.recipient,
       sender: notification.sender,
       accountType: notification.accountType,
       type: notification.type,
       read: notification.read,
       isSystem: notification.isSystem,
-      company: notification.company,
+      company: notification.company || null,
     };
   },
   fromFirestore(
