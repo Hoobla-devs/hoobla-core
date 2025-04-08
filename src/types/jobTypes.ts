@@ -12,6 +12,8 @@ import { TEmployerUser, TFreelancerUser, TUser } from './userTypes';
 export type TJobBase = {
   name: string;
   description: string;
+  generatedDescription?: string;
+  wasTiptapUsed?: boolean;
   unapprovedTags?: TUnapprovedTags | null;
   type: 'notSure' | 'partTime' | 'timeframe';
   status: TJobStatus;
@@ -210,8 +212,10 @@ export type TOfferType = 'hourly' | 'fixed';
 export type TJobFormData = {
   name: string;
   description: string;
-  generatedDescription: string;
-  preferGeneratedDescription: boolean;
+  wasTiptapUsed?: boolean;
+  generatedDescription?: string;
+  selectedState: 'original' | 'generated';
+  preferGeneratedDescription?: boolean;
   jobTitles: string[];
   skills: string[];
   languages: string[];
