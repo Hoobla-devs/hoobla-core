@@ -210,6 +210,8 @@ export type TOfferType = 'hourly' | 'fixed';
 export type TJobFormData = {
   name: string;
   description: string;
+  generatedDescription: string;
+  preferGeneratedDescription: boolean;
   jobTitles: string[];
   skills: string[];
   languages: string[];

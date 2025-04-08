@@ -67,6 +67,8 @@ export function convertFormJobToJobRead(
     id: '',
     name: formJob.name,
     description: formJob.description,
+    generatedDescription: formJob.generatedDescription,
+    preferGeneratedDescription: formJob.preferGeneratedDescription,
     type: formJob.type ? formJob.type : 'notSure',
     status: formJob.status,
     company: doc(db, 'companies', company) as DocumentReference<TCompanyWrite>,
