@@ -54,7 +54,6 @@ export const jobConverter = {
         ...jobInfoData,
         ...(deadline && { deadline: Timestamp.fromDate(deadline) }),
       },
-      wasTiptapUsed: true,
     };
   },
 

@@ -12,8 +12,9 @@ import { TEmployerUser, TFreelancerUser, TUser } from './userTypes';
 export type TJobBase = {
   name: string;
   description: string;
+  originalDescription: string;
   generatedDescription?: string;
-  wasTiptapUsed?: boolean;
+  generationCount?: number;
   unapprovedTags?: TUnapprovedTags | null;
   type: 'notSure' | 'partTime' | 'timeframe';
   status: TJobStatus;
@@ -211,10 +212,10 @@ export type TOfferType = 'hourly' | 'fixed';
 // * Job Form Types
 export type TJobFormData = {
   name: string;
+  originalDescription: string;
   description: string;
-  wasTiptapUsed?: boolean;
+  generationCount?: number;
   generatedDescription?: string;
-  selectedState: 'original' | 'generated';
   preferGeneratedDescription?: boolean;
   jobTitles: string[];
   skills: string[];
