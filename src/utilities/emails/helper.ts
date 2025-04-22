@@ -175,7 +175,9 @@ export const getEmailWithDynamicData = async (
     primaryButton: convertLinkTypeToLink(
       lang,
       data.jobID,
-      emailContent.primaryButton?.linkType
+      emailContent.primaryButton?.linkType,
+      data.companyId,
+      data.token
     ), // Defaults to see more that links to account page
   };
 
