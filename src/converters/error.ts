@@ -7,7 +7,7 @@ import { TErrorRead, TErrorWrite } from '../types/errorTypes';
 
 export const errorConverter = {
   toFirestore(error: TErrorRead): TErrorWrite {
-    const { id, timestamp, ...rest } = error;
+    const { timestamp, ...rest } = error;
     return {
       ...rest,
       timestamp: Timestamp.fromDate(timestamp),
@@ -21,8 +21,7 @@ export const errorConverter = {
     const data = snapshot.data(options);
     return {
       ...data,
-      id: snapshot.id,
       timestamp: data.timestamp.toDate(),
     };
   },
-}; 
+};
