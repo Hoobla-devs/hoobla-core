@@ -70,7 +70,7 @@ export function convertLinkTypeToLink(
   if (linkType === 'employerInvitation') {
     return {
       label: LinkTypeTranslations[linkType][lang],
-      link: `https://hoobla.is/employers/form?token=${token}&cid=${companyId}`,
+      link: `https://hoobla.is/${lang}/employers/form?token=${token}&cid=${companyId}`,
     };
   }
   return {
