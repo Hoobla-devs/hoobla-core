@@ -70,7 +70,7 @@ export function convertLinkTypeToLink(
   if (linkType === 'employerInvitation') {
     return {
       label: LinkTypeTranslations[linkType][lang],
-      link: `https://hoobla.is/employers/form?token=${token}&cid=${companyId}`,
+      link: `https://hoobla.is/${lang}/employers/form?token=${token}&cid=${companyId}`,
     };
   }
   return {
@@ -175,7 +175,9 @@ export const getEmailWithDynamicData = async (
     primaryButton: convertLinkTypeToLink(
       lang,
       data.jobID,
-      emailContent.primaryButton?.linkType
+      emailContent.primaryButton?.linkType,
+      data.companyId,
+      data.token
     ), // Defaults to see more that links to account page
   };
 
