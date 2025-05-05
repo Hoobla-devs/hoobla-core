@@ -9,6 +9,8 @@ export type TErrorAction =
   | 'inviteEmployee'
   | 'createOffer'
   | 'updateOffer'
+  | 'selectFreelancer'
+  | 'approveContactRequest'
   | 'signContract'
   | 'createCompany'
   | 'updateCompany'
