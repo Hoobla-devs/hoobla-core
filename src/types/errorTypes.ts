@@ -11,6 +11,7 @@ export type TErrorAction =
   | 'updateOffer'
   | 'signContract'
   | 'createCompany'
+  | 'addEmployeeToJobs'
   | 'updateCompany'
   | 'deleteCompany'
   | 'authentication'

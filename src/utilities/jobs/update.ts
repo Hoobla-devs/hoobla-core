@@ -181,6 +181,19 @@ export async function editJob(jobId: string, jobData: TJobRead) {
     .catch(() => false);
 }
 
+export async function addEmployeeToJob(jobId: string, employeeId: string) {
+  try {
+    const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
+    const employeesCollectionRef = collection(jobRef, 'employees');
+    const employeeRef = doc(employeesCollectionRef, employeeId);
+    await setDoc(employeeRef, { permission: 'edit' });
+    return true;
+  } catch (err) {
+    console.error(err);
+    throw new Error(`Error adding employee to job: ${err}`);
+  }
+}
+
 export async function updateJobEmployeeList(
   jobId: string,
   employees: TJobEmployee[]

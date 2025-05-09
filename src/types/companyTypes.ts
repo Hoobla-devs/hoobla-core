@@ -40,6 +40,7 @@ export type TInvite = {
   position: string;
   role: TEmployerRole;
   date: Date;
+  jobs: string[];
 };
 
 export type TCompany = TCompanyRead;
@@ -85,6 +86,7 @@ export type TInviteWrite = {
   name: string;
   position: string;
   role: TEmployerRole;
+  jobs: string[];
 };
 
 // * Form Types

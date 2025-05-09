@@ -18,7 +18,9 @@ import {
   TCompanyWrite,
   TInvite,
 } from '../../types/companyTypes';
+import { TJob } from '../../types/jobTypes';
 import { TEmployerUser } from '../../types/userTypes';
+import { getJob } from '../jobs/get';
 import { getEmployer, getUserGeneralInfo } from '../users/get';
 
 export async function getCompanyById(companyId: string) {
@@ -167,6 +169,22 @@ export async function getCompanyWithEmployees(
   ) as TCompanyEmployee[];
 
   return { ...company, employees: validEmployees };
+}
+
+export async function getCompanyWithRelations(
+  companyRef: string | DocumentReference<TCompanyWrite>
+) {
+  const company = await getCompanyWithEmployees(companyRef);
+  const jobIds = company.jobs.map(job => job.id);
+
+  const jobs = await Promise.all(
+    jobIds.map(jobId => getJob(jobId, company.creator.id))
+  );
+
+  return {
+    ...company,
+    jobs: jobs.filter(job => job !== undefined) as TJob[],
+  };
 }
 
 export async function getCompanyWithCreator(
