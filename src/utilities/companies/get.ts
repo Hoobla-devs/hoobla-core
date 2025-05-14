@@ -18,9 +18,9 @@ import {
   TCompanyWrite,
   TInvite,
 } from '../../types/companyTypes';
-import { TJob } from '../../types/jobTypes';
+import { TJob, TJobWithEmployees } from '../../types/jobTypes';
 import { TEmployerUser } from '../../types/userTypes';
-import { getJob } from '../jobs/get';
+import { getJob, getJobWithEmployees } from '../jobs/get';
 import { getEmployer, getUserGeneralInfo } from '../users/get';
 
 export async function getCompanyById(companyId: string) {
@@ -178,12 +178,17 @@ export async function getCompanyWithRelations(
   const jobIds = company.jobs.map(job => job.id);
 
   const jobs = await Promise.all(
-    jobIds.map(jobId => getJob(jobId, company.creator.id))
+    jobIds.map(jobId =>
+      getJobWithEmployees(jobId).catch(e => {
+        console.log('Error fetching job: ', e);
+        return undefined;
+      })
+    )
   );
 
   return {
     ...company,
-    jobs: jobs.filter(job => job !== undefined) as TJob[],
+    jobs: jobs.filter(job => job !== undefined) as TJobWithEmployees[],
   };
 }
 
