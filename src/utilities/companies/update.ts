@@ -2,6 +2,7 @@ import { doc, DocumentReference, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase/init';
 import {
   TCompany,
+  TCompanyEmployee,
   TCompanyFormData,
   TCompanyRead,
   TCompanyWrite,
@@ -13,6 +14,9 @@ import { uploadPhoto } from '../storage/add';
 import { deletePhoto } from '../storage/delete';
 import { updateDoc } from '../updateDoc';
 import { getCompany } from './get';
+import { getJobWithEmployees } from '../jobs/get';
+import { addEmployeeToJob } from '../jobs/update';
+import { updateJobEmployeeList } from '../jobs/update';
 
 export function convertEditCompanyFormToCompanyRead(
   company: TCompany,
@@ -122,24 +126,63 @@ export async function updateInvitationList(
     .catch(() => null);
 }
 
-export async function updateEmployeeRole(
+export async function updateEmployee(
   cid: string,
   uid: string,
-  role: TEmployerRole
+  employeeData: TCompanyEmployee,
+  selectedJobs: string[]
 ) {
   const companyRef = doc(
     db,
     'companies',
     cid
   ) as DocumentReference<TCompanyWrite>;
+
   const employeeRef = doc(
     companyRef,
     'employees',
     uid
   ) as DocumentReference<TEmployerWrite>;
 
-  // Use setDoc with merge option to create or update the role field
-  await setDoc(employeeRef, { role: role }, { merge: true })
-    .then(() => true)
-    .catch(() => false);
+  // First update the employee data
+  const updateSuccess = await updateDoc(employeeRef, employeeData)
+    .then(() => employeeData)
+    .catch(() => null);
+
+  if (!updateSuccess) {
+    return null;
+  }
+
+  // Get all jobs for the company to check current access
+  const company = await getCompany(companyRef);
+  const jobs = company.jobs;
+
+  // For each job, check if we need to add or remove the employee
+  const updatePromises = jobs.map(async jobRef => {
+    const job = await getJobWithEmployees(jobRef.id).catch(() => null);
+    if (!job) {
+      return null;
+    }
+    const currentEmployeeIds = job.employees.map(e => e.id);
+    const shouldHaveAccess = selectedJobs.includes(job.id);
+
+    // If employee should have access but doesn't, add them
+    if (shouldHaveAccess && !currentEmployeeIds.includes(uid)) {
+      return addEmployeeToJob(job.id, uid);
+    }
+    // If employee shouldn't have access but does, remove them
+    else if (!shouldHaveAccess && currentEmployeeIds.includes(uid)) {
+      const updatedEmployees = job.employees.filter(e => e.id !== uid);
+      return updateJobEmployeeList(job.id, updatedEmployees);
+    }
+    return true;
+  });
+
+  try {
+    await Promise.all(updatePromises);
+    return updateSuccess;
+  } catch (error) {
+    console.error('Error updating job access:', error);
+    return null;
+  }
 }

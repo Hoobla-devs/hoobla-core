@@ -7,6 +7,7 @@ import {
   DocumentReference,
   runTransaction,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import { TCompanyWrite } from '../../types/companyTypes';
 import { db } from '../../firebase/init';
@@ -47,39 +48,43 @@ export async function removeCompanyEmployee(companyId: string, userId: string) {
   ]);
 
   try {
-    await runTransaction(db, async transaction => {
-      // Remove the employee from the company's employee subcollection
+    // Create a new batch
+    const batch = writeBatch(db);
+
+    // Remove the employee from the company's employee subcollection
+    const employeeRef = doc(employeesCollectionRef, userId);
+    batch.delete(employeeRef);
+
+    // Remove the employee from all jobs related to the company
+    company.jobs.forEach(job => {
+      const jobRef = doc(db, 'jobs', job.id);
+      const employeesCollectionRef = collection(jobRef, 'employees');
       const employeeRef = doc(employeesCollectionRef, userId);
-      transaction.delete(employeeRef);
-
-      // Remove the employee from all jobs related to the company
-      company.jobs.forEach(job => {
-        const jobRef = doc(db, 'jobs', job.id);
-        const employeesCollectionRef = collection(jobRef, 'employees');
-        const employeeRef = doc(employeesCollectionRef, userId);
-        transaction.delete(employeeRef);
-      });
-
-      // Determine new value for 'activeCompany' field
-      const newActiveCompany =
-        employeeData.activeCompany &&
-        employeeData.activeCompany.company.id === companyId
-          ? deleteField()
-          : employeeData.activeCompany;
-
-      // Update the employee's document
-      transaction.update(userEmployeeToRemoveRef, {
-        activeCompany: newActiveCompany,
-        companies: arrayRemove(companyRef),
-      });
+      batch.delete(employeeRef);
     });
+
+    // Determine new value for 'activeCompany' field
+    const newActiveCompany =
+      employeeData.activeCompany &&
+      employeeData.activeCompany.company.id === companyId
+        ? deleteField()
+        : employeeData.activeCompany;
+
+    // Update the employee's document
+    batch.update(userEmployeeToRemoveRef, {
+      activeCompany: newActiveCompany,
+      companies: arrayRemove(companyRef),
+    });
+
+    // Commit the batch
+    await batch.commit();
 
     console.log(
       'Employee removed from company and company reference removed from employee successfully'
     );
     return true;
   } catch (error) {
-    console.error(error);
+    console.log('Error removing employee', error);
     return false;
   }
 }
