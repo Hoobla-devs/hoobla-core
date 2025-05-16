@@ -53,6 +53,13 @@ export function convertLinkTypeToLink(
     };
   }
 
+  if (linkType === 'jobApplicants') {
+    return {
+      label: LinkTypeTranslations[linkType][lang],
+      link: `https://hoobla.is/jobs/${jobID}/freelancers`,
+    };
+  }
+
   if (linkType === 'jobSignature') {
     return {
       label: LinkTypeTranslations[linkType][lang],
