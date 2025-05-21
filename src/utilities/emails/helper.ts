@@ -42,7 +42,7 @@ export function convertLinkTypeToLink(
   if (linkType === 'settings') {
     return {
       label: LinkTypeTranslations[linkType][lang],
-      link: `https://hoobla.is/settings`,
+      link: `https://hoobla.is/account/settings`,
     };
   }
 
@@ -63,7 +63,7 @@ export function convertLinkTypeToLink(
   if (linkType === 'jobSignature') {
     return {
       label: LinkTypeTranslations[linkType][lang],
-      link: `https://hoobla.is/jobs/${jobID}/signature`,
+      link: `https://hoobla.is/account/jobs/${jobID}/signature`,
     };
   }
 

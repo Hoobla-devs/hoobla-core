@@ -53,7 +53,8 @@ export type TEmailTemplate =
   | 'jobInProgress'
   | 'jobDeleted'
   | 'jobReview'
-  | 'freelancerApplication';
+  | 'freelancerApplication'
+  | 'freelancerSelected';
 
 export type TEmail = {
   name: string;
