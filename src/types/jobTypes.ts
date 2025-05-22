@@ -74,6 +74,10 @@ export type TJob = TJobRead & {
   applicants?: TApplicant[]; // TODO: breyta í map?   // Allir sem hafa sent inn umsókn
 };
 
+export type TJobWithSelectedApplicants = Omit<TJob, 'selectedApplicants'> & {
+  selectedApplicants: TFreelancerUser[];
+};
+
 export type TJobWithEmployees = Omit<TJob, 'employees'> & {
   employees: TJobEmployee[];
 };

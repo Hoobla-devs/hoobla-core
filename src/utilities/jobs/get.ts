@@ -24,7 +24,9 @@ import {
   TJobEmployee,
   TJobWithEmployeesAndApplicants,
   TJobWithEmployees,
+  TJobWithSelectedApplicants,
 } from '../../types/jobTypes';
+import { TFreelancerUser } from '../../types/userTypes';
 import { getCompany, getCompanyEmployee } from '../companies/get';
 import { getFreelancer, getUserById } from '../users/get';
 import { getAllApplicants, getApplicant } from './applicants/get';
@@ -74,6 +76,32 @@ export async function getJob(
   }
 
   return job;
+}
+
+export async function getJobWithSelectedApplicants(
+  ref: string | DocumentReference<TJobWrite>
+): Promise<TJobWithSelectedApplicants> {
+  if (typeof ref === 'string') {
+    ref = doc(db, 'jobs', ref) as DocumentReference<TJobWrite>;
+  }
+
+  const job = await _getJobFromRef(ref);
+
+  let selectedApplicants: TFreelancerUser[] = [];
+
+  try {
+    const selectedApplicantIds = job.selectedApplicants.map(a => a.id);
+    selectedApplicants = await Promise.all(
+      selectedApplicantIds.map(async a => {
+        const freelancer = await getFreelancer(a);
+        return freelancer;
+      })
+    );
+  } catch (error) {
+    console.error(error);
+  }
+
+  return { ...job, selectedApplicants };
 }
 
 export async function getJobWithCompanyAndApplicant(
