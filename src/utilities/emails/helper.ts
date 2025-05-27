@@ -109,7 +109,7 @@ export async function convertDynamicDataToText(
 
           switch (property) {
             case 'userName':
-              replacement = data?.userName || '';
+              replacement = data?.userName?.split(' ')[0] || '';
               break;
             case 'companyName':
               replacement = data?.companyName || '';
