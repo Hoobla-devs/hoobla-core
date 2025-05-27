@@ -79,13 +79,26 @@ export async function getJob(
 }
 
 export async function getJobWithSelectedApplicants(
-  ref: string | DocumentReference<TJobWrite>
-): Promise<TJobWithSelectedApplicants> {
+  ref: string | DocumentReference<TJobWrite>,
+  userId: string
+): Promise<TJobWithSelectedApplicants | null> {
   if (typeof ref === 'string') {
     ref = doc(db, 'jobs', ref) as DocumentReference<TJobWrite>;
   }
 
-  const job = await _getJobFromRef(ref);
+  const [job, employeesSnapshot] = await Promise.all([
+    _getJobFromRef(ref),
+    getDocs(collection(ref, 'employees')),
+  ]);
+
+  const isUserAnEmployee = employeesSnapshot.docs.some(
+    doc => doc.id === userId
+  );
+
+  // If the user is not an employee of the job, return null
+  if (!isUserAnEmployee) {
+    return null;
+  }
 
   let selectedApplicants: TFreelancerUser[] = [];
 
