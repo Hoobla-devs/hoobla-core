@@ -241,18 +241,11 @@ export async function getPaginatedJobsWithRelations(
   const lastVisible = jobsSnapshot.docs[jobsSnapshot.docs.length - 1];
   const hasMore = jobsSnapshot.docs.length === pageSize;
 
-  console.timeEnd('getData');
-  console.log('jobs length', jobs.length);
-  console.log('applicantDocs length', applicantDocs.length);
-  console.log('companies length', companies.length);
-  console.log('users length', users.length);
-
   // Gather all related document IDs
   const applicantsByJob: Record<string, TApplicantRead[]> = {};
   const companiesMap: Record<string, TCompanyRead> = {};
   const usersMap: Record<string, TUserRead> = {};
 
-  console.time('processData');
   applicantDocs.forEach(applicant => {
     if (!applicant.jobId) return;
     if (!applicantsByJob[applicant.jobId]) {
@@ -268,7 +261,6 @@ export async function getPaginatedJobsWithRelations(
   users.forEach(user => {
     usersMap[user.general.uid] = user;
   });
-  console.timeEnd('processData');
 
   // Process each job with its relations
   const mappedJobs = jobs.map(job => {
