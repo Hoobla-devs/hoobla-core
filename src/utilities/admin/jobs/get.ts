@@ -207,9 +207,18 @@ export type TJobWithAllRelations = {
   selectedApplicants: TFreelancerApplicant[];
 };
 
-export async function getJobsWithRelations(): Promise<TJobWithAllRelations[]> {
+export async function getJobsWithRelations(
+  pageSize: number = 10,
+  lastDoc?: any
+): Promise<{
+  jobs: TJobWithAllRelations[];
+  lastDoc: any;
+  hasMore: boolean;
+}> {
   const jobsQuery = query(
-    collection(db, 'jobs').withConverter(jobConverter)
+    collection(db, 'jobs').withConverter(jobConverter),
+    limit(pageSize),
+    ...(lastDoc ? [startAfter(lastDoc)] : [])
   );
 
   const [jobsSnapshot, applicantDocs, companies, users] = await Promise.all([
@@ -229,6 +238,8 @@ export async function getJobsWithRelations(): Promise<TJobWithAllRelations[]> {
   ]);
 
   const jobs = jobsSnapshot.docs.map(doc => doc.data());
+  const lastVisible = jobsSnapshot.docs[jobsSnapshot.docs.length - 1];
+  const hasMore = jobsSnapshot.docs.length === pageSize;
 
   // Gather all related document IDs
   const applicantsByJob: Record<string, TApplicantRead[]> = {};
@@ -252,27 +263,43 @@ export async function getJobsWithRelations(): Promise<TJobWithAllRelations[]> {
   });
 
   // Process each job with its relations
-  return jobs.map(job => ({
-    job: {
-      title: job.name,
-      id: job.id,
-      status: job.status,
-      deadline: job.jobInfo.deadline,
-      info: job.jobInfo,
-    },
-    logs: job.logs,
-    company: {
-      name: companiesMap[job.company.id].name,
-      logo: companiesMap[job.company.id].logo.url,
-      id: companiesMap[job.company.id].id,
-      phone: companiesMap[job.company.id].phone.number,
-    },
-    applicantsCount: applicantsByJob[job.id]
-      ? applicantsByJob[job.id].length
-      : 0,
-    creator: usersMap[job.creator.id],
-    employees: [],
-    freelancers: [],
-    selectedApplicants: [],
-  }));
+  const mappedJobs = jobs.map(job => {
+    return {
+      job: {
+        title: job.name,
+        id: job.id,
+        status: job.status,
+        deadline: job.jobInfo.deadline,
+        info: job.jobInfo,
+      },
+      logs: job.logs,
+      company: {
+        name: companiesMap[job.company.id].name,
+        logo: companiesMap[job.company.id].logo.url,
+        id: companiesMap[job.company.id].id,
+        phone: companiesMap[job.company.id].phone.number,
+      },
+      applicantsCount: applicantsByJob[job.id]
+        ? applicantsByJob[job.id].length
+        : 0,
+      creator: usersMap[job.creator.id],
+      employees: [],
+      freelancers: [],
+      selectedApplicants: [],
+    };
+  });
+
+  return {
+    jobs: mappedJobs,
+    lastDoc: lastVisible,
+    hasMore,
+  };
+}
+
+// Keep the original function for backward compatibility
+export async function getAllJobsWithRelations(): Promise<
+  TJobWithAllRelations[]
+> {
+  const { jobs } = await getJobsWithRelations(1000); // Use a large number to get all jobs
+  return jobs;
 }
