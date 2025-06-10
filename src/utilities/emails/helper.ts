@@ -56,7 +56,7 @@ export function convertLinkTypeToLink(
   if (linkType === 'jobApplicants') {
     return {
       label: LinkTypeTranslations[linkType][lang],
-      link: `https://hoobla.is/jobs/${jobID}/freelancers`,
+      link: `https://hoobla.is/account/jobs/${jobID}/freelancers`,
     };
   }
 
