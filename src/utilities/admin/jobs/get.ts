@@ -5,6 +5,10 @@ import {
   getDoc,
   getDocs,
   collectionGroup,
+  query,
+  orderBy,
+  limit,
+  startAfter,
 } from 'firebase/firestore';
 import { applicantConverter, jobConverter } from '../../../converters/job';
 import { db } from '../../../firebase/init';
@@ -203,15 +207,22 @@ export type TJobWithAllRelations = {
   selectedApplicants: TFreelancerApplicant[];
 };
 
-// Update the return type of the function
-export async function getAllJobsWithRelations(): Promise<
-  TJobWithAllRelations[]
-> {
-  console.time('getData');
-  const [jobs, applicantDocs, companies, users] = await Promise.all([
-    getDocs(collection(db, 'jobs').withConverter(jobConverter)).then(docs =>
-      docs.docs.map(doc => doc.data())
-    ),
+export async function getJobsWithRelations(
+  pageSize: number = 10,
+  lastDoc?: any
+): Promise<{
+  jobs: TJobWithAllRelations[];
+  lastDoc: any;
+  hasMore: boolean;
+}> {
+  const jobsQuery = query(
+    collection(db, 'jobs').withConverter(jobConverter),
+    limit(pageSize),
+    ...(lastDoc ? [startAfter(lastDoc)] : [])
+  );
+
+  const [jobsSnapshot, applicantDocs, companies, users] = await Promise.all([
+    getDocs(jobsQuery),
     getDocs(collectionGroup(db, 'applicants')).then(docs =>
       docs.docs.map(doc => ({
         applicant: doc.data(),
@@ -225,17 +236,16 @@ export async function getAllJobsWithRelations(): Promise<
       docs.docs.map(doc => doc.data())
     ),
   ]);
-  console.timeEnd('getData');
-  console.log('jobs length', jobs.length);
-  console.log('applicantDocs length', applicantDocs.length);
-  console.log('companies length', companies.length);
-  console.log('users length', users.length);
+
+  const jobs = jobsSnapshot.docs.map(doc => doc.data());
+  const lastVisible = jobsSnapshot.docs[jobsSnapshot.docs.length - 1];
+  const hasMore = jobsSnapshot.docs.length === pageSize;
+
   // Gather all related document IDs
   const applicantsByJob: Record<string, TApplicantRead[]> = {};
   const companiesMap: Record<string, TCompanyRead> = {};
   const usersMap: Record<string, TUserRead> = {};
 
-  console.time('processData');
   applicantDocs.forEach(applicant => {
     if (!applicant.jobId) return;
     if (!applicantsByJob[applicant.jobId]) {
@@ -251,7 +261,7 @@ export async function getAllJobsWithRelations(): Promise<
   users.forEach(user => {
     usersMap[user.general.uid] = user;
   });
-  console.timeEnd('processData');
+
   // Process each job with its relations
   const mappedJobs = jobs.map(job => {
     return {
@@ -279,5 +289,17 @@ export async function getAllJobsWithRelations(): Promise<
     };
   });
 
-  return mappedJobs;
+  return {
+    jobs: mappedJobs,
+    lastDoc: lastVisible,
+    hasMore,
+  };
+}
+
+// Keep the original function for backward compatibility
+export async function getAllJobsWithRelations(): Promise<
+  TJobWithAllRelations[]
+> {
+  const { jobs } = await getJobsWithRelations(1000); // Use a large number to get all jobs
+  return jobs;
 }
