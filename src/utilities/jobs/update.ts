@@ -235,3 +235,27 @@ export async function updateJobEmployeeList(
     return false;
   }
 }
+
+export async function updateJobSigner(jobId: string, employeeId: string) {
+  try {
+    const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
+    const employeesCollectionRef = collection(jobRef, 'employees');
+    const employeesSnapshot = await getDocs(employeesCollectionRef);
+    const updatePromises = employeesSnapshot.docs.map(async docSnap => {
+      const isSigner = docSnap.id === employeeId;
+      await setDoc(
+        docSnap.ref,
+        {
+          ...docSnap.data(),
+          signer: isSigner,
+        },
+        { merge: true }
+      );
+    });
+    await Promise.all(updatePromises);
+    return true;
+  } catch (err) {
+    console.error('Error setting job signer:', err);
+    throw err;
+  }
+}

@@ -55,11 +55,13 @@ export type TJobEmployeePermission = 'edit' | 'view';
 
 export type TJobEmployeeWrite = {
   permission: TJobEmployeePermission;
+  signer?: boolean; // If not present, assume false
 };
 
 export type TJobEmployeeRead = {
   permission: TJobEmployeePermission;
   id: string;
+  signer?: boolean; // If not present, assume false
 };
 
 export type TJobEmployee = {
@@ -67,6 +69,7 @@ export type TJobEmployee = {
   name: string;
   photo?: string;
   email: string;
+  signer?: boolean; // If not present, assume false
 };
 
 export type TJob = TJobRead & {
