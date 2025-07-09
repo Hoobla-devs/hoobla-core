@@ -1,4 +1,14 @@
-import { doc, DocumentReference, getDoc, onSnapshot } from 'firebase/firestore';
+import {
+  collection,
+  CollectionReference,
+  doc,
+  DocumentReference,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from 'firebase/firestore';
 import { userConverter } from '../../converters/user';
 import { db } from '../../firebase/init';
 import { TCompanyWithEmployees } from '../../types/companyTypes';
@@ -98,6 +108,26 @@ export async function checkIfUserExists(uid: string) {
   const userRef = doc(db, 'users', uid) as DocumentReference<TUserWrite>;
   const userDoc = await getDoc(userRef);
   return userDoc.exists();
+}
+
+export async function getUserByEmail(email: string) {
+  try {
+    const userRef = query(
+      collection(db, 'users'),
+      where('general.email', '==', email)
+    ).withConverter(userConverter);
+    const querySnapshot = await getDocs(userRef);
+
+    if (!querySnapshot.empty) {
+      const usersData = querySnapshot.docs.map(doc => doc.data());
+      return usersData[0];
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.log('Error getting user by email:', error);
+    return null;
+  }
 }
 
 export async function getUserById(id: string): Promise<TUser> {
