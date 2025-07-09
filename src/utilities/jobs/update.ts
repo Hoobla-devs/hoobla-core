@@ -16,6 +16,7 @@ import {
   TJobEmployee,
   TJobEmployeeWrite,
   TJobRead,
+  TJobStatus,
   TJobWrite,
   TLogWrite,
 } from '../../types/jobTypes';
@@ -71,22 +72,20 @@ export async function selectFreelancer(
 }
 
 export async function addCompanySignature(
-  job: TJobRead,
+  jobId: string,
+  jobName: string,
+  jobStatus: TJobStatus,
   employerUser: TEmployerUser,
   jobData: Partial<TJobWrite>
 ) {
-  const jobRef = doc(db, 'jobs', job.id) as DocumentReference<TJobWrite>;
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
   const company = employerUser.activeCompany.company;
-
-  const jobStatus = job.signatures?.freelancer
-    ? 'inProgress'
-    : 'requiresSignature';
 
   const log: TLogWrite = {
     date: Timestamp.fromDate(new Date()),
     status: jobStatus,
-    description: `${company.name} hefur skrifað undir samning fyrir verkefnið ${job.name}`,
+    description: `${company.name} hefur skrifað undir samning fyrir verkefnið ${jobName}`,
     title: 'Fyrirtæki skrifar undir',
   };
 
@@ -109,20 +108,18 @@ export async function addCompanySignature(
 }
 
 export async function addFreelancerSignature(
-  job: TJobRead,
+  jobId: string,
+  jobName: string,
+  jobStatus: TJobStatus,
   freelancerUser: TFreelancerUser,
   jobData: Partial<TJobWrite>
 ) {
-  const jobRef = doc(db, 'jobs', job.id) as DocumentReference<TJobWrite>;
-
-  const jobStatus = job.signatures?.employer
-    ? 'inProgress'
-    : 'requiresSignature';
+  const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
 
   const log: TLogWrite = {
     date: Timestamp.fromDate(new Date()),
     status: jobStatus,
-    description: `${freelancerUser.general.name} skrifar undir samning fyrir verkefnið ${job.name}.`,
+    description: `${freelancerUser.general.name} skrifar undir samning fyrir verkefnið ${jobName}.`,
     title: 'Giggari skrifar undir',
   };
 
@@ -233,5 +230,29 @@ export async function updateJobEmployeeList(
   } catch (err) {
     console.error(err);
     return false;
+  }
+}
+
+export async function updateJobSigner(jobId: string, employeeId: string) {
+  try {
+    const jobRef = doc(db, 'jobs', jobId) as DocumentReference<TJobWrite>;
+    const employeesCollectionRef = collection(jobRef, 'employees');
+    const employeesSnapshot = await getDocs(employeesCollectionRef);
+    const updatePromises = employeesSnapshot.docs.map(async docSnap => {
+      const isSigner = docSnap.id === employeeId;
+      await setDoc(
+        docSnap.ref,
+        {
+          ...docSnap.data(),
+          signer: isSigner,
+        },
+        { merge: true }
+      );
+    });
+    await Promise.all(updatePromises);
+    return true;
+  } catch (err) {
+    console.error('Error setting job signer:', err);
+    throw err;
   }
 }
