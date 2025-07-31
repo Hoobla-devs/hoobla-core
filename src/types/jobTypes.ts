@@ -164,7 +164,6 @@ export type TJobInfoRead = {
   start: string;
   end: string;
   percentage: number | null;
-  numOfHours: number | null;
   deadline?: Date;
 };
 
@@ -172,7 +171,6 @@ export type TJobInfoWrite = {
   start: string;
   end: string;
   percentage: number | null;
-  numOfHours: number | null;
   deadline?: Timestamp;
 };
 
@@ -237,7 +235,6 @@ export type TJobFormData = {
     start: string;
     end: string;
     percentage: number | null;
-    numOfHours: string | null;
     deadline: number | null;
   };
   logs?: TLog[];

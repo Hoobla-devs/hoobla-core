@@ -20,7 +20,6 @@ export async function addReview(
       start: job.jobInfo.start,
       end: job.jobInfo.end,
       percentage: job.jobInfo.percentage,
-      numOfHours: job.jobInfo.numOfHours,
     },
     companyInfo: {
       name: company.name,
