@@ -55,11 +55,13 @@ export type TJobEmployeePermission = 'edit' | 'view';
 
 export type TJobEmployeeWrite = {
   permission: TJobEmployeePermission;
+  signer?: boolean; // If not present, assume false
 };
 
 export type TJobEmployeeRead = {
   permission: TJobEmployeePermission;
   id: string;
+  signer?: boolean; // If not present, assume false
 };
 
 export type TJobEmployee = {
@@ -67,6 +69,7 @@ export type TJobEmployee = {
   name: string;
   photo?: string;
   email: string;
+  signer?: boolean; // If not present, assume false
 };
 
 export type TJob = TJobRead & {
@@ -161,7 +164,6 @@ export type TJobInfoRead = {
   start: string;
   end: string;
   percentage: number | null;
-  numOfHours: number | null;
   deadline?: Date;
 };
 
@@ -169,7 +171,6 @@ export type TJobInfoWrite = {
   start: string;
   end: string;
   percentage: number | null;
-  numOfHours: number | null;
   deadline?: Timestamp;
 };
 
@@ -234,7 +235,6 @@ export type TJobFormData = {
     start: string;
     end: string;
     percentage: number | null;
-    numOfHours: string | null;
     deadline: number | null;
   };
   logs?: TLog[];

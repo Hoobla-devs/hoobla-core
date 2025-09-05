@@ -303,6 +303,7 @@ export async function getJobWithApplicantsAndEmployees(
         email: user.general.email,
         permission: e.permission,
         photo: user.general.photo?.url,
+        signer: e.signer || false,
       };
     })
   );

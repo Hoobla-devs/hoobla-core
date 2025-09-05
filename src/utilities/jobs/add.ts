@@ -90,10 +90,6 @@ export function convertFormJobToJobRead(
       end: formJob.jobInfo.end || '',
       percentage:
         formJob.type === 'partTime' ? formJob.jobInfo.percentage : null,
-      numOfHours:
-        formJob.type === 'timeframe'
-          ? parseInt(formJob.jobInfo.numOfHours!) || null
-          : null,
       deadline: _getOfferDeadlineDate(
         new Date(),
         formJob.jobInfo.deadline || 2
@@ -133,7 +129,7 @@ export async function createJob(data: TJobRead) {
     data.creator.id
   ) as DocumentReference<TJobEmployeeWrite>;
 
-  await setDoc(employeeRef, { permission: 'edit' });
+  await setDoc(employeeRef, { permission: 'edit', signer: true }); // Default job creator to signer
 
   // Add job to company
   await updateDoc(companyRef, {
