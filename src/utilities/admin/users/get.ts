@@ -22,6 +22,7 @@ import {
 import { getSelectedReviews } from '../../users/reviews/get';
 import { TFreelancerOffer } from '../../../types/adminTypes';
 import { getJob, getJobWithApplicants } from '../../jobs/get';
+import { TJobWithApplicants } from '../../../types/jobTypes';
 
 export async function getAllFreelancers(): Promise<TFreelancerUser[]> {
   const usersRef = collection(db, 'users').withConverter(
@@ -97,11 +98,15 @@ export const getFreelancerOffers = async (
 
   const freelancerJobs = await Promise.all(
     freelancer.freelancer.jobs.map(async jobId => {
-      return getJobWithApplicants(jobId);
+      return getJobWithApplicants(jobId).catch(() => null);
     })
   );
 
-  const freelancerOffers = freelancerJobs.map(job => {
+  const freelancerJobsData = freelancerJobs.filter(
+    job => job !== null
+  ) as TJobWithApplicants[];
+
+  const freelancerOffers = freelancerJobsData.map(job => {
     const freelancerOffer = job.applicants.find(
       applicant => applicant.id === freelancerId
     );
