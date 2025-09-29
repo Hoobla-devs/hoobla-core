@@ -1,4 +1,18 @@
 import { Timestamp } from 'firebase/firestore';
+import { TUserNotificationSettings } from '../types/userTypes';
+
+export const getUserNotificationSettings = (
+  settings: TUserNotificationSettings
+) => {
+  return {
+    smsEnabled:
+      settings?.SMSNotifications === undefined || settings?.SMSNotifications,
+    offerDeclinedNotifications:
+      settings?.deniedOfferMails === undefined || settings?.deniedOfferMails,
+    jobCancelledNotifications:
+      settings?.cancelledJobMails === undefined || settings?.cancelledJobMails,
+  };
+};
 
 export const isEmptyObject = (obj: Object) =>
   Object.keys(obj || {}).length === 0;
