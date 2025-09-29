@@ -166,10 +166,6 @@ export async function updateJobApplication(
     'jobInfo.end': jobFormData.jobInfo.end || '',
     'jobInfo.percentage':
       jobType === 'partTime' ? jobFormData.jobInfo.percentage : null,
-    'jobInfo.numOfHours':
-      jobType === 'timeframe'
-        ? parseInt(jobFormData.jobInfo.numOfHours!) || null
-        : null,
     unapprovedTags: noUnapprovedTags
       ? null
       : (unapprovedTags as TUnapprovedTags),

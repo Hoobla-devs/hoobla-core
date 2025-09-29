@@ -25,3 +25,15 @@ export type TTestType = {
   name: string;
   value: number;
 };
+
+export type TFreelancerOffer = {
+  jobId: string;
+  jobTitle: string;
+  offer: {
+    date: Date;
+    hourlyRate: string;
+    fixedRate: string;
+    message: string;
+    acceptedRate?: 'hourly' | 'fixed' | '';
+  };
+};

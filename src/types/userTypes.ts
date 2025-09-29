@@ -272,7 +272,6 @@ export type TReviewBase = {
     start: string;
     end: string;
     percentage: number | null;
-    numOfHours: number | null;
   };
   companyInfo: {
     name: string;

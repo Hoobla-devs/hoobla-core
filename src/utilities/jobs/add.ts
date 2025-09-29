@@ -90,10 +90,6 @@ export function convertFormJobToJobRead(
       end: formJob.jobInfo.end || '',
       percentage:
         formJob.type === 'partTime' ? formJob.jobInfo.percentage : null,
-      numOfHours:
-        formJob.type === 'timeframe'
-          ? parseInt(formJob.jobInfo.numOfHours!) || null
-          : null,
       deadline: _getOfferDeadlineDate(
         new Date(),
         formJob.jobInfo.deadline || 2
