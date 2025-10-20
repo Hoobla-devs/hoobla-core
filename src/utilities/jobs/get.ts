@@ -287,6 +287,8 @@ export async function getJobWithApplicantsAndEmployees(
     ),
   ]);
 
+  console.log('job employees: ', employeeDocs);
+
   const applicants: TFreelancerApplicant[] = await Promise.all(
     applicantDocs.map(async a => {
       const freelancer = await getFreelancer(a.id);
